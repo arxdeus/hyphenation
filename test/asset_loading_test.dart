@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -61,15 +60,15 @@ void main() {
     );
 
     await tester.pumpWidget(
-      Directionality(
+      const Directionality(
         textDirection: TextDirection.ltr,
         child: Center(
           child: SizedBox(
             width: 120,
             child: HyphenText(
               'программирование',
-              style: const TextStyle(fontSize: 20),
-              locale: const Locale('ru', 'RU'),
+              style: TextStyle(fontSize: 20),
+              locale: Locale('ru', 'RU'),
             ),
           ),
         ),

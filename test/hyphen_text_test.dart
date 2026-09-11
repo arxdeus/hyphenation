@@ -313,7 +313,7 @@ void main() {
     testWidgets('dry layout agrees with real layout', (
       WidgetTester tester,
     ) async {
-      for (final double width in <double>[30, 60, 100, 160, 400]) {
+      for (final width in <double>[30, 60, 100, 160, 400]) {
         await tester.pumpWidget(
           host(
             HyphenText(
