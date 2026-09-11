@@ -337,6 +337,65 @@ void main() {
       }
     });
 
+    testWidgets('the width cache never serves a stale break', (
+      WidgetTester tester,
+    ) async {
+      // The broken text is memoised per width, so every input that feeds the
+      // break must invalidate it. A stale entry would paint hyphens in the
+      // wrong places, which no other test would notice.
+      Widget build({
+        required String data,
+        required double fontSize,
+        required double width,
+        Hyphenator? which,
+      }) => host(
+        HyphenText(
+          data,
+          style: TextStyle(fontSize: fontSize),
+          hyphenator: which ?? latin,
+        ),
+        width: width,
+      );
+
+      // Same width throughout, so only the other inputs can change the break.
+      await tester.pumpWidget(
+        build(data: 'hyphenation', fontSize: 20, width: 100),
+      );
+      final atTwenty = renderedTextOf(tester);
+
+      await tester.pumpWidget(
+        build(data: 'hyphenation', fontSize: 8, width: 100),
+      );
+      final atEight = renderedTextOf(tester);
+      expect(atEight, isNot(atTwenty), reason: 'style change must re-break');
+      expect(atEight, 'hyphenation');
+
+      await tester.pumpWidget(
+        build(data: 'hyphenation', fontSize: 20, width: 100),
+      );
+      expect(
+        renderedTextOf(tester),
+        atTwenty,
+        reason: 'going back must restore the original break',
+      );
+
+      // Changing the text at the same width and style.
+      await tester.pumpWidget(
+        build(data: 'extraordinary', fontSize: 20, width: 100),
+      );
+      expect(renderedTextOf(tester).replaceAll('-\n', ''), 'extraordinary');
+
+      // Changing the dictionary at the same width, style and text.
+      await tester.pumpWidget(
+        build(data: 'hyphenation', fontSize: 20, width: 100, which: russian),
+      );
+      expect(
+        renderedTextOf(tester),
+        isNot(contains('-\n')),
+        reason: 'the Russian dictionary cannot break a Latin word',
+      );
+    });
+
     testWidgets('empty and whitespace text lay out without error', (
       WidgetTester tester,
     ) async {

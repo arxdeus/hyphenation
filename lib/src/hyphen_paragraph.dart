@@ -178,7 +178,7 @@ class RenderHyphenParagraph extends RenderParagraph
       return;
     }
     _sourceSpan = span;
-    _breaker = null;
+    _invalidateBreaks();
     // The painted text is recomputed in the layout callback; installing the
     // source text here keeps semantics, intrinsics and `toStringDeep` honest
     // until then.
@@ -194,7 +194,7 @@ class RenderHyphenParagraph extends RenderParagraph
       return;
     }
     _hyphenator = value;
-    _breaker = null;
+    _invalidateBreaks();
     markNeedsLayout();
   }
 
@@ -207,14 +207,14 @@ class RenderHyphenParagraph extends RenderParagraph
       return;
     }
     _hyphenCharacter = value;
-    _breaker = null;
+    _invalidateBreaks();
     markNeedsLayout();
   }
 
   @override
   set textScaler(TextScaler value) {
     if (textScaler != value) {
-      _breaker = null;
+      _invalidateBreaks();
     }
     super.textScaler = value;
   }
@@ -222,7 +222,7 @@ class RenderHyphenParagraph extends RenderParagraph
   @override
   set strutStyle(StrutStyle? value) {
     if (strutStyle != value) {
-      _breaker = null;
+      _invalidateBreaks();
     }
     super.strutStyle = value;
   }
@@ -230,7 +230,7 @@ class RenderHyphenParagraph extends RenderParagraph
   @override
   set textHeightBehavior(TextHeightBehavior? value) {
     if (textHeightBehavior != value) {
-      _breaker = null;
+      _invalidateBreaks();
     }
     super.textHeightBehavior = value;
   }
@@ -238,6 +238,21 @@ class RenderHyphenParagraph extends RenderParagraph
   HyphenLineBreaker? _breaker;
   TextPainter? _measurePainter;
   TextPainter? _dryPainter;
+
+  /// Memoised result of the last break, keyed by the width it was made for.
+  ///
+  /// Re-laying out at an unchanged width is by far the most common case (any
+  /// rebuild, and every frame of a scroll), and breaking the text again there
+  /// costs far more than the paragraph layout itself.
+  double? _cachedWidth;
+  String? _cachedBroken;
+
+  /// Drops everything derived from the text, the style or the dictionary.
+  void _invalidateBreaks() {
+    _breaker = null;
+    _cachedWidth = null;
+    _cachedBroken = null;
+  }
 
   HyphenLineBreaker get _lineBreaker => _breaker ??= HyphenLineBreaker(
     measure: _measure,
@@ -270,7 +285,13 @@ class RenderHyphenParagraph extends RenderParagraph
     if (source.isEmpty || !maxWidth.isFinite || !softWrap) {
       return source;
     }
-    return _lineBreaker.breakIntoString(source, maxWidth);
+    if (_cachedWidth == maxWidth && _cachedBroken != null) {
+      return _cachedBroken!;
+    }
+    final broken = _lineBreaker.breakIntoString(source, maxWidth);
+    _cachedWidth = maxWidth;
+    _cachedBroken = broken;
+    return broken;
   }
 
   TextSpan _spanFor(double maxWidth) => TextSpan(
