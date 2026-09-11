@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hyphen/flutter_hyphen.dart';
+import 'package:hyphen/hyphen.dart';
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final hyphen = await Hyphen.fromDictionaryPath(
+    'assets/dictionary/hyph_ru_RU.dic',
+  );
+  runApp(HyphenScope(child: const MyApp(), hyphenator: Hyphenator(hyphen)));
 }
 
 class MyApp extends StatelessWidget {
@@ -104,7 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
           // wireframe for each widget.
           mainAxisAlignment: .center,
           children: [
-            const Text('You have pushed the button this many times:'),
+            HyphenText('Количество нажатий:'),
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,

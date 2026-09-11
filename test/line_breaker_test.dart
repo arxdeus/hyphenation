@@ -1,0 +1,162 @@
+import 'package:flutter_hyphen/flutter_hyphen.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'test_dictionaries.dart';
+
+/// A measure function where every character is exactly 10 wide, so the
+/// expected line breaks can be reasoned about by counting characters.
+double measureByCharacter(String text) => text.length * 10.0;
+
+void main() {
+  group('HyphenLineBreaker', () {
+    late Hyphenator latin;
+
+    setUp(() => latin = loadTestLatinHyphenator());
+
+    HyphenLineBreaker breakerFor(Hyphenator? hyphenator) => HyphenLineBreaker(
+      measure: measureByCharacter,
+      hyphenator: hyphenator,
+    );
+
+    test('breaks at whitespace when the words fit', () {
+      final breaker = breakerFor(null);
+      expect(
+        breaker.breakText('aa bb cc', 50),
+        <String>['aa bb', 'cc'],
+      );
+    });
+
+    test('splits a long word and paints a hyphen', () {
+      final breaker = breakerFor(latin);
+      // 'hyphenation' breaks as hy-phen-ation. At width 70 the longest prefix
+      // that fits once the hyphen is added is 'hyphen-' (7 characters).
+      expect(breaker.breakText('hyphenation', 70), <String>[
+        'hyphen-',
+        'ation',
+      ]);
+    });
+
+    test('a wider column keeps more of the word on the first line', () {
+      final breaker = breakerFor(latin);
+      // At 60 'hyphen-' no longer fits, so the earlier break point wins.
+      expect(
+        breaker.breakText('hyphenation', 60),
+        <String>['hy-', 'phen-', 'ation'],
+      );
+      // Wide enough for everything: no hyphen at all.
+      expect(breaker.breakText('hyphenation', 200), <String>['hyphenation']);
+    });
+
+    test('without a hyphenator the word moves whole', () {
+      final breaker = breakerFor(null);
+      expect(
+        breaker.breakText('aa hyphenation', 60),
+        <String>['aa', 'hyphenation'],
+      );
+    });
+
+    test('no line exceeds the requested width where a break exists', () {
+      final breaker = breakerFor(latin);
+      const text = 'always wonderful extraordinary computer hyphenation';
+      for (final width in <double>[40, 70, 100, 130]) {
+        for (final line in breaker.breakText(text, width)) {
+          // 'always' has no break point in the test dictionary, so a line may
+          // only overflow when it holds a single unbreakable chunk.
+          if (measureByCharacter(line) > width) {
+            expect(
+              line.contains(' '),
+              isFalse,
+              reason: 'overflowing line "$line" should be one chunk',
+            );
+          }
+        }
+      }
+    });
+
+    test('the original text survives the round trip', () {
+      final breaker = breakerFor(latin);
+      const text = 'always wonderful extraordinary computer hyphenation';
+      for (final width in <double>[30, 55, 80, 200]) {
+        final rebuilt = breaker
+            .breakText(text, width)
+            .map(
+              (String line) => line.endsWith('-')
+                  ? line.substring(0, line.length - 1)
+                  : '$line ',
+            )
+            .join()
+            .trim();
+        expect(rebuilt, text, reason: 'at width $width');
+      }
+    });
+
+    test('hard newlines are preserved', () {
+      final breaker = breakerFor(latin);
+      expect(breaker.breakText('aa\nbb', 100), <String>['aa', 'bb']);
+      expect(breaker.breakText('aa\n\nbb', 100), <String>['aa', '', 'bb']);
+    });
+
+    test('a trailing newline yields a trailing empty line', () {
+      final breaker = breakerFor(latin);
+      expect(breaker.breakText('aa\n', 100), <String>['aa', '']);
+    });
+
+    test('soft hyphens are consumed, never painted', () {
+      final breaker = breakerFor(latin);
+      final lines = breaker.breakText('wonder${kSoftHyphen}land', 70);
+      expect(lines, <String>['wonder-', 'land']);
+      for (final line in lines) {
+        expect(line.contains(kSoftHyphen), isFalse);
+      }
+    });
+
+    test('an existing hyphen is not doubled', () {
+      final breaker = breakerFor(latin);
+      expect(breaker.breakText('e-mail', 20), <String>['e-', 'mail']);
+    });
+
+    test('an unbreakable word overflows rather than vanishing', () {
+      final breaker = breakerFor(null);
+      expect(breaker.breakText('unbreakable', 20), <String>['unbreakable']);
+    });
+
+    test('empty text yields one empty line', () {
+      expect(breakerFor(latin).breakText('', 100), <String>['']);
+    });
+
+    test('minIntrinsicWidth is the widest unbreakable chunk', () {
+      final breaker = breakerFor(latin);
+      // Every chunk is measured with the hyphen it would carry: 'al-' (3),
+      // 'ways' (4), 'hy-' (3), 'phen-' (5) and 'ation' (5). The widest is 5
+      // characters at 10 each.
+      expect(breaker.minIntrinsicWidth('always hyphenation'), 50.0);
+      // Hyphenation makes the minimum far narrower than the longest word.
+      expect(
+        breaker.minIntrinsicWidth('hyphenation'),
+        lessThan(measureByCharacter('hyphenation')),
+      );
+    });
+
+    test('measurements are cached but results stay correct', () {
+      var calls = 0;
+      final breaker = HyphenLineBreaker(
+        measure: (String text) {
+          calls++;
+          return measureByCharacter(text);
+        },
+        hyphenator: latin,
+      );
+      final first = breaker.breakText('hyphenation hyphenation', 60);
+      final callsAfterFirst = calls;
+      final second = breaker.breakText('hyphenation hyphenation', 60);
+      expect(second, first);
+      expect(
+        calls,
+        callsAfterFirst,
+        reason: 'the second pass should hit the cache',
+      );
+      breaker.clearCache();
+      expect(breaker.breakText('hyphenation hyphenation', 60), first);
+    });
+  });
+}

@@ -8,8 +8,10 @@ environment:
   flutter: ">=1.17.0"
 
 dependencies:
+  characters: ^1.4.1
   flutter:
     sdk: flutter
+  hyphen: ^0.4.0
 
 dev_dependencies:
   flutter_test:
