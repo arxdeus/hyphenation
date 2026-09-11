@@ -247,11 +247,38 @@ class RenderHyphenParagraph extends RenderParagraph
   double? _cachedWidth;
   String? _cachedBroken;
 
+  /// The source text with soft hyphens inserted, cached across widths.
+  String? _marked;
+
+  /// Minimum intrinsic width, which depends only on the text and the style.
+  double? _minIntrinsicWidthCache;
+
+  /// Painter holding the shaped soft-hyphenated text, reused across widths.
+  TextPainter? _breakPainter;
+  String? _breakPainterText;
+
+  /// How many times this paragraph has been broken by the engine.
+  ///
+  /// The two strategies have opposite cost profiles: the engine path is a
+  /// flat cost per width, while the measuring breaker is expensive until its
+  /// width cache fills and cheap afterwards. A paragraph laid out once or
+  /// twice is best served by the engine; one that is being resized every
+  /// frame is best served by the cache. Counting the engine breaks switches
+  /// from the first to the second once it is clear which case this is.
+  int _engineBreaks = 0;
+
+  /// After this many engine breaks, the measuring breaker takes over.
+  static const int _maxEngineBreaks = 3;
+
   /// Drops everything derived from the text, the style or the dictionary.
   void _invalidateBreaks() {
     _breaker = null;
     _cachedWidth = null;
     _cachedBroken = null;
+    _marked = null;
+    _minIntrinsicWidthCache = null;
+    _breakPainterText = null;
+    _engineBreaks = 0;
   }
 
   HyphenLineBreaker get _lineBreaker => _breaker ??= HyphenLineBreaker(
@@ -279,7 +306,21 @@ class RenderHyphenParagraph extends RenderParagraph
     return painter.width;
   }
 
+  /// The source text with a soft hyphen at every break the dictionary allows.
+  ///
+  /// Computing this needs no measurement at all, so it only has to be redone
+  /// when the text or the dictionary changes, not when the width does.
+  String get _markedText => _marked ??= _hyphenator.hyphenate(sourceText);
+
   /// The text to paint when laid out into [maxWidth].
+  ///
+  /// The expensive part of hyphenation is deciding where the lines end. Rather
+  /// than measuring candidate lines one by one, this hands the engine a string
+  /// marked with soft hyphens and lets it break the paragraph in a single
+  /// layout: the engine already treats U+00AD as a break opportunity, it just
+  /// will not paint a hyphen glyph there. Reading the resulting line starts
+  /// back out and re-emitting the text with real hyphens costs one layout
+  /// instead of O(lines x log candidates) of them.
   String _brokenTextFor(double maxWidth) {
     final source = sourceText;
     if (source.isEmpty || !maxWidth.isFinite || !softWrap) {
@@ -288,11 +329,153 @@ class RenderHyphenParagraph extends RenderParagraph
     if (_cachedWidth == maxWidth && _cachedBroken != null) {
       return _cachedBroken!;
     }
-    final broken = _lineBreaker.breakIntoString(source, maxWidth);
+
+    final marked = _markedText;
+    final String broken;
+    if (!marked.contains(kSoftHyphen)) {
+      // Nothing to hyphenate: let the engine wrap the text as it would a
+      // plain Text.
+      broken = source;
+    } else if (_engineBreaks < _maxEngineBreaks) {
+      // The engine breaks the whole paragraph in one layout, which is much
+      // cheaper than measuring candidate lines the first few times a width is
+      // seen.
+      _engineBreaks++;
+      broken = _breakViaEngine(marked, maxWidth);
+    } else {
+      // Widths keep changing, which means this paragraph is being resized or
+      // animated. `HyphenLineBreaker` caches the width of every chunk it has
+      // measured, so after a few widths it answers almost entirely from cache
+      // and beats the engine path, which has to pay `computeLineMetrics` on
+      // every new width.
+      broken = _lineBreaker.breakIntoString(source, maxWidth);
+    }
     _cachedWidth = maxWidth;
     _cachedBroken = broken;
     return broken;
   }
+
+  /// Lays [marked] out once and rewrites it with a real hyphen wherever the
+  /// engine chose to break at a soft hyphen.
+  String _breakViaEngine(String marked, double maxWidth) {
+    final painter = _breakPainter ??= TextPainter();
+    // Assigning `text` throws the shaped paragraph away, so it is only done
+    // when the marked text actually changed. Re-shaping the same string on
+    // every width change made this call roughly six times more expensive than
+    // it needed to be, which is most of what a resizing column pays.
+    if (!identical(_breakPainterText, marked)) {
+      painter.text = TextSpan(
+        text: marked,
+        style: _sourceSpan.style,
+        locale: _sourceSpan.locale,
+      );
+      _breakPainterText = marked;
+    }
+    painter
+      ..textAlign = TextAlign.start
+      ..textDirection = textDirection
+      ..textScaler = textScaler
+      ..strutStyle = strutStyle
+      ..textHeightBehavior = textHeightBehavior
+      ..textWidthBasis = TextWidthBasis.parent
+      ..maxLines = null
+      ..ellipsis = null
+      // Laid out at the real width. Lines the engine ends at a soft hyphen
+      // still have to fit the hyphen that will be painted there, which is
+      // checked per line below; reserving room on every line instead would
+      // waste a hyphen's width on the lines that end at a space, and make
+      // this disagree with `HyphenLineBreaker`.
+      ..layout(maxWidth: maxWidth);
+
+    final metrics = painter.computeLineMetrics();
+    if (metrics.length < 2) {
+      return _stripSoftHyphens(marked);
+    }
+
+    // Where each line starts, in the marked text, with a trailing sentinel so
+    // line `i` always spans `starts[i]` to `starts[i + 1]`.
+    final starts = <int>[0];
+    for (var i = 1; i < metrics.length; i++) {
+      final start = _lineStartOffset(painter, metrics[i]);
+      if (start > starts.last) {
+        starts.add(start);
+      }
+    }
+    starts.add(marked.length);
+
+    // Only the lines the engine ended at a soft hyphen need rewriting. Every
+    // other break it made (at a space, at a newline, or inside an unbreakable
+    // run) is already correct and is left untouched, so the engine reproduces
+    // it on the real layout.
+    //
+    // The engine laid each line out without the hyphen it is about to be
+    // given, so a line that exactly filled the column would overflow once the
+    // hyphen is added. `LineMetrics` already carries each line's width, so
+    // that check costs no extra measurement: the break is simply pulled back
+    // to the previous opportunity until the hyphen fits.
+    // Emit the lines the engine chose, one per output line. Soft hyphens that
+    // fall inside a line are dropped, which is correct: the engine had the
+    // room and did not need them.
+    final buffer = StringBuffer();
+    for (var i = 0; i + 1 < starts.length; i++) {
+      var end = starts[i + 1];
+      var line = marked.substring(starts[i], end);
+
+      // A line the engine ended at a soft hyphen was measured without the
+      // hyphen that is about to be painted there, so it can overflow by up to
+      // one hyphen. Pull the break back to an earlier opportunity until it
+      // fits.
+      while (line.endsWith(kSoftHyphen) &&
+          _measure(_stripSoftHyphens(line).trimRight() + _hyphenCharacter) >
+              maxWidth) {
+        final previous = line.lastIndexOf(kSoftHyphen, line.length - 2);
+        if (previous < 0) {
+          // No earlier opportunity: let it overflow rather than lose text,
+          // exactly as a plain Text would.
+          break;
+        }
+        end = starts[i] + previous + 1;
+        starts.insert(i + 1, end);
+        line = marked.substring(starts[i], end);
+      }
+
+      final hyphenated = line.endsWith(kSoftHyphen);
+      final raw = _stripSoftHyphens(line);
+      final endsWithNewline = raw.endsWith('\n');
+      // Trailing spaces at a wrap are not painted, and keeping them would
+      // make the line widths disagree with the breaker's.
+      final text = endsWithNewline ? raw : raw.trimRight();
+      buffer.write(hyphenated ? text + _hyphenCharacter : text);
+
+      if (i + 2 >= starts.length || endsWithNewline) {
+        continue;
+      }
+      // A newline is only written where the engine had a real break
+      // opportunity. Where it broke inside an unbreakable run (a CJK sequence,
+      // or a word longer than the column) there is nothing to break at, and
+      // forcing a newline there would insert whitespace the author never
+      // wrote. Those lines are emitted as-is so the engine makes the same
+      // choice again on the real layout.
+      if (hyphenated || text.length < raw.length) {
+        buffer.write('\n');
+      }
+    }
+    return buffer.toString();
+  }
+
+  /// The offset in the text at which the line described by [metrics] starts.
+  ///
+  /// `getLineBoundary` is unreliable around hard newlines, so the start is
+  /// read by hit-testing the left edge of the line instead.
+  static int _lineStartOffset(TextPainter painter, LineMetrics metrics) =>
+      painter
+          .getPositionForOffset(
+            Offset(0, metrics.baseline - metrics.ascent + 1),
+          )
+          .offset;
+
+  static String _stripSoftHyphens(String text) =>
+      text.contains(kSoftHyphen) ? text.replaceAll(kSoftHyphen, '') : text;
 
   TextSpan _spanFor(double maxWidth) => TextSpan(
     text: _brokenTextFor(maxWidth),
@@ -351,7 +534,17 @@ class RenderHyphenParagraph extends RenderParagraph
     // The narrowest sensible width is the widest chunk that cannot be broken
     // any further, which is what hyphenation buys: much narrower columns than
     // whole-word wrapping allows.
-    return _lineBreaker.minIntrinsicWidth(sourceText);
+    //
+    // The engine cannot answer this: `TextPainter.minIntrinsicWidth` ignores
+    // soft hyphens, and laying out at a tiny width makes it break per
+    // character instead. So the chunks between break points are measured
+    // directly. That is expensive, but it depends only on the text and the
+    // style, so it is cached: parents like Center and IntrinsicWidth query
+    // intrinsics on every layout pass, and recomputing this each time was the
+    // single most expensive thing this class did.
+    return _minIntrinsicWidthCache ??= _lineBreaker.minIntrinsicWidth(
+      sourceText,
+    );
   }
 
   @override
@@ -379,6 +572,8 @@ class RenderHyphenParagraph extends RenderParagraph
   void dispose() {
     _measurePainter?.dispose();
     _dryPainter?.dispose();
+    _breakPainter?.dispose();
+    _breakPainter = null;
     _measurePainter = null;
     _dryPainter = null;
     super.dispose();

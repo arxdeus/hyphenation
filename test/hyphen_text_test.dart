@@ -396,6 +396,67 @@ void main() {
       );
     });
 
+    testWidgets('both break strategies produce valid lines', (
+      WidgetTester tester,
+    ) async {
+      // The render object lets the engine break the paragraph the first few
+      // times and switches to the measuring breaker once a paragraph is being
+      // resized repeatedly. The two are allowed to disagree about which of
+      // several legal break points to take, but both must always produce
+      // lines that fit the column and preserve the text.
+      const text = 'hyphenation extraordinary computer always wonderful';
+      const style = TextStyle(fontSize: 16);
+
+      double widthOf(String line) {
+        final painter = TextPainter(
+          text: TextSpan(text: line, style: style),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        final result = painter.width;
+        painter.dispose();
+        return result;
+      }
+
+      Future<List<String>> linesAt(double width) async {
+        await tester.pumpWidget(
+          host(
+            HyphenText(text, style: style, hyphenator: latin),
+            width: width,
+          ),
+        );
+        return renderedTextOf(tester).split('\n');
+      }
+
+      void check(List<String> lines, double width, String label) {
+        for (final line in lines) {
+          expect(
+            widthOf(line),
+            lessThanOrEqualTo(width),
+            reason: '$label: "$line" overflows a ${width}px column',
+          );
+        }
+        // Removing the hyphens and re-joining must give the text back.
+        final rebuilt = lines
+            .map(
+              (String l) =>
+                  l.endsWith('-') ? l.substring(0, l.length - 1) : '$l ',
+            )
+            .join()
+            .trim();
+        expect(rebuilt, text, reason: '$label: text was altered');
+      }
+
+      for (final width in <double>[90, 120, 150, 180, 210, 240]) {
+        // First pass: a width seen for the first time, broken by the engine.
+        check(await linesAt(width), width, 'engine');
+      }
+      for (final width in <double>[90, 120, 150, 180, 210, 240]) {
+        // Second pass: by now the object has switched to the measuring
+        // breaker.
+        check(await linesAt(width), width, 'breaker');
+      }
+    });
+
     testWidgets('empty and whitespace text lay out without error', (
       WidgetTester tester,
     ) async {
