@@ -157,7 +157,22 @@ class Hyphenator {
         buffer.write(token);
         return;
       }
-      buffer.write(split(token).join(separator));
+      // Written straight from the offsets rather than via `split`, which would
+      // allocate a list of substrings for every word. This runs on every
+      // paragraph, so the allocations are worth avoiding.
+      final offsets = breakOffsets(token);
+      if (offsets.isEmpty) {
+        buffer.write(token);
+        return;
+      }
+      var previous = 0;
+      for (final offset in offsets) {
+        buffer
+          ..write(token.substring(previous, offset))
+          ..write(separator);
+        previous = offset;
+      }
+      buffer.write(token.substring(previous));
     });
     return buffer.toString();
   }
@@ -208,8 +223,13 @@ class Hyphenator {
   }
 
   void _appendRunBreaks(String run, int base, List<int> offsets) {
-    final characters = run.characters;
-    if (characters.length < minWordLength) {
+    // Grapheme clusters only differ from code units when the word contains a
+    // surrogate pair or a combining mark, which is rare and cheap to rule out.
+    // Building a `Characters` view for every word otherwise dominates the cost
+    // of hyphenating a paragraph.
+    final simple = _isSimple(run);
+    final characterCount = simple ? run.length : run.characters.length;
+    if (characterCount < minWordLength) {
       return;
     }
     // Dictionaries only carry lowercase patterns, so an all-caps or
@@ -219,7 +239,7 @@ class Hyphenator {
     final lower = run.toLowerCase();
     final lookup =
         lower.length == run.length &&
-            lower.characters.length == characters.length
+            (simple || lower.characters.length == characterCount)
         ? lower
         : run;
 
@@ -243,11 +263,13 @@ class Hyphenator {
       return;
     }
 
-    final totalCharacters = characters.length;
+    final totalCharacters = characterCount;
     var characterOffset = 0;
     var codeUnitOffset = 0;
     for (var i = 0; i < parts.length - 1; i++) {
-      final partCharacters = parts[i].characters.length;
+      final partCharacters = simple
+          ? parts[i].length
+          : parts[i].characters.length;
       characterOffset += partCharacters;
       codeUnitOffset += parts[i].length;
       if (characterOffset < leftMin ||
@@ -259,6 +281,29 @@ class Hyphenator {
       }
       _addOffset(offsets, base + codeUnitOffset);
     }
+  }
+
+  /// Whether [text] is free of surrogate pairs and combining marks, so one
+  /// code unit is one grapheme cluster.
+  static bool _isSimple(String text) {
+    for (var i = 0; i < text.length; i++) {
+      final unit = text.codeUnitAt(i);
+      // Surrogates, combining marks, and variation selectors are the cases
+      // where a grapheme cluster spans more than one code unit.
+      if (unit >= 0xD800 && unit <= 0xDFFF) {
+        return false;
+      }
+      if (unit >= 0x0300 && unit <= 0x036F) {
+        return false;
+      }
+      if (unit >= 0xFE00 && unit <= 0xFE0F) {
+        return false;
+      }
+      if (unit == 0x200D) {
+        return false;
+      }
+    }
+    return true;
   }
 
   static void _addOffset(List<int> offsets, int offset) {
