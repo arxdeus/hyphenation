@@ -33,6 +33,7 @@ dependencies:
   hyphen: ^0.4.0
   flutter_hyphen:
     path: ../
+  marionette_flutter: ^0.6.0
 
 dev_dependencies:
   flutter_test:

@@ -296,8 +296,12 @@ class RenderHyphenParagraph extends RenderParagraph
       ..textHeightBehavior = textHeightBehavior
       ..layout(
         minWidth: constraints.minWidth,
-        // The text is pre-broken, so the paragraph itself must not wrap.
-        maxWidth: overflow == TextOverflow.ellipsis
+        // Mirror RenderParagraph's own `_adjustMaxWidth`, so dry layout and
+        // real layout agree. The text is pre-broken, but the paragraph is
+        // still allowed to wrap: a chunk that cannot be hyphenated small
+        // enough must fall back to the engine's own breaking, exactly as it
+        // would in a plain Text.
+        maxWidth: softWrap || overflow == TextOverflow.ellipsis
             ? constraints.maxWidth
             : double.infinity,
       );

@@ -1,127 +1,311 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
-import 'package:hyphen/hyphen.dart';
+import 'package:marionette_flutter/marionette_flutter.dart';
+
+/// The Russian dictionary bundled with this example.
+///
+/// Generate your own with `substrings.pl` from the legacy engine, or grab a
+/// pattern file from CTAN. See the package README.
+const String kRussianDictionary = 'assets/dictionary/hyph_ru_RU.dic';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  final hyphen = await Hyphen.fromDictionaryPath(
-    'assets/dictionary/hyph_ru_RU.dic',
+  // Marionette lets an agent drive this demo (tap, screenshot, hot reload)
+  // over the VM service. It is debug-only and changes nothing about how the
+  // widgets below behave.
+  if (kDebugMode) {
+    MarionetteBinding.ensureInitialized();
+  } else {
+    WidgetsFlutterBinding.ensureInitialized();
+  }
+  // Registering here makes every HyphenText in the app hyphenate without any
+  // further plumbing.
+  await HyphenationRegistry.instance.registerAsset(
+    const Locale('ru', 'RU'),
+    kRussianDictionary,
   );
-  runApp(HyphenScope(child: const MyApp(), hyphenator: Hyphenator(hyphen)));
+  runApp(const HyphenDemoApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class HyphenDemoApp extends StatelessWidget {
+  const HyphenDemoApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'flutter_hyphen',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const DemoPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class DemoPage extends StatefulWidget {
+  const DemoPage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<DemoPage> createState() => _DemoPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _DemoPageState extends State<DemoPage> {
+  static const String _sample =
+      'Программирование на Flutter это интересное и увлекательное '
+      'занятие. Конституция Российской Федерации гарантирует '
+      'непосредственное действие прав и свобод человека.';
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+  double _width = 180;
+  double _fontSize = 18;
+  bool _justify = true;
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final textStyle = TextStyle(fontSize: _fontSize, height: 1.3);
+    final align = _justify ? TextAlign.justify : TextAlign.start;
+
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
+        title: const Text('flutter_hyphen'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: <Widget>[
+          _Controls(
+            width: _width,
+            fontSize: _fontSize,
+            justify: _justify,
+            onWidth: (double value) => setState(() => _width = value),
+            onFontSize: (double value) => setState(() => _fontSize = value),
+            onJustify: (bool value) => setState(() => _justify = value),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              _Column(
+                title: 'Text',
+                subtitle: 'no hyphenation',
+                width: _width,
+                child: Text(_sample, style: textStyle, textAlign: align),
+              ),
+              const SizedBox(width: 16),
+              _Column(
+                title: 'HyphenText',
+                subtitle: 'dictionary hyphenation',
+                width: _width,
+                child: HyphenText(_sample, style: textStyle, textAlign: align),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _RenderedLines(text: _sample, width: _width, style: textStyle),
+          const SizedBox(height: 24),
+          const _WordList(),
+        ],
+      ),
+    );
+  }
+}
+
+class _Controls extends StatelessWidget {
+  const _Controls({
+    required this.width,
+    required this.fontSize,
+    required this.justify,
+    required this.onWidth,
+    required this.onFontSize,
+    required this.onJustify,
+  });
+
+  final double width;
+  final double fontSize;
+  final bool justify;
+  final ValueChanged<double> onWidth;
+  final ValueChanged<double> onFontSize;
+  final ValueChanged<bool> onJustify;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            HyphenText('Количество нажатий:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const SizedBox(width: 80, child: Text('Width')),
+                Expanded(
+                  child: Slider(
+                    value: width,
+                    min: 80,
+                    max: 400,
+                    onChanged: onWidth,
+                  ),
+                ),
+                Text(width.round().toString()),
+              ],
+            ),
+            Row(
+              children: <Widget>[
+                const SizedBox(width: 80, child: Text('Font size')),
+                Expanded(
+                  child: Slider(
+                    value: fontSize,
+                    min: 10,
+                    max: 40,
+                    onChanged: onFontSize,
+                  ),
+                ),
+                Text(fontSize.round().toString()),
+              ],
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Justify'),
+              value: justify,
+              onChanged: onJustify,
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+    );
+  }
+}
+
+class _Column extends StatelessWidget {
+  const _Column({
+    required this.title,
+    required this.subtitle,
+    required this.width,
+    required this.child,
+  });
+
+  final String title;
+  final String subtitle;
+  final double width;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(title, style: theme.textTheme.titleMedium),
+        Text(subtitle, style: theme.textTheme.bodySmall),
+        const SizedBox(height: 8),
+        Container(
+          width: width,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: child,
+        ),
+      ],
+    );
+  }
+}
+
+/// Shows the lines a [HyphenText] actually paints for the sample text.
+///
+/// This makes the effect legible as text rather than pixels, which is handy
+/// when driving the demo from a tool.
+class _RenderedLines extends StatelessWidget {
+  const _RenderedLines({
+    required this.text,
+    required this.width,
+    required this.style,
+  });
+
+  final String text;
+  final double width;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    final hyphenator = HyphenationRegistry.instance.resolve(
+      const Locale('ru', 'RU'),
+    );
+    if (hyphenator == null) {
+      return const SizedBox.shrink();
+    }
+    final painter = TextPainter(textDirection: TextDirection.ltr);
+    double measure(String value) {
+      painter
+        ..text = TextSpan(text: value, style: style)
+        ..layout();
+      return painter.width;
+    }
+
+    final lines = HyphenLineBreaker(
+      measure: measure,
+      hyphenator: hyphenator,
+    ).breakText(text, width - 18);
+    painter.dispose();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              'Painted lines (${lines.length})',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            for (final String line in lines)
+              Text(line, style: const TextStyle(fontFamily: 'monospace')),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shows how individual words are split by the dictionary.
+class _WordList extends StatelessWidget {
+  const _WordList();
+
+  static const List<String> _words = <String>[
+    'программирование',
+    'Конституция',
+    'непосредственное',
+    'увлекательное',
+    'Федерации',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final hyphenator = HyphenationRegistry.instance.resolve(
+      const Locale('ru', 'RU'),
+    );
+    if (hyphenator == null) {
+      return const SizedBox.shrink();
+    }
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              'Dictionary break points',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            for (final String word in _words)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Text('$word  →  ${hyphenator.split(word).join('-')}'),
+              ),
+          ],
+        ),
       ),
     );
   }

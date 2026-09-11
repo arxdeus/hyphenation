@@ -287,6 +287,56 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('a column too narrow for any chunk still fits its box', (
+      WidgetTester tester,
+    ) async {
+      // Found by driving the example app: at an extreme width no hyphenated
+      // chunk fits, and the paragraph must fall back to the engine's own
+      // breaking rather than painting outside its box.
+      await tester.pumpWidget(
+        host(
+          HyphenText(
+            'extraordinary hyphenation',
+            style: const TextStyle(fontSize: 20),
+            hyphenator: latin,
+          ),
+          width: 30,
+        ),
+      );
+      final render = tester.renderObject<RenderHyphenParagraph>(
+        find.byType(HyphenParagraph),
+      );
+      expect(render.size.width, lessThanOrEqualTo(30.0));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('dry layout agrees with real layout', (
+      WidgetTester tester,
+    ) async {
+      for (final double width in <double>[30, 60, 100, 160, 400]) {
+        await tester.pumpWidget(
+          host(
+            HyphenText(
+              'extraordinary hyphenation computer',
+              style: const TextStyle(fontSize: 20),
+              hyphenator: latin,
+            ),
+            width: width,
+          ),
+        );
+        final render = tester.renderObject<RenderHyphenParagraph>(
+          find.byType(HyphenParagraph),
+        );
+        // The same constraints the real layout ran under, so the two are
+        // directly comparable.
+        expect(
+          render.getDryLayout(render.constraints),
+          render.size,
+          reason: 'at width $width',
+        );
+      }
+    });
+
     testWidgets('empty and whitespace text lay out without error', (
       WidgetTester tester,
     ) async {
