@@ -21,6 +21,7 @@ dependencies:
   hyphen: ^0.4.0
 
 dev_dependencies:
+  bench_press: ^0.3.0
   flutter_test:
     sdk: flutter
 

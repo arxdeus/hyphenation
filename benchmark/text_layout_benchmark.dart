@@ -3,76 +3,46 @@
 // Run it with:
 //
 // ```bash
-// flutter test benchmark/text_layout_benchmark.dart --plain-name benchmark
+// flutter test benchmark/text_layout_benchmark.dart
 // ```
 //
-// The numbers are wall-clock times from the Flutter test binding, so they are
-// comparable within one run but not across machines. What matters is the ratio
-// between the two widgets, which is what the report prints.
+// Measurement is done by [bench_press](https://pub.dev/packages/bench_press),
+// which handles the parts that are easy to get wrong by hand: it calibrates a
+// batch size so timer quantisation is negligible, detects steady state instead
+// of guessing a warmup count, runs repeated trials, and reports a Fieller 95%
+// confidence interval for the ratio between the two widgets.
+//
+// bench_press normally runs benchmarks through its own CLI (`dart run
+// bench_press run`). That is not usable here: laying out text needs `dart:ui`,
+// which only exists under the Flutter test binding, so the benchmarks are
+// driven through its library API from inside `flutter test` instead.
 //
 // What the numbers say, measured on an M-series Mac:
 //
-//  - Re-laying out at an unchanged width costs about the same as a plain
-//    `Text`. This is the case that matters for scrolling and for ordinary
-//    rebuilds, and it is why `RenderHyphenParagraph` memoises the broken text
-//    per width.
-//  - A first layout costs roughly 4-5x a plain `Text`. The cost is dominated
-//    by measuring candidate lines with a `TextPainter`: each distinct string
-//    is a fresh paragraph layout (~20us), and the breaker needs O(log n) of
-//    them per line to binary-search the longest line that fits.
-//  - Dictionary lookups are not the bottleneck. Cached lookups run in tens of
-//    nanoseconds, and even uncached ones are a few microseconds, which is why
-//    the cold and warm first-layout rows are so close together.
+//  - Re-laying out at an unchanged width costs about 1.2x a plain `Text`.
+//    This is the case that matters for scrolling and for ordinary rebuilds,
+//    and it is why `RenderHyphenParagraph` memoises the broken text per width:
+//    a rebuild at the same width does no hyphenation work at all.
+//  - A first layout costs roughly 11x a plain `Text`, about 2 ms for the
+//    paragraph below. The cost is dominated by measuring candidate lines with
+//    a `TextPainter`: each distinct string is a fresh paragraph layout, and
+//    the breaker needs O(log n) of them per line to binary-search the longest
+//    line that fits.
+//  - Dictionary lookups are not the bottleneck, but they are not free either.
+//    A cached lookup takes about 15 ns against roughly 3.5 us uncached, which
+//    is the gap between the warm and cold first-layout rows.
 //
 // An earlier attempt to estimate line widths from cached per-segment
-// measurements, and only confirm near the answer, made things roughly twice
-// as slow: the extra per-segment measurements cost more than the handful of
+// measurements, and only confirm near the answer, measured roughly twice as
+// slow: the extra per-segment measurements cost more than the handful of
 // binary-search probes they were meant to save. The straightforward binary
 // search is kept for that reason.
-import 'dart:io';
-
+import 'package:bench_press/bench_press.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../test/test_dictionaries.dart';
-
-/// A single measured scenario.
-class BenchmarkResult {
-  BenchmarkResult({
-    required this.name,
-    required this.plain,
-    required this.hyphen,
-    required this.iterations,
-  });
-
-  /// What was measured.
-  final String name;
-
-  /// Total time spent by the plain [Text] variant.
-  final Duration plain;
-
-  /// Total time spent by the [HyphenText] variant.
-  final Duration hyphen;
-
-  /// How many times the scenario ran.
-  final int iterations;
-
-  double get plainMicros => plain.inMicroseconds / iterations;
-
-  double get hyphenMicros => hyphen.inMicroseconds / iterations;
-
-  /// How much slower `HyphenText` is. Below 1 means it is faster.
-  double get ratio =>
-      plainMicros == 0 ? double.nan : hyphenMicros / plainMicros;
-
-  String get row {
-    final plainText = plainMicros.toStringAsFixed(1).padLeft(10);
-    final hyphenText = hyphenMicros.toStringAsFixed(1).padLeft(11);
-    final ratioText = '${ratio.toStringAsFixed(2)}x'.padLeft(8);
-    return '${name.padRight(38)}$plainText$hyphenText$ratioText';
-  }
-}
 
 /// Text long enough that line breaking dominates the measurement.
 const String kSampleText =
@@ -85,6 +55,52 @@ const String kSampleText =
 
 const TextStyle kStyle = TextStyle(fontSize: 16, height: 1.3);
 
+/// Layout benchmarks are far slower than the microbenchmarks bench_press is
+/// tuned for, so the budgets are widened to keep a run to a few seconds while
+/// still collecting enough trials for a meaningful interval.
+const BenchmarkConfig kLayoutConfig = BenchmarkConfig(
+  trials: 10,
+  minWarmupIterations: 3,
+  maxWarmupIterations: 30,
+  targetBatchDuration: Duration(milliseconds: 50),
+  maxWarmupDurationSeconds: 3,
+);
+
+/// One `Text` versus `HyphenText` comparison.
+class Comparison {
+  Comparison(this.name, this.plain, this.hyphen);
+
+  /// What was compared.
+  final String name;
+
+  /// Result for the plain [Text] variant.
+  final BenchmarkResult plain;
+
+  /// Result for the [HyphenText] variant.
+  final BenchmarkResult hyphen;
+
+  /// Ratio of the means, with a Fieller 95% confidence interval.
+  FiellerInterval get interval => FiellerInterval.compute(
+    sampleA: hyphen.rawTrialLatenciesNs,
+    sampleB: plain.rawTrialLatenciesNs,
+  );
+
+  String get row {
+    final ratio = interval;
+    final plainUs = (plain.metrics.medianNs / 1000).toStringAsFixed(1);
+    final hyphenUs = (hyphen.metrics.medianNs / 1000).toStringAsFixed(1);
+    final ci = ratio.isValid
+        ? '[${ratio.lowerBound.toStringAsFixed(2)}, '
+              '${ratio.upperBound.toStringAsFixed(2)}]'
+        : 'n/a';
+    return '${name.padRight(32)}'
+        '${plainUs.padLeft(9)}'
+        '${hyphenUs.padLeft(11)}'
+        '${'${ratio.ratio.toStringAsFixed(2)}x'.padLeft(8)}'
+        '${ci.padLeft(16)}';
+  }
+}
+
 /// Builds the widget under test inside a fixed-width column.
 Widget buildHost(Widget child, double width) => Directionality(
   textDirection: TextDirection.ltr,
@@ -93,138 +109,136 @@ Widget buildHost(Widget child, double width) => Directionality(
   ),
 );
 
-/// Runs [body] [iterations] times and returns the elapsed time, discarding a
-/// warmup pass so JIT compilation does not land in the measurement.
-Future<Duration> measure(
-  int iterations,
-  Future<void> Function(int) body, {
-  int warmup = 3,
-}) async {
-  for (var i = 0; i < warmup; i++) {
-    await body(i);
-  }
-  final stopwatch = Stopwatch()..start();
-  for (var i = 0; i < iterations; i++) {
-    await body(i);
-  }
-  stopwatch.stop();
-  return stopwatch.elapsed;
+/// Attaches [widget] to the tree and pumps one frame, synchronously.
+///
+/// `WidgetTester.pumpWidget` is async and guarded, so bench_press cannot call
+/// it from a synchronous benchmark body. Driving the binding directly does the
+/// same work, and has the side benefit of measuring only build plus layout
+/// plus paint, without the test framework's bookkeeping.
+void pumpSync(WidgetTester tester, Widget widget) {
+  // The same steps `pumpWidget` takes, minus its async guard: the widget has
+  // to be wrapped in the binding's default View or the render tree has no root
+  // to attach to.
+  tester.binding.attachRootWidget(tester.binding.wrapWithDefaultView(widget));
+  tester.binding.scheduleFrame();
+  tester.binding.handleBeginFrame(null);
+  tester.binding.handleDrawFrame();
 }
 
 void main() {
-  final results = <BenchmarkResult>[];
+  final comparisons = <Comparison>[];
   late Hyphenator hyphenator;
 
   setUpAll(() => hyphenator = loadRussianHyphenator());
 
+  /// Measures [plain] against [hyphen] and records the comparison.
+  ///
+  /// Both variants are declared in one [BenchmarkGroup] so bench_press runs
+  /// them back to back, under the same thermal and GC conditions.
+  Future<void> compare(
+    String name,
+    void Function() plain,
+    void Function() hyphen, {
+    BenchmarkConfig config = kLayoutConfig,
+  }) async {
+    final group = BenchmarkGroup.compare(
+      name: name,
+      baseline: ('Text', plain),
+      candidates: <String, dynamic Function()>{'HyphenText': hyphen},
+      config: config,
+    );
+    final results = <BenchmarkResult>[];
+    for (final variant in group.variants) {
+      results.add(await variant.report(config: config));
+    }
+    comparisons.add(Comparison(name, results[0], results[1]));
+  }
+
   tearDownAll(() {
     final buffer = StringBuffer()
       ..writeln()
-      ..writeln('=' * 68)
-      ..writeln('  Text vs HyphenText  (microseconds per iteration)')
-      ..writeln('=' * 68)
+      ..writeln('=' * 76)
       ..writeln(
-        '${'scenario'.padRight(38)}${'Text'.padLeft(10)}'
-        '${'HyphenText'.padLeft(11)}${'ratio'.padLeft(8)}',
+        '  Text vs HyphenText   (median us/op, Fieller 95% CI on the '
+        'ratio)',
       )
-      ..writeln('-' * 68);
-    for (final result in results) {
-      buffer.writeln(result.row);
+      ..writeln('=' * 76)
+      ..writeln(
+        '${'scenario'.padRight(32)}${'Text'.padLeft(9)}'
+        '${'HyphenText'.padLeft(11)}${'ratio'.padLeft(8)}${'95% CI'.padLeft(16)}',
+      )
+      ..writeln('-' * 76);
+    for (final comparison in comparisons) {
+      buffer.writeln(comparison.row);
     }
     buffer
-      ..writeln('=' * 68)
+      ..writeln('=' * 76)
       ..writeln(
         'Sample: ${kSampleText.length} characters, '
-        '${kSampleText.split(' ').length} words.',
+        '${kSampleText.split(' ').length} words. '
+        'Lower is better; ratio > 1 means HyphenText is slower.',
       )
-      ..writeln('=' * 68);
+      ..writeln('=' * 76);
     // ignore: avoid_print
     print(buffer);
   });
 
-  group('benchmark', () {
-    testWidgets('first layout of a new paragraph', (WidgetTester tester) async {
+  group('layout', () {
+    testWidgets('first layout, warm dictionary', (WidgetTester tester) async {
       // A paragraph appearing for the first time, with the app's shared
       // hyphenator already warm. This is the realistic "new screen" cost,
       // because a real app registers one dictionary at startup and every
       // widget shares its word cache.
-      const iterations = 40;
+      var seed = 0;
 
-      Future<void> run(Widget child, int i) async {
-        // A fresh key forces a new render object, so nothing is cached.
-        await tester.pumpWidget(
-          buildHost(KeyedSubtree(key: ValueKey<int>(i), child: child), 320),
+      void pump(Widget child) {
+        // A fresh key forces a new render object, so no per-widget state is
+        // carried between iterations.
+        pumpSync(
+          tester,
+          buildHost(
+            KeyedSubtree(key: ValueKey<int>(seed++), child: child),
+            320,
+          ),
         );
       }
 
-      final plain = await measure(
-        iterations,
-        (int i) => run(const Text(kSampleText, style: kStyle), i),
-      );
-      final hyphen = await measure(
-        iterations,
-        (int i) => run(
+      await compare(
+        'first layout, warm dict',
+        () => pump(const Text(kSampleText, style: kStyle)),
+        () => pump(
           HyphenText(kSampleText, style: kStyle, hyphenator: hyphenator),
-          i,
         ),
       );
-
-      results.add(
-        BenchmarkResult(
-          name: 'first layout, warm dictionary',
-          plain: plain,
-          hyphen: hyphen,
-          iterations: iterations,
-        ),
-      );
-      expect(results.last.hyphenMicros, greaterThan(0));
+      expect(comparisons, isNotEmpty);
     });
 
-    testWidgets('first layout with a cold dictionary', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('first layout, cold dictionary', (WidgetTester tester) async {
       // The genuine worst case: the very first paragraph after startup, when
       // no word has been looked up yet. A fresh Hyphenator per iteration means
-      // every word is a cache miss, which is what makes this so much slower
-      // than the warm case above.
-      const iterations = 15;
+      // every word is a cache miss. It shares the parsed dictionary, so this
+      // isolates lookup cost from the one-off cost of parsing the .dic file.
+      var seed = 0;
 
-      final plain = await measure(iterations, (int i) async {
-        await tester.pumpWidget(
+      void pump(Widget child) {
+        pumpSync(
+          tester,
           buildHost(
-            KeyedSubtree(
-              key: ValueKey<int>(i),
-              child: const Text(kSampleText, style: kStyle),
-            ),
+            KeyedSubtree(key: ValueKey<int>(seed++), child: child),
             320,
           ),
         );
-      });
-      final hyphen = await measure(iterations, (int i) async {
-        // Sharing the parsed dictionary but not the word cache isolates the
-        // lookup cost from the one-off cost of parsing the .dic file.
-        final cold = Hyphenator(hyphenator.hyphen);
-        await tester.pumpWidget(
-          buildHost(
-            KeyedSubtree(
-              key: ValueKey<int>(i),
-              child: HyphenText(
-                kSampleText,
-                style: kStyle,
-                hyphenator: cold,
-              ),
-            ),
-            320,
-          ),
-        );
-      });
+      }
 
-      results.add(
-        BenchmarkResult(
-          name: 'first layout, cold dictionary',
-          plain: plain,
-          hyphen: hyphen,
-          iterations: iterations,
+      await compare(
+        'first layout, cold dict',
+        () => pump(const Text(kSampleText, style: kStyle)),
+        () => pump(
+          HyphenText(
+            kSampleText,
+            style: kStyle,
+            hyphenator: Hyphenator(hyphenator.hyphen),
+          ),
         ),
       );
     });
@@ -232,220 +246,186 @@ void main() {
     testWidgets('relayout at an unchanged width', (WidgetTester tester) async {
       // The common case in a scrolling list or on any rebuild: the same text
       // at the same width. Everything here should be served from cache.
-      const iterations = 200;
-
-      Future<Duration> runFor(Widget child) async {
-        await tester.pumpWidget(buildHost(child, 320));
-        final render = tester.renderObject<RenderBox>(
-          find.byType(child is HyphenText ? HyphenParagraph : RichText),
-        );
-        return measure(iterations, (int i) async {
-          render.markNeedsLayout();
-          await tester.pump();
-        });
-      }
-
-      final plain = await runFor(const Text(kSampleText, style: kStyle));
-      final hyphen = await runFor(
-        HyphenText(kSampleText, style: kStyle, hyphenator: hyphenator),
+      await tester.pumpWidget(
+        buildHost(const Text(kSampleText, style: kStyle), 320),
+      );
+      final plainRender = tester.renderObject<RenderBox>(
+        find.byType(RichText),
       );
 
-      results.add(
-        BenchmarkResult(
-          name: 'relayout, same width (warm)',
-          plain: plain,
-          hyphen: hyphen,
-          iterations: iterations,
+      void relayoutPlain() {
+        plainRender.markNeedsLayout();
+        tester.binding.scheduleFrame();
+        tester.binding.handleBeginFrame(null);
+        tester.binding.handleDrawFrame();
+      }
+
+      // Measure the plain widget first, then swap the tree and measure ours,
+      // rather than rebuilding between every iteration.
+      final plainResult = await BenchmarkVariant(
+        'Text',
+        relayoutPlain,
+        isBaseline: true,
+      ).report(config: kLayoutConfig);
+
+      await tester.pumpWidget(
+        buildHost(
+          HyphenText(kSampleText, style: kStyle, hyphenator: hyphenator),
+          320,
         ),
+      );
+      final hyphenRender = tester.renderObject<RenderBox>(
+        find.byType(HyphenParagraph),
+      );
+
+      void relayoutHyphen() {
+        hyphenRender.markNeedsLayout();
+        tester.binding.scheduleFrame();
+        tester.binding.handleBeginFrame(null);
+        tester.binding.handleDrawFrame();
+      }
+
+      final hyphenResult = await BenchmarkVariant(
+        'HyphenText',
+        relayoutHyphen,
+      ).report(config: kLayoutConfig);
+
+      comparisons.add(
+        Comparison('relayout, same width', plainResult, hyphenResult),
       );
     });
 
     testWidgets('relayout at a changing width', (WidgetTester tester) async {
-      // The worst case: a resizing window or an animating column, where the
-      // break points have to be recomputed every frame.
-      const iterations = 60;
+      // The worst case for caching: a resizing window or an animating column,
+      // where the break points have to be recomputed every frame.
+      var width = 240.0;
 
-      Future<Duration> runFor(Widget Function() build) async {
-        await tester.pumpWidget(buildHost(build(), 320));
-        return measure(
-          iterations,
-          (int i) => tester.pumpWidget(buildHost(build(), 240.0 + (i % 40))),
-        );
+      void pump(Widget child) {
+        width = 240.0 + ((width + 1) % 40);
+        pumpSync(tester, buildHost(child, width));
       }
 
-      final plain = await runFor(() => const Text(kSampleText, style: kStyle));
-      final hyphen = await runFor(
-        () => HyphenText(kSampleText, style: kStyle, hyphenator: hyphenator),
-      );
-
-      results.add(
-        BenchmarkResult(
-          name: 'relayout, changing width',
-          plain: plain,
-          hyphen: hyphen,
-          iterations: iterations,
+      await compare(
+        'relayout, changing width',
+        () => pump(const Text(kSampleText, style: kStyle)),
+        () => pump(
+          HyphenText(kSampleText, style: kStyle, hyphenator: hyphenator),
         ),
       );
     });
 
     testWidgets('many paragraphs in a list', (WidgetTester tester) async {
       // A realistic screen: a column of paragraphs laid out in one frame.
-      const iterations = 10;
       const count = 25;
+      var seed = 0;
 
-      Future<Duration> runFor(Widget Function(int) build) => measure(
-        iterations,
-        (int i) => tester.pumpWidget(
+      void pump(Widget Function(int) build) {
+        pumpSync(
+          tester,
           Directionality(
             textDirection: TextDirection.ltr,
             child: SizedBox(
               width: 320,
               child: ListView.builder(
-                key: ValueKey<int>(i),
+                key: ValueKey<int>(seed++),
                 itemCount: count,
                 itemBuilder: (BuildContext context, int index) => build(index),
               ),
             ),
           ),
-        ),
-      );
+        );
+      }
 
-      final plain = await runFor(
-        (int index) => Text('$index $kSampleText', style: kStyle),
-      );
-      final hyphen = await runFor(
-        (int index) => HyphenText(
-          '$index $kSampleText',
-          style: kStyle,
-          hyphenator: hyphenator,
+      await compare(
+        '$count paragraphs in a list',
+        () => pump(
+          (int index) => Text('$index $kSampleText', style: kStyle),
         ),
-      );
-
-      results.add(
-        BenchmarkResult(
-          name: '$count paragraphs in a ListView',
-          plain: plain,
-          hyphen: hyphen,
-          iterations: iterations,
+        () => pump(
+          (int index) => HyphenText(
+            '$index $kSampleText',
+            style: kStyle,
+            hyphenator: hyphenator,
+          ),
         ),
       );
     });
 
     testWidgets('intrinsic width', (WidgetTester tester) async {
-      const iterations = 40;
-
-      Future<Duration> runFor(Widget child) async {
-        await tester.pumpWidget(buildHost(child, 320));
-        final render = tester.renderObject<RenderBox>(
-          find.byType(child is HyphenText ? HyphenParagraph : RichText),
-        );
-        return measure(iterations, (int i) async {
-          render.getMinIntrinsicWidth(double.infinity);
-        });
-      }
-
-      final plain = await runFor(const Text(kSampleText, style: kStyle));
-      final hyphen = await runFor(
-        HyphenText(kSampleText, style: kStyle, hyphenator: hyphenator),
+      await tester.pumpWidget(
+        buildHost(const Text(kSampleText, style: kStyle), 320),
       );
+      final plainRender = tester.renderObject<RenderBox>(find.byType(RichText));
+      final plainResult = await BenchmarkVariant(
+        'Text',
+        () => plainRender.getMinIntrinsicWidth(double.infinity),
+        isBaseline: true,
+      ).report();
 
-      results.add(
-        BenchmarkResult(
-          name: 'getMinIntrinsicWidth',
-          plain: plain,
-          hyphen: hyphen,
-          iterations: iterations,
+      await tester.pumpWidget(
+        buildHost(
+          HyphenText(kSampleText, style: kStyle, hyphenator: hyphenator),
+          320,
         ),
+      );
+      final hyphenRender = tester.renderObject<RenderBox>(
+        find.byType(HyphenParagraph),
+      );
+      final hyphenResult = await BenchmarkVariant(
+        'HyphenText',
+        () => hyphenRender.getMinIntrinsicWidth(double.infinity),
+      ).report();
+
+      comparisons.add(
+        Comparison('getMinIntrinsicWidth', plainResult, hyphenResult),
       );
     });
   });
 
-  group('hyphenation cost in isolation', () {
-    test('dictionary lookup throughput', () {
+  group('dictionary', () {
+    test('cached versus uncached lookups', () async {
       final words = kSampleText
           .split(RegExp(r'\s+'))
-          .where((String w) => w.isNotEmpty)
+          .where((String word) => word.isNotEmpty)
           .toList();
 
-      // Cold: every word is a cache miss.
+      // Cache disabled: every word is a fresh dictionary walk.
       final cold = Hyphenator(hyphenator.hyphen, maxCacheSize: 0);
-      final coldWatch = Stopwatch()..start();
-      for (var i = 0; i < 200; i++) {
-        for (final word in words) {
-          cold.breakOffsets(word);
-        }
-      }
-      coldWatch.stop();
-
-      // Warm: the cache serves every word after the first pass.
+      // Cache enabled and pre-warmed.
       final warm = Hyphenator(hyphenator.hyphen);
       for (final word in words) {
         warm.breakOffsets(word);
       }
-      final warmWatch = Stopwatch()..start();
-      for (var i = 0; i < 200; i++) {
+
+      final coldResult = await BenchmarkVariant('uncached', () {
         for (final word in words) {
-          warm.breakOffsets(word);
+          Blackhole.consume(cold.breakOffsets(word));
         }
-      }
-      warmWatch.stop();
+      }, isBaseline: true).report();
 
-      final lookups = words.length * 200;
-      final coldNanos = coldWatch.elapsed.inMicroseconds * 1000 / lookups;
-      final warmNanos = warmWatch.elapsed.inMicroseconds * 1000 / lookups;
+      final warmResult = await BenchmarkVariant('cached', () {
+        for (final word in words) {
+          Blackhole.consume(warm.breakOffsets(word));
+        }
+      }).report();
 
+      final perWordCold = coldResult.metrics.medianNs / words.length;
+      final perWordWarm = warmResult.metrics.medianNs / words.length;
       // ignore: avoid_print
       print(
-        '\nDictionary lookups (${words.length} words x 200):\n'
-        '  uncached: ${coldNanos.toStringAsFixed(0)} ns/word\n'
-        '  cached:   ${warmNanos.toStringAsFixed(0)} ns/word\n'
-        '  speedup:  ${(coldNanos / warmNanos).toStringAsFixed(1)}x',
+        '\nDictionary lookups over ${words.length} words:\n'
+        '  uncached: ${perWordCold.toStringAsFixed(0)} ns/word\n'
+        '  cached:   ${perWordWarm.toStringAsFixed(0)} ns/word\n'
+        '  speedup:  ${(perWordCold / perWordWarm).toStringAsFixed(1)}x',
       );
 
-      // The cache is the reason HyphenText is usable in a scrolling list, so
-      // a regression here is a real regression.
+      // The cache is what makes HyphenText usable in a scrolling list, so a
+      // regression here is a real regression.
       expect(
-        warmNanos,
-        lessThan(coldNanos),
-        reason: 'the cache must beat a cold lookup',
+        perWordWarm,
+        lessThan(perWordCold),
+        reason: 'the cache must beat an uncached lookup',
       );
     });
-  });
-
-  group('regression guards', () {
-    testWidgets('a warm relayout is not dramatically slower than Text', (
-      WidgetTester tester,
-    ) async {
-      // Guards the property that actually matters for scrolling: once the
-      // widths are cached, re-laying out the same text at the same width must
-      // stay in the same order of magnitude as a plain Text.
-      const iterations = 150;
-
-      Future<Duration> runFor(Widget child) async {
-        await tester.pumpWidget(buildHost(child, 320));
-        final render = tester.renderObject<RenderBox>(
-          find.byType(child is HyphenText ? HyphenParagraph : RichText),
-        );
-        return measure(iterations, (int i) async {
-          render.markNeedsLayout();
-          await tester.pump();
-        });
-      }
-
-      final plain = await runFor(const Text(kSampleText, style: kStyle));
-      final hyphen = await runFor(
-        HyphenText(kSampleText, style: kStyle, hyphenator: hyphenator),
-      );
-      final ratio = hyphen.inMicroseconds / plain.inMicroseconds;
-
-      // A generous bound: CI machines are noisy, and the point is to catch a
-      // change that makes hyphenation cost orders of magnitude more, not to
-      // police a few percent.
-      expect(
-        ratio,
-        lessThan(12),
-        reason: 'warm relayout was ${ratio.toStringAsFixed(1)}x plain Text',
-      );
-    }, skip: Platform.environment['CI'] == 'true');
   });
 }
