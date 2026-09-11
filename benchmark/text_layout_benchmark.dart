@@ -351,6 +351,40 @@ void main() {
       );
     });
 
+    testWidgets('a list of repeated paragraphs', (WidgetTester tester) async {
+      // The same string shown many times, which is what a rebuilt list or a
+      // repeated label looks like. Marking the text is memoised per string, so
+      // only the first paragraph pays for it.
+      const count = 25;
+      var seed = 0;
+
+      void pump(Widget Function(int) build) {
+        pumpSync(
+          tester,
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: SizedBox(
+              width: 320,
+              child: ListView.builder(
+                key: ValueKey<int>(seed++),
+                itemCount: count,
+                itemBuilder: (BuildContext context, int index) => build(index),
+              ),
+            ),
+          ),
+        );
+      }
+
+      await compare(
+        '$count repeated paragraphs',
+        () => pump((int index) => const Text(kSampleText, style: kStyle)),
+        () => pump(
+          (int index) =>
+              HyphenText(kSampleText, style: kStyle, hyphenator: hyphenator),
+        ),
+      );
+    });
+
     testWidgets('intrinsic width', (WidgetTester tester) async {
       await tester.pumpWidget(
         buildHost(const Text(kSampleText, style: kStyle), 320),

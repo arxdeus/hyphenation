@@ -97,6 +97,38 @@ class Hyphenator {
 
   final Map<String, List<int>> _cache = <String, List<int>>{};
 
+  /// Memoised results of [hyphenate], keyed by the input text.
+  ///
+  /// Every paragraph marks its whole text before it can be laid out, and a
+  /// screen often shows the same string more than once (a rebuilt list, a
+  /// repeated label). Keeping the marked form here means the work is done once
+  /// per distinct string per app, not once per widget.
+  final Map<String, String> _markedCache = <String, String>{};
+
+  /// Memoised broken paragraphs, shared by every widget using this
+  /// dictionary.
+  ///
+  /// A screen frequently lays the same string out at the same width more than
+  /// once: a rebuilt list, a repeated label, two widgets in equal columns.
+  /// Each of those otherwise repeats the whole break from scratch, because the
+  /// per-render-object cache cannot see across widgets. The key has to cover
+  /// everything that changes the answer, which the caller supplies.
+  final Map<String, String> _brokenCache = <String, String>{};
+
+  /// Returns the cached broken form for [key], or null.
+  String? cachedBreak(String key) => _brokenCache[key];
+
+  /// Records [value] as the broken form for [key].
+  void cacheBreak(String key, String value) {
+    if (maxCacheSize <= 0) {
+      return;
+    }
+    if (_brokenCache.length >= maxCacheSize) {
+      _brokenCache.remove(_brokenCache.keys.first);
+    }
+    _brokenCache[key] = value;
+  }
+
   /// Returns the offsets inside [word] at which a hyphen may be inserted.
   ///
   /// Offsets are UTF-16 code unit indices, strictly between `0` and
@@ -151,6 +183,15 @@ class Hyphenator {
   /// identically to the input while giving the text engine extra break
   /// opportunities.
   String hyphenate(String text, {String separator = kSoftHyphen}) {
+    final isDefaultSeparator =
+        identical(separator, kSoftHyphen) || separator == kSoftHyphen;
+    if (isDefaultSeparator) {
+      final cached = _markedCache[text];
+      if (cached != null) {
+        return cached;
+      }
+    }
+
     final buffer = StringBuffer();
     _forEachToken(text, (token) {
       if (_isSeparatorRun(token)) {
@@ -174,11 +215,22 @@ class Hyphenator {
       }
       buffer.write(token.substring(previous));
     });
-    return buffer.toString();
+    final result = buffer.toString();
+    if (isDefaultSeparator && maxCacheSize > 0) {
+      if (_markedCache.length >= maxCacheSize) {
+        _markedCache.remove(_markedCache.keys.first);
+      }
+      _markedCache[text] = result;
+    }
+    return result;
   }
 
-  /// Clears the memoisation cache.
-  void clearCache() => _cache.clear();
+  /// Clears the memoisation caches.
+  void clearCache() {
+    _cache.clear();
+    _markedCache.clear();
+    _brokenCache.clear();
+  }
 
   List<int> _computeBreakOffsets(String word) {
     final offsets = <int>[];

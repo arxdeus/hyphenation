@@ -457,6 +457,94 @@ void main() {
       }
     });
 
+    testWidgets('the shared break cache never crosses configurations', (
+      WidgetTester tester,
+    ) async {
+      // Break results are cached on the Hyphenator so two widgets showing the
+      // same text at the same width only break once. Anything that changes
+      // where the lines fall has to be part of that key, or one widget would
+      // pick up another's layout.
+      const text = 'hyphenation extraordinary computer';
+
+      Future<String> render({
+        double width = 120,
+        double fontSize = 16,
+        String hyphen = '-',
+        TextDirection direction = TextDirection.ltr,
+        TextScaler scaler = TextScaler.noScaling,
+      }) async {
+        await tester.pumpWidget(
+          host(
+            HyphenText(
+              text,
+              style: TextStyle(fontSize: fontSize),
+              hyphenator: latin,
+              hyphenCharacter: hyphen,
+              textScaler: scaler,
+            ),
+            width: width,
+            direction: direction,
+          ),
+        );
+        return renderedTextOf(tester);
+      }
+
+      final base = await render();
+      expect(base, contains('-\n'));
+
+      // Each of these must produce its own result, not the cached one.
+      expect(await render(width: 200), isNot(base), reason: 'width');
+      expect(await render(fontSize: 30), isNot(base), reason: 'font size');
+      expect(
+        await render(scaler: const TextScaler.linear(2)),
+        isNot(base),
+        reason: 'text scaler',
+      );
+      final piped = await render(hyphen: '=');
+      expect(piped, contains('=\n'), reason: 'hyphen character');
+      expect(piped, isNot(contains('-\n')));
+
+      // And the original configuration still gives the original answer.
+      expect(await render(), base);
+    });
+
+    testWidgets('two widgets sharing a dictionary agree', (
+      WidgetTester tester,
+    ) async {
+      const text = 'hyphenation extraordinary';
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Row(
+            children: <Widget>[
+              SizedBox(
+                width: 120,
+                child: HyphenText(
+                  text,
+                  style: const TextStyle(fontSize: 16),
+                  hyphenator: latin,
+                ),
+              ),
+              SizedBox(
+                width: 120,
+                child: HyphenText(
+                  text,
+                  style: const TextStyle(fontSize: 16),
+                  hyphenator: latin,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      final renders = tester
+          .renderObjectList<RenderHyphenParagraph>(find.byType(HyphenParagraph))
+          .toList();
+      expect(renders, hasLength(2));
+      expect(renders[0].renderedText, renders[1].renderedText);
+      expect(renders[0].renderedText, contains('-\n'));
+    });
+
     testWidgets('empty and whitespace text lay out without error', (
       WidgetTester tester,
     ) async {

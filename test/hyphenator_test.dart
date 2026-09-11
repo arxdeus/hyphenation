@@ -103,6 +103,42 @@ void main() {
       expect(small.split('программирование').join(), 'программирование');
     });
 
+    test('hyphenate() memoises whole strings', () {
+      const text = 'привет мир программирование';
+      final first = russian.hyphenate(text);
+      final second = russian.hyphenate(text);
+      expect(
+        identical(first, second),
+        isTrue,
+        reason: 'the marked form should be served from cache',
+      );
+      expect(second.replaceAll(kSoftHyphen, ''), text);
+
+      // A non-default separator must not be served from, or poison, the cache.
+      final piped = russian.hyphenate(text, separator: '|');
+      expect(piped.replaceAll('|', ''), text);
+      expect(russian.hyphenate(text), first);
+
+      russian.clearCache();
+      expect(russian.hyphenate(text), first);
+    });
+
+    test('the marked cache respects the size limit', () {
+      final small = Hyphenator(russian.hyphen, maxCacheSize: 2);
+      for (final text in <String>[
+        'привет мир',
+        'конституция страны',
+        'предложение тут',
+      ]) {
+        expect(small.hyphenate(text).replaceAll(kSoftHyphen, ''), text);
+      }
+      // Still correct after eviction.
+      expect(
+        small.hyphenate('привет мир').replaceAll(kSoftHyphen, ''),
+        'привет мир',
+      );
+    });
+
     test('handles empty and single-character input', () {
       expect(russian.split(''), <String>['']);
       expect(russian.breakOffsets(''), isEmpty);

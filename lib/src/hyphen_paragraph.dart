@@ -330,6 +330,16 @@ class RenderHyphenParagraph extends RenderParagraph
       return _cachedBroken!;
     }
 
+    // Shared across every widget using this dictionary, so two paragraphs
+    // with the same text, style and width only break once.
+    final sharedKey = _sharedBreakKey(maxWidth);
+    final shared = _hyphenator.cachedBreak(sharedKey);
+    if (shared != null) {
+      _cachedWidth = maxWidth;
+      _cachedBroken = shared;
+      return shared;
+    }
+
     final marked = _markedText;
     final String broken;
     if (!marked.contains(kSoftHyphen)) {
@@ -350,9 +360,22 @@ class RenderHyphenParagraph extends RenderParagraph
       // every new width.
       broken = _lineBreaker.breakIntoString(source, maxWidth);
     }
+    _hyphenator.cacheBreak(sharedKey, broken);
     _cachedWidth = maxWidth;
     _cachedBroken = broken;
     return broken;
+  }
+
+  /// Key identifying a break result across widgets.
+  ///
+  /// Everything that can change where the lines fall has to appear here, or a
+  /// widget would pick up another's layout.
+  String _sharedBreakKey(double maxWidth) {
+    final style = _sourceSpan.style;
+    return '$maxWidth\u0000$_hyphenCharacter\u0000$textDirection\u0000'
+        '$textScaler\u0000${strutStyle?.hashCode}\u0000'
+        '${textHeightBehavior?.hashCode}\u0000${style?.hashCode}\u0000'
+        '${_sourceSpan.locale}\u0000$sourceText';
   }
 
   /// Lays [marked] out once and rewrites it with a real hyphen wherever the
