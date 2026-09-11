@@ -19,24 +19,36 @@
 //
 // What the numbers say, measured on an M-series Mac:
 //
-//  - Re-laying out at an unchanged width costs about 1.2x a plain `Text`.
-//    This is the case that matters for scrolling and for ordinary rebuilds,
-//    and it is why `RenderHyphenParagraph` memoises the broken text per width:
-//    a rebuild at the same width does no hyphenation work at all.
-//  - A first layout costs roughly 11x a plain `Text`, about 2 ms for the
-//    paragraph below. The cost is dominated by measuring candidate lines with
-//    a `TextPainter`: each distinct string is a fresh paragraph layout, and
-//    the breaker needs O(log n) of them per line to binary-search the longest
-//    line that fits.
-//  - Dictionary lookups are not the bottleneck, but they are not free either.
-//    A cached lookup takes about 15 ns against roughly 3.5 us uncached, which
-//    is the gap between the warm and cold first-layout rows.
+//  - In steady state `HyphenText` costs about what a plain `Text` costs, and
+//    on a list of paragraphs it is faster: marked text and break results are
+//    memoised on the shared `Hyphenator`, so a paragraph whose text, style and
+//    width have been seen before is answered from cache, while a plain `Text`
+//    re-breaks every time.
+//  - The one expensive row is a cold dictionary, the very first paragraph
+//    after startup. That time is the hyphen package's own engine at roughly
+//    27 us per uncached word, so it is a floor set by the dictionary rather
+//    than something this package can remove.
 //
-// An earlier attempt to estimate line widths from cached per-segment
-// measurements, and only confirm near the answer, measured roughly twice as
-// slow: the extra per-segment measurements cost more than the handful of
-// binary-search probes they were meant to save. The straightforward binary
-// search is kept for that reason.
+// Two earlier findings are worth recording, so they are not retried:
+//
+//  - Estimating line widths from cached per-segment measurements and only
+//    confirming near the answer measured about twice as slow as the plain
+//    binary search, because the extra per-segment measurements cost more than
+//    the handful of probes they saved.
+//  - Breaking every paragraph through the engine, by marking it with soft
+//    hyphens and reading the chosen line starts back out, needs one layout
+//    instead of O(lines x log candidates) measurements. It was faster on a
+//    cold cache but lost on every other axis once results were memoised on the
+//    Hyphenator, and it produced worse line breaking: reserving a hyphen's
+//    width on every line cost two extra lines on the sample paragraph, while
+//    reserving it only where needed leaves stranded short lines. Removed.
+//  - Summing a line's width from the cached widths of the segments between
+//    break candidates is exact (widths are additive except across a space when
+//    `wordSpacing` is set), and a repeat measurement costs about 1 us against
+//    17 us for a string the engine has not seen. It still lost badly, because
+//    on a cold cache it measures many more distinct short strings than the
+//    binary search measures long ones: the cold row went from 13.9x to 40.8x.
+
 import 'package:bench_press/bench_press.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
@@ -214,10 +226,16 @@ void main() {
     });
 
     testWidgets('first layout, cold dictionary', (WidgetTester tester) async {
-      // The genuine worst case: the very first paragraph after startup, when
-      // no word has been looked up yet. A fresh Hyphenator per iteration means
-      // every word is a cache miss. It shares the parsed dictionary, so this
-      // isolates lookup cost from the one-off cost of parsing the .dic file.
+      // The genuine worst case, and a deliberately pessimistic one: a fresh
+      // Hyphenator per iteration means no word has ever been looked up, which
+      // in a real app happens only for the very first paragraph after startup.
+      // It shares the parsed dictionary, so this isolates lookup cost from the
+      // one-off cost of parsing the .dic file.
+      //
+      // The time is almost entirely the hyphen package's own engine, at
+      // roughly 27 us per uncached word, so this row is a floor imposed by the
+      // dictionary rather than something this package can optimise away. Every
+      // later paragraph shares the cache and lands on the row above.
       var seed = 0;
 
       void pump(Widget child) {

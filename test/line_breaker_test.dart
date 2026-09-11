@@ -137,6 +137,44 @@ void main() {
       );
     });
 
+    test('minIntrinsicWidth matches an exhaustive measurement', () {
+      // The implementation sorts the chunks by length and stops once no
+      // shorter chunk can win, which is only sound if the bound it uses is
+      // conservative. Checked here against measuring every chunk.
+      final breaker = breakerFor(latin);
+      for (final text in <String>[
+        'hyphenation extraordinary computer always wonderful',
+        'always',
+        'a bb ccc dddd eeeee',
+        'hyphenation\nextraordinary',
+        '',
+      ]) {
+        var exhaustive = 0.0;
+        for (final line in text.split('\n')) {
+          for (final word in line.split(' ')) {
+            if (word.isEmpty) {
+              continue;
+            }
+            // The widest a chunk of this word can be is the whole word, and
+            // the narrowest is bounded below by any of its hyphenated parts.
+            for (final part in latin.split(word)) {
+              final width = measureByCharacter(part);
+              if (width > exhaustive) {
+                exhaustive = width;
+              }
+            }
+          }
+        }
+        // The breaker's answer must be at least the widest unbreakable part,
+        // or a word would not fit the column it reports as sufficient.
+        expect(
+          breaker.minIntrinsicWidth(text),
+          greaterThanOrEqualTo(exhaustive),
+          reason: 'minIntrinsicWidth under-reports for "$text"',
+        );
+      }
+    });
+
     test('measurements are cached but results stay correct', () {
       var calls = 0;
       final breaker = HyphenLineBreaker(

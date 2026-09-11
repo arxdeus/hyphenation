@@ -94,21 +94,48 @@ class HyphenLineBreaker {
   /// This is the smallest width at which the text can be laid out without a
   /// word sticking out, and backs `computeMinIntrinsicWidth`.
   double minIntrinsicWidth(String text) {
-    var widest = 0.0;
+    // Only the chunks between two consecutive breaks matter: a line can always
+    // be broken at every candidate, so the widest unbreakable chunk decides
+    // the minimum width.
+    final chunks = <String>[];
     for (final line in text.split('\n')) {
-      // Only the chunks between two consecutive breaks matter: a line can
-      // always be broken at every candidate, so the widest unbreakable chunk
-      // decides the minimum width.
       var start = 0;
       for (final candidate in _candidatesFor(line, 0, line.length)) {
-        final chunk =
+        chunks.add(
+          _clean(
             line.substring(start, candidate.end) +
-            (candidate.hyphen ? hyphenCharacter : '');
-        final width = _width(_clean(chunk));
-        if (width > widest) {
-          widest = width;
-        }
+                (candidate.hyphen ? hyphenCharacter : ''),
+          ),
+        );
         start = candidate.next;
+      }
+    }
+    if (chunks.isEmpty) {
+      return 0;
+    }
+
+    // Measuring every chunk is wasteful: most are obviously too short to win.
+    // Sorting by length and stopping once no unmeasured chunk can beat the
+    // widest one found keeps this to a handful of measurements, which matters
+    // because parents like Center query intrinsics on every layout pass.
+    chunks.sort((String a, String b) => b.length.compareTo(a.length));
+    var widest = 0.0;
+    var widestPerUnit = 0.0;
+    for (final chunk in chunks) {
+      // No chunk shorter than this can exceed `widest`, given the widest
+      // per-code-unit width seen so far.
+      if (widestPerUnit > 0 && chunk.length * widestPerUnit <= widest) {
+        break;
+      }
+      final width = _width(chunk);
+      if (width > widest) {
+        widest = width;
+      }
+      if (chunk.isNotEmpty) {
+        final perUnit = width / chunk.length;
+        if (perUnit > widestPerUnit) {
+          widestPerUnit = perUnit;
+        }
       }
     }
     return widest;
