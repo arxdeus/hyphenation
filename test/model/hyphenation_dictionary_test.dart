@@ -142,5 +142,28 @@ void main() {
         contains('broken'),
       );
     });
+
+    test('a dictionary failure is a FormatException', () {
+      // Catching FormatException is how a caller handles malformed data from
+      // any SDK parser, and a bad .dic file is exactly that.
+      expect(DictionaryFormatException('broken'), isA<FormatException>());
+      // A word that cannot be written in the dictionary's charset keeps
+      // reporting ArgumentError, which is what latin1.encode does and what
+      // callers already handle; only the dictionary-level failure is a
+      // FormatException.
+      expect(
+        () => singleByte().markWord('日本語のことば'),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('the message still names the dictionary, not just the format', () {
+      // FormatException.toString() would say "FormatException", which loses
+      // the only thing a stack trace needs: which parse failed.
+      expect(
+        DictionaryFormatException('broken').toString(),
+        startsWith('DictionaryFormatException: broken'),
+      );
+    });
   });
 }
