@@ -1,3 +1,4 @@
+import 'package:example/dangling_words.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
@@ -8,6 +9,10 @@ import 'package:marionette_flutter/marionette_flutter.dart';
 /// Generate your own with `substrings.pl` from the legacy engine, or grab a
 /// pattern file from CTAN. See the package README.
 const String kRussianDictionary = 'assets/dictionary/hyph_ru_RU.dic';
+
+// The dangling-word list and the glue that applies it live in
+// `lib/dangling_words.dart`, so `benchmark/dangling_words_benchmark.dart` can
+// measure them without pulling in the app.
 
 Future<void> main() async {
   // Marionette lets an agent drive this demo (tap, screenshot, hot reload)
@@ -59,11 +64,13 @@ class _DemoPageState extends State<DemoPage> {
   double _width = 180;
   double _fontSize = 18;
   bool _justify = true;
+  bool _noDangling = true;
 
   @override
   Widget build(BuildContext context) {
     final textStyle = TextStyle(fontSize: _fontSize, height: 1.3);
     final align = _justify ? TextAlign.justify : TextAlign.start;
+    final text = _noDangling ? preventDanglingWords(_sample) : _sample;
 
     return Scaffold(
       appBar: AppBar(
@@ -80,6 +87,8 @@ class _DemoPageState extends State<DemoPage> {
             onWidth: (double value) => setState(() => _width = value),
             onFontSize: (double value) => setState(() => _fontSize = value),
             onJustify: (bool value) => setState(() => _justify = value),
+            noDangling: _noDangling,
+            onNoDangling: (bool value) => setState(() => _noDangling = value),
           ),
           const SizedBox(height: 16),
           Row(
@@ -89,19 +98,19 @@ class _DemoPageState extends State<DemoPage> {
                 title: 'Text',
                 subtitle: 'no hyphenation',
                 width: _width,
-                child: Text(_sample, style: textStyle, textAlign: align),
+                child: Text(text, style: textStyle, textAlign: align),
               ),
               const SizedBox(width: 16),
               _Column(
                 title: 'HyphenText',
                 subtitle: 'dictionary hyphenation',
                 width: _width,
-                child: HyphenText(_sample, style: textStyle, textAlign: align),
+                child: HyphenText(text, style: textStyle, textAlign: align),
               ),
             ],
           ),
           const SizedBox(height: 24),
-          _RenderedLines(text: _sample, width: _width, style: textStyle),
+          _RenderedLines(text: text, width: _width, style: textStyle),
           const SizedBox(height: 24),
           const _WordList(),
         ],
@@ -118,6 +127,8 @@ class _Controls extends StatelessWidget {
     required this.onWidth,
     required this.onFontSize,
     required this.onJustify,
+    required this.noDangling,
+    required this.onNoDangling,
   });
 
   final double width;
@@ -126,6 +137,8 @@ class _Controls extends StatelessWidget {
   final ValueChanged<double> onWidth;
   final ValueChanged<double> onFontSize;
   final ValueChanged<bool> onJustify;
+  final bool noDangling;
+  final ValueChanged<bool> onNoDangling;
 
   @override
   Widget build(BuildContext context) {
@@ -167,6 +180,13 @@ class _Controls extends StatelessWidget {
               title: const Text('Justify'),
               value: justify,
               onChanged: onJustify,
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('No hanging prepositions'),
+              subtitle: const Text('glue short words with U+00A0'),
+              value: noDangling,
+              onChanged: onNoDangling,
             ),
           ],
         ),
