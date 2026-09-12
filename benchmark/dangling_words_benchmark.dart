@@ -85,11 +85,14 @@
 import 'dart:typed_data';
 
 import '../test/support/test_dictionaries.dart';
+
 import 'package:bench_press/bench_press.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'text_layout_benchmark.dart' show buildHost, kStyle, pumpSync;
+
+import 'support/comparison.dart';
+import 'support/widget_harness.dart';
 
 /// Realistic prose: a normal density of short words to glue.
 const String kProse =
@@ -139,47 +142,6 @@ const BenchmarkConfig kMicroConfig = BenchmarkConfig(
   trials: 25,
   targetBatchDuration: Duration(milliseconds: 20),
 );
-
-/// One baseline versus candidate comparison, rendered as a table row.
-class Comparison {
-  Comparison(this.name, this.units, this.baseline, this.candidate);
-
-  /// What was compared.
-  final String name;
-
-  /// Characters covered by one operation, for the throughput column.
-  final int units;
-
-  /// The slower, or reference, variant.
-  final BenchmarkResult baseline;
-
-  /// The variant under test.
-  final BenchmarkResult candidate;
-
-  /// Ratio of the means, with a Fieller 95% confidence interval.
-  FiellerInterval get interval => FiellerInterval.compute(
-    sampleA: candidate.rawTrialLatenciesNs,
-    sampleB: baseline.rawTrialLatenciesNs,
-  );
-
-  String get row {
-    final ratio = interval;
-    final baseUs = (baseline.metrics.medianNs / 1000).toStringAsFixed(2);
-    final candUs = (candidate.metrics.medianNs / 1000).toStringAsFixed(2);
-    final mcps = units / candidate.metrics.medianNs * 1000;
-    final ci = ratio.isValid
-        ? '[${ratio.lowerBound.toStringAsFixed(2)}, '
-              '${ratio.upperBound.toStringAsFixed(2)}]'
-        : 'n/a';
-    return '${name.padRight(26)}'
-        '${units.toString().padLeft(7)}'
-        '${baseUs.padLeft(10)}'
-        '${candUs.padLeft(10)}'
-        '${'${ratio.ratio.toStringAsFixed(2)}x'.padLeft(8)}'
-        '${ci.padLeft(16)}'
-        '${mcps.toStringAsFixed(0).padLeft(9)}';
-  }
-}
 
 // ---------------------------------------------------------------------------
 // The rejected approach: rewriting the text with no-break spaces.
@@ -329,7 +291,7 @@ Int32List wordRanges(String text) {
 }
 
 void main() {
-  final comparisons = <Comparison>[];
+  final comparisons = <ThroughputComparison>[];
   final words = DanglingWords.english;
 
   Future<void> compare(
@@ -351,7 +313,7 @@ void main() {
     for (final variant in group.variants) {
       results.add(await variant.report(config: config));
     }
-    comparisons.add(Comparison(name, units, results[0], results[1]));
+    comparisons.add(ThroughputComparison(name, units, results[0], results[1]));
   }
 
   tearDownAll(() {
