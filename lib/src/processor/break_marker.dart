@@ -6,49 +6,17 @@
 
 import 'dart:typed_data';
 
+import 'package:flutter_hyphen/src/buffer/match_scratch.dart';
+import 'package:flutter_hyphen/src/buffer/rewrite_track.dart';
 import 'package:flutter_hyphen/src/model/edge_limits.dart';
 import 'package:flutter_hyphen/src/model/pattern_automaton.dart';
 import 'package:flutter_hyphen/src/model/pattern_set.dart';
+import 'package:flutter_hyphen/src/util/byte_reader.dart';
 
 const int _digitZero = 0x30;
 const int _digitNine = 0x39;
 const int _dot = 0x2E;
 const int _equals = 0x3D;
-
-/// Where a rewritten break begins and ends, one entry per character of the
-/// word being marked.
-///
-/// A `hyph_*.dic` dictionary rarely populates one of these. It exists
-/// for the non-standard patterns the format allows, where the spelling
-/// changes at the break and the replacement text, how far back it starts and
-/// how much it swallows all have to travel with the break itself.
-///
-/// Three `Int32List`s rather than a list of byte arrays: a replacement is a
-/// packed reference into the dictionary's shared pool (see
-/// [PatternAutomaton.packReplacement]), which keeps this poolable and free
-/// of per-word allocation.
-class RewriteTrack {
-  RewriteTrack(int length)
-    : reference = Int32List(length)..fillRange(0, length, -1),
-      shift = Int32List(length),
-      cut = Int32List(length);
-
-  /// Packed replacement reference per character, -1 where there is none.
-  final Int32List reference;
-
-  /// How far back from the break the replacement text starts.
-  final Int32List shift;
-
-  /// How many characters of the original the replacement swallows.
-  final Int32List cut;
-
-  /// Returns this to the state a freshly built one is in.
-  void clear() {
-    reference.fillRange(0, reference.length, -1);
-    shift.fillRange(0, shift.length, 0);
-    cut.fillRange(0, cut.length, 0);
-  }
-}
 
 /// Marks the break opportunities in a word.
 ///
@@ -72,7 +40,7 @@ class RewriteTrack {
 /// falls through to the inner level's patterns. That recursion is why the
 /// scratch is indexed by depth.
 class BreakMarker {
-  final List<_LevelScratch> _scratch = <_LevelScratch>[];
+  final List<MatchScratch> _scratch = <MatchScratch>[];
 
   /// Marks every break opportunity of `word[offset..offset + length)` into
   /// [marks], which must have room for `length + 3` bytes and must arrive
@@ -391,7 +359,7 @@ class BreakMarker {
           final reference = track.reference[i];
           final start = PatternAutomaton.replacementStart(reference);
           final textLength = PatternAutomaton.replacementLength(reference);
-          final split = _indexOfByte(pool, _equals, start, start + textLength);
+          final split = indexOfByteIn(pool, _equals, start, start + textLength);
           final into = 2 + i - track.shift[i];
           for (var k = 0; k < textLength && into + k < paddedLength - 1; k++) {
             padded[into + k] = pool[start + k];
@@ -430,7 +398,7 @@ class BreakMarker {
           }
         }
 
-        padded[i + 2] = _byteAt(word, offset, limit, i + 1);
+        padded[i + 2] = byteAt(word, offset, limit, i + 1);
         if (track != null && track.reference[i] >= 0) {
           final copy = length < paddedLength - 2 ? length : paddedLength - 2;
           for (var k = 0; k < copy; k++) {
@@ -513,16 +481,16 @@ class BreakMarker {
     var counted = 1;
 
     if (utf8 &&
-        _byteAt(word, offset, limit, 0) == 0xEF &&
-        _byteAt(word, offset, limit, 1) == 0xAC) {
-      counted += ligatureExtraCharacters(_byteAt(word, offset, limit, 2));
+        byteAt(word, offset, limit, 0) == 0xEF &&
+        byteAt(word, offset, limit, 1) == 0xAC) {
+      counted += ligatureExtraCharacters(byteAt(word, offset, limit, 2));
     }
 
     // Leading digits are not characters of the word for this purpose.
     for (
       var k = 0;
-      _byteAt(word, offset, limit, k) <= _digitNine &&
-          _byteAt(word, offset, limit, k) >= _digitZero;
+      byteAt(word, offset, limit, k) <= _digitNine &&
+          byteAt(word, offset, limit, k) >= _digitZero;
       k++
     ) {
       counted--;
@@ -530,14 +498,14 @@ class BreakMarker {
 
     final reference = track?.reference;
     var i = 0;
-    while (counted < minimum && _byteAt(word, offset, limit, i) != 0) {
+    while (counted < minimum && byteAt(word, offset, limit, i) != 0) {
       do {
         if (reference != null && i < reference.length && reference[i] >= 0) {
           // A rewritten break keeps its mark if the text it introduces is
           // itself long enough to satisfy the minimum.
           final start = PatternAutomaton.replacementStart(reference[i]);
           final textLength = PatternAutomaton.replacementLength(reference[i]);
-          final split = _indexOfByte(pool, _equals, start, start + textLength);
+          final split = indexOfByteIn(pool, _equals, start, start + textLength);
           if (split >= 0 &&
               (countCharacters(
                         word,
@@ -563,13 +531,13 @@ class BreakMarker {
         i++;
 
         if (utf8 &&
-            _byteAt(word, offset, limit, i) == 0xEF &&
-            _byteAt(word, offset, limit, i + 1) == 0xAC) {
+            byteAt(word, offset, limit, i) == 0xEF &&
+            byteAt(word, offset, limit, i + 1) == 0xAC) {
           counted += ligatureExtraCharacters(
-            _byteAt(word, offset, limit, i + 2),
+            byteAt(word, offset, limit, i + 2),
           );
         }
-      } while (utf8 && (_byteAt(word, offset, limit, i) & 0xC0) == 0x80);
+      } while (utf8 && (byteAt(word, offset, limit, i) & 0xC0) == 0x80);
       counted++;
     }
   }
@@ -604,8 +572,8 @@ class BreakMarker {
     for (
       var k = length - 1;
       k > 0 &&
-          _byteAt(word, offset, limit, k) <= _digitNine &&
-          _byteAt(word, offset, limit, k) >= _digitZero;
+          byteAt(word, offset, limit, k) <= _digitNine &&
+          byteAt(word, offset, limit, k) >= _digitZero;
       k--
     ) {
       counted--;
@@ -616,7 +584,7 @@ class BreakMarker {
       if (reference != null && i < reference.length && reference[i] >= 0) {
         final start = PatternAutomaton.replacementStart(reference[i]);
         final textLength = PatternAutomaton.replacementLength(reference[i]);
-        final split = _indexOfByte(pool, _equals, start, start + textLength);
+        final split = indexOfByteIn(pool, _equals, start, start + textLength);
         if (split >= 0) {
           final from = i - track!.shift[i] + track.cut[i] + 1;
           final clamped = from < 0 ? 0 : (from > limit ? limit : from);
@@ -642,7 +610,7 @@ class BreakMarker {
       } else {
         marks[i] = _digitZero;
       }
-      final byte = _byteAt(word, offset, limit, i);
+      final byte = byteAt(word, offset, limit, i);
       if (!utf8 || (byte & 0xC0) == 0xC0 || (byte & 0x80) != 0x80) {
         counted++;
       }
@@ -737,7 +705,7 @@ class BreakMarker {
           var span = shift[i];
           var characters = 0;
           for (var k = 0; k < span; k++) {
-            if ((_byteAt(word, offset, limit, i - k) >> 6) != 2) {
+            if ((byteAt(word, offset, limit, i - k) >> 6) != 2) {
               characters++;
             }
           }
@@ -746,7 +714,7 @@ class BreakMarker {
           span = k + cut[i];
           characters = 0;
           for (; k < span; k++) {
-            if ((_byteAt(word, offset, limit, k) >> 6) != 2) {
+            if ((byteAt(word, offset, limit, k) >> 6) != 2) {
               characters++;
             }
           }
@@ -766,137 +734,10 @@ class BreakMarker {
     return true;
   }
 
-  _LevelScratch _scratchFor(int depth, int length, {required bool rewrites}) {
+  MatchScratch _scratchFor(int depth, int length, {required bool rewrites}) {
     while (_scratch.length <= depth) {
-      _scratch.add(_LevelScratch());
+      _scratch.add(MatchScratch());
     }
     return _scratch[depth]..prepare(length, rewrites: rewrites);
   }
-}
-
-/// The buffers one level of the recursion works in.
-///
-/// The recursion's depth is bounded by the length of the word, so the arena
-/// is a list indexed by depth that grows once and is reused forever after.
-/// The reference implementation allocates all of this per call.
-class _LevelScratch {
-  Uint8List padded = Uint8List(0);
-  Uint8List innerMarks = Uint8List(0);
-  Int32List spanCut = _noInts;
-  Int32List spanIndex = _noInts;
-  Int32List spanRef = _noInts;
-  RewriteTrack? _track;
-
-  static final Int32List _noInts = Int32List(0);
-
-  /// Sizes the buffers for a word of [length] bytes and puts the ones that
-  /// are read before they are written into their documented start state.
-  void prepare(int length, {required bool rewrites}) {
-    final size = length + 3;
-    if (padded.length < size) {
-      // Word lengths cluster, and a regrow costs a full allocation, so the
-      // first one is generous enough to cover every word in running text.
-      final grown = size < 64 ? 64 : size * 2;
-      padded = Uint8List(grown);
-      innerMarks = Uint8List(grown);
-    }
-    // Every byte of the padded copy is written below except the last, which
-    // the compound recursion reads back through its window.
-    padded[length + 2] = 0;
-
-    if (!rewrites) {
-      return;
-    }
-    if (spanCut.length < size) {
-      final grown = size < 64 ? 64 : size * 2;
-      spanCut = Int32List(grown);
-      spanIndex = Int32List(grown)..fillRange(0, grown, -1);
-      spanRef = Int32List(grown)..fillRange(0, grown, -1);
-    } else {
-      spanCut.fillRange(0, size, 0);
-      spanIndex.fillRange(0, size, -1);
-      spanRef.fillRange(0, size, -1);
-    }
-  }
-
-  /// A cleared carrier for the recursion, big enough for [length]
-  /// characters.
-  RewriteTrack trackFor(int length) {
-    final size = length == 0 ? 1 : length;
-    final existing = _track;
-    if (existing == null || existing.reference.length < size) {
-      return _track = RewriteTrack(size < 64 ? 64 : size * 2);
-    }
-    return existing..clear();
-  }
-}
-
-/// How many extra characters the ligature at a `U+FB00`..`U+FB06` sequence
-/// is worth, given its third byte.
-///
-/// Zero for the two-letter ligatures and one for the three-letter ones. The
-/// reference build does not enable the long-ligature variant, so `ﬀ` counts
-/// as one character and `ﬃ` as two.
-int ligatureExtraCharacters(int thirdByte) {
-  switch (thirdByte) {
-    case 0x83: // ffi
-    case 0x84: // ffl
-      return 1;
-    case 0x80: // ff
-    case 0x81: // fi
-    case 0x82: // fl
-    case 0x85: // long st
-    case 0x86: // st
-      return 0;
-  }
-  return 0;
-}
-
-/// How many characters the first [count] bytes of `buffer[offset..)` hold,
-/// stopping early at a NUL.
-int countCharacters(
-  Uint8List buffer,
-  int offset,
-  int limit,
-  int count, {
-  required bool utf8,
-}) {
-  var characters = 0;
-  var i = 0;
-  while (i < count && _byteAt(buffer, offset, limit, i) != 0) {
-    characters++;
-    if (utf8 &&
-        _byteAt(buffer, offset, limit, i) == 0xEF &&
-        _byteAt(buffer, offset, limit, i + 1) == 0xAC) {
-      characters += ligatureExtraCharacters(
-        _byteAt(buffer, offset, limit, i + 2),
-      );
-    }
-    for (
-      i++;
-      utf8 && (_byteAt(buffer, offset, limit, i) & 0xC0) == 0x80;
-      i++
-    ) {}
-  }
-  return characters;
-}
-
-/// `buffer[offset + at]`, or 0 when [at] is outside `[0, limit)`.
-///
-/// The algorithm reads past both ends of the word in several places — the
-/// ligature probe in the left-edge pass most obviously. In C those reads
-/// land in whatever the allocator left there; here they are defined to be
-/// zero, which is what the reference implementation's own behaviour turns
-/// out to depend on.
-@pragma('vm:prefer-inline')
-int _byteAt(Uint8List buffer, int offset, int limit, int at) =>
-    (at < 0 || at >= limit) ? 0 : buffer[offset + at];
-
-int _indexOfByte(Uint8List buffer, int byte, int from, int end) {
-  for (var i = from; i < end; i++) {
-    if (buffer[i] == byte) {
-      return i;
-    }
-  }
-  return -1;
 }
