@@ -1,9 +1,3 @@
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at https://mozilla.org/MPL/2.0/.
-//
-// Derived from the legacy engine. See LICENSE and THIRD_PARTY_LICENSES.md.
-
 /// The character set a dictionary declares on its first line.
 ///
 /// the legacy engine hyphenation dictionaries are byte-oriented: the patterns are

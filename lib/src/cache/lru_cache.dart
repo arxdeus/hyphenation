@@ -1,9 +1,3 @@
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at https://mozilla.org/MPL/2.0/.
-//
-// Derived from the legacy engine. See LICENSE and THIRD_PARTY_LICENSES.md.
-
 /// A map that keeps at most [maxSize] entries and discards the least recently
 /// used one when it overflows.
 ///

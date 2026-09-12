@@ -1,9 +1,3 @@
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at https://mozilla.org/MPL/2.0/.
-//
-// Derived from the legacy engine. See LICENSE and THIRD_PARTY_LICENSES.md.
-
 // Benchmark for the dangling-word feature: the rule that a short word such as
 // a preposition must never be left hanging at the end of a line.
 //
