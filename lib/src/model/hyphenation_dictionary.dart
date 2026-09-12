@@ -1,7 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:flutter_hyphen/src/model/dictionary_charset.dart';
-import 'package:flutter_hyphen/src/model/pattern_automaton.dart';
+import 'package:flutter_hyphen/src/model/edge_limits.dart';
+import 'package:flutter_hyphen/src/model/pattern_set.dart';
 import 'package:flutter_hyphen/src/parser/dictionary_parser.dart';
 import 'package:flutter_hyphen/src/processor/break_mark_splitter.dart';
 import 'package:flutter_hyphen/src/processor/break_marker.dart';

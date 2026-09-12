@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'test_dictionaries.dart';
 
 void main() {
@@ -69,7 +70,9 @@ void main() {
   testWidgets('punctuation-only text is left alone', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(host(HyphenText('!!! ??? ...', hyphenator: testDict)));
+    await tester.pumpWidget(
+      host(HyphenText('!!! ??? ...', hyphenator: testDict)),
+    );
     expect(tester.takeException(), isNull);
     expect(renderOf(tester).sourceText, '!!! ??? ...');
   });

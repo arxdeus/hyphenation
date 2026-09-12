@@ -6,9 +6,11 @@
 
 import 'dart:typed_data';
 
+import 'package:flutter_hyphen/src/buffer/replacement_pool.dart';
 import 'package:flutter_hyphen/src/builder/pattern_trie.dart';
 import 'package:flutter_hyphen/src/model/dictionary_charset.dart';
-import 'package:flutter_hyphen/src/model/pattern_automaton.dart';
+import 'package:flutter_hyphen/src/model/edge_limits.dart';
+import 'package:flutter_hyphen/src/model/pattern_set.dart';
 
 const int _digitZero = 0x30;
 const int _digitNine = 0x39;

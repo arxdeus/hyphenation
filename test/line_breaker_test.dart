@@ -1,5 +1,6 @@
 import 'package:flutter_hyphen/flutter_hyphen.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'test_dictionaries.dart';
 
 /// A measure function where every character is exactly 10 wide, so the
@@ -234,7 +235,10 @@ void main() {
       for (final text in texts) {
         // One breaker per text so its running estimate evolves across widths
         // the way it does across a resize.
-        final breaker = HyphenLineBreaker(measure: uneven, hyphenator: testDict);
+        final breaker = HyphenLineBreaker(
+          measure: uneven,
+          hyphenator: testDict,
+        );
         for (var width = 20.0; width <= 320; width += 3) {
           expect(
             breaker.breakText(text, width),
