@@ -1,3 +1,8 @@
+// This Source Code Form is a Dart derivative of the legacy engine (hyphen.c,
+// hyphen.h) and is subject to the terms of the Mozilla Public License, v. 2.0.
+// If a copy of the MPL was not distributed with this file, You can obtain one
+// at https://mozilla.org/MPL/2.0/.
+
 import 'dart:typed_data';
 
 import 'package:flutter_hyphen/src/buffer/match_scratch.dart';

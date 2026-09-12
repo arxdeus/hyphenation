@@ -22,27 +22,37 @@ SOFTWARE.
 
 ---
 
-## Where the hyphenation engine came from
+## the legacy engine (MPL-2.0)
 
-The hyphenation engine in this package is a Dart
-implementation of the hyphenation algorithm of
-[the legacy engine](https://github.com/the legacy engine), whose authors offer it
-under a GPL 2.0 / LGPL 2.1 / MPL 1.1-or-later tri-license.
+The hyphenation engine in this package is a Dart implementation of the
+algorithm of [the legacy engine](https://github.com/the legacy engine)
+(`hyphen.c`, `hyphen.h`), whose authors offer it under a
+GPL 2.0 / LGPL 2.1 / MPL 1.1-or-later tri-license.
 
 **The MPL branch of that grant is elected here, at version 2.0.** MPL 2.0
-applies per file, and the four files that carry the algorithm say so in their
-own header:
+applies per file: the files that carry the algorithm are Covered Software and
+each says so in its own header:
 
-- `lib/src/hyphenation/patterns.dart`
-- `lib/src/hyphenation/pattern_trie.dart`
-- `lib/src/hyphenation/parser.dart`
-- `lib/src/hyphenation/matcher.dart`
+- `lib/src/model/pattern_automaton.dart`
+- `lib/src/model/pattern_set.dart`
+- `lib/src/model/edge_limits.dart`
+- `lib/src/builder/pattern_trie.dart`
+- `lib/src/builder/pattern_level_builder.dart`
+- `lib/src/parser/dictionary_parser.dart`
+- `lib/src/parser/dictionary_line_scanner.dart`
+- `lib/src/constant/dictionary_syntax.dart`
+- `lib/src/processor/break_marker.dart`
+- `lib/src/processor/break_mark_processor.dart`
+- `lib/src/buffer/replacement_pool.dart`
+- `lib/src/buffer/rewrite_track.dart`
+- `lib/src/buffer/match_scratch.dart`
+- `lib/src/util/byte_reader.dart`
 
-Everything else — the widgets, the line breaker, the caches, the rest of
-`lib/src/hyphenation/`, the tests and the benchmarks — is covered by the MIT
-license above. The full MPL 2.0 text, and what it asks of you if you
-redistribute those four files, is in
-[THIRD_PARTY_LICENSES.md](./THIRD_PARTY_LICENSES.md).
+Everything else — the widgets, the line breaker, the caches, the tests and
+the benchmarks — is covered by the MIT license above, as a Larger Work under
+MPL 2.0 §3.3. No copy of Hyphen's C sources is redistributed here.
 
 The hyphenation dictionary (`hyph_*.dic`) is **not** bundled with this
-package; you supply your own, and it carries its own license.
+package; you supply your own, and it carries its own license. See
+[THIRD_PARTY_LICENSES.md](./THIRD_PARTY_LICENSES.md) for the full MPL 2.0
+text and the details.
