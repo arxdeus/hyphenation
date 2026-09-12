@@ -1,8 +1,7 @@
 /// A hyphenation dictionary built from TeX pattern files.
 library;
 
-import 'dart:typed_data';
-
+import 'package:flutter/services.dart';
 import 'package:flutter_hyphen/src/tex/tex_pattern_parser.dart';
 import 'package:flutter_hyphen/src/tex/tex_pattern_table.dart';
 import 'package:flutter_hyphen/src/tex/tex_word_marker.dart';
@@ -41,6 +40,27 @@ class TexHyphenationPatterns {
 
   /// How many patterns were compiled.
   int get patternNodeCount => _table.edgeStart.length - 1;
+
+  /// Loads and compiles a pattern file from the asset bundle.
+  ///
+  /// [path] is the asset key of a TeX pattern file, for example
+  /// `assets/patterns/ushyph1.tex`, declared in `pubspec.yaml`:
+  ///
+  /// ```yaml
+  /// flutter:
+  ///   assets:
+  ///     - assets/patterns/ushyph1.tex
+  /// ```
+  static Future<TexHyphenationPatterns> fromAsset(
+    String path, {
+    AssetBundle? bundle,
+    int leftMin = 2,
+    int rightMin = 3,
+  }) async => TexHyphenationPatterns.parse(
+    await (bundle ?? rootBundle).loadString(path),
+    leftMin: leftMin,
+    rightMin: rightMin,
+  );
 
   /// One mark per character of the last marked word: odd where the word may
   /// be broken after that character. Valid until the next call.
