@@ -18,6 +18,8 @@
 /// ```
 library;
 
+export 'package:flutter_hyphen/src/dangling_words.dart'
+    show DanglingWords, kEnglishDanglingWords;
 export 'package:flutter_hyphen/src/hyphen_paragraph.dart'
     show HyphenParagraph, RenderHyphenParagraph;
 export 'package:flutter_hyphen/src/hyphen_scope.dart'

@@ -1,6 +1,8 @@
 import 'package:characters/characters.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_hyphen/src/code_units.dart';
+import 'package:flutter_hyphen/src/dangling_words.dart';
 import 'package:flutter_hyphen/src/lru_cache.dart';
 import 'package:hyphen/hyphen.dart';
 
@@ -35,7 +37,9 @@ class Hyphenator {
     this.minWordLength = 5,
     this.maxCacheSize = 5000,
     int? maxParagraphCacheSize,
-  }) : maxParagraphCacheSize =
+    Iterable<String> danglingWords = const <String>[],
+  }) : danglingWords = DanglingWords.compile(danglingWords),
+       maxParagraphCacheSize =
            maxParagraphCacheSize ??
            (maxCacheSize == 0 ? 0 : kDefaultParagraphCacheSize),
        assert(leftMin >= 1, 'leftMin must be at least 1'),
@@ -58,7 +62,7 @@ class Hyphenator {
   /// Loads a dictionary from the asset bundle.
   ///
   /// [path] is the asset key of a the legacy engine `.dic` file, for example
-  /// `assets/dictionary/hyph_ru_RU.dic`.
+  /// `assets/dictionary/hyph_en_US.dic`.
   static Future<Hyphenator> fromAsset(
     String path, {
     AssetBundle? bundle,
@@ -67,6 +71,7 @@ class Hyphenator {
     int minWordLength = 5,
     int maxCacheSize = 5000,
     int? maxParagraphCacheSize,
+    Iterable<String> danglingWords = const <String>[],
   }) async {
     final data = await (bundle ?? rootBundle).load(path);
     return Hyphenator.fromBytes(
@@ -79,6 +84,7 @@ class Hyphenator {
       minWordLength: minWordLength,
       maxCacheSize: maxCacheSize,
       maxParagraphCacheSize: maxParagraphCacheSize,
+      danglingWords: danglingWords,
     );
   }
 
@@ -90,6 +96,7 @@ class Hyphenator {
     int minWordLength = 5,
     int maxCacheSize = 5000,
     int? maxParagraphCacheSize,
+    Iterable<String> danglingWords = const <String>[],
   }) => Hyphenator(
     Hyphen.fromDictionaryBytes(bytes),
     leftMin: leftMin,
@@ -97,10 +104,20 @@ class Hyphenator {
     minWordLength: minWordLength,
     maxCacheSize: maxCacheSize,
     maxParagraphCacheSize: maxParagraphCacheSize,
+    danglingWords: danglingWords,
   );
 
   /// The underlying hyphenation engine.
   final Hyphen hyphen;
+
+  /// Words that must never be left hanging at the end of a line, or `null`
+  /// when the feature is off.
+  ///
+  /// [HyphenLineBreaker] drops the break opportunity after such a word, so it
+  /// is carried down to the next line together with the word it belongs to.
+  /// Nothing is inserted into the text: the string that gets painted is the
+  /// one that was passed in.
+  final DanglingWords? danglingWords;
 
   /// The minimum number of characters that must stay on the line before a
   /// break. Dictionaries carry their own values; this is an extra floor.
@@ -273,12 +290,22 @@ class Hyphenator {
     return result;
   }
 
-  /// Whether [text] contains at least one word the dictionary can break.
+  /// Whether this hyphenator would change how [text] is broken into lines.
+  ///
+  /// True when the dictionary can break at least one word, or when [text]
+  /// contains a word from [danglingWords] that would be glued to its
+  /// neighbour.
   ///
   /// This is what a paragraph needs to know before it commits to breaking
   /// lines itself, and it is far cheaper than [hyphenate]: it stops at the
-  /// first hit and allocates nothing.
+  /// first hit and allocates nothing beyond the word it has to look up.
+  ///
+  /// The dangling-word half matters more than it looks: a paragraph of short
+  /// words may well have no hyphenation point at all, and without it such a
+  /// paragraph would be handed straight to the engine and silently ignore the
+  /// word list.
   bool hasBreakOpportunity(String text) {
+    final dangling = danglingWords;
     var start = 0;
     while (start < text.length) {
       final whitespace = _isWhitespace(text.codeUnitAt(start));
@@ -287,8 +314,17 @@ class Hyphenator {
           _isWhitespace(text.codeUnitAt(end)) == whitespace) {
         end++;
       }
-      if (!whitespace && breakOffsets(text.substring(start, end)).isNotEmpty) {
-        return true;
+      if (!whitespace) {
+        // A dangling word only changes anything when something follows it on
+        // the same line, so the last token of the text does not count.
+        if (dangling != null &&
+            end < text.length &&
+            dangling.matches(text, start, end)) {
+          return true;
+        }
+        if (breakOffsets(text.substring(start, end)).isNotEmpty) {
+          return true;
+        }
       }
       start = end;
     }
@@ -484,56 +520,9 @@ class Hyphenator {
     offsets.add(offset);
   }
 
-  static bool _isHardHyphen(int unit) =>
-      unit == 0x2D || // hyphen-minus
-      unit == 0x2010 || // hyphen
-      unit == 0x2011; // non-breaking hyphen (kept, but still a break point)
+  static bool _isHardHyphen(int unit) => isHardHyphen(unit);
 
-  static bool _isWordCharacter(int unit) {
-    if (unit >= 0x41 && unit <= 0x5A) {
-      return true;
-    }
-    if (unit >= 0x61 && unit <= 0x7A) {
-      return true;
-    }
-    if (unit < 0x80) {
-      return false;
-    }
-    // Everything outside ASCII that is not punctuation or whitespace is
-    // treated as a letter. Dictionaries decide what is actually breakable.
-    return !_isNonWordHighCodeUnit(unit);
-  }
-
-  static bool _isNonWordHighCodeUnit(int unit) {
-    switch (unit) {
-      case 0x00A0: // no-break space
-      case 0x00AB: // «
-      case 0x00BB: // »
-      case 0x2000:
-      case 0x2001:
-      case 0x2002:
-      case 0x2003:
-      case 0x2004:
-      case 0x2005:
-      case 0x2006:
-      case 0x2007:
-      case 0x2008:
-      case 0x2009:
-      case 0x200A:
-      case 0x2012: // figure dash
-      case 0x2013: // en dash
-      case 0x2014: // em dash
-      case 0x2018: // ‘
-      case 0x201C: // “
-      case 0x201D: // ”
-      case 0x201E: // „
-      case 0x2026: // …
-      case 0x3000: // ideographic space
-        return true;
-      default:
-        return false;
-    }
-  }
+  static bool _isWordCharacter(int unit) => isWordCharacter(unit);
 
   static bool _isSeparatorRun(String token) =>
       token.isNotEmpty && _isWhitespace(token.codeUnitAt(0));

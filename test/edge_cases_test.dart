@@ -6,11 +6,11 @@ import 'test_dictionaries.dart';
 
 void main() {
   late Hyphenator latin;
-  late Hyphenator russian;
+  late Hyphenator english;
 
   setUp(() {
     latin = loadTestLatinHyphenator();
-    russian = loadRussianHyphenator();
+    english = loadEnglishHyphenator();
     HyphenationRegistry.instance.clear();
   });
   tearDown(HyphenationRegistry.instance.clear);
@@ -78,13 +78,13 @@ void main() {
   testWidgets('emoji and mixed scripts survive intact', (
     WidgetTester tester,
   ) async {
-    const text = 'программирование 😀 hyphenation 中文';
+    const text = 'internationalization 😀 hyphenation 中文';
     await tester.pumpWidget(
       host(
         HyphenText(
           text,
           style: const TextStyle(fontSize: 20),
-          hyphenator: russian,
+          hyphenator: english,
         ),
         width: 120,
       ),

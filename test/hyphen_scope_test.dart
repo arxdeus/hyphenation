@@ -6,11 +6,11 @@ import 'test_dictionaries.dart';
 
 void main() {
   late Hyphenator latin;
-  late Hyphenator russian;
+  late Hyphenator english;
 
   setUp(() {
     latin = loadTestLatinHyphenator();
-    russian = loadRussianHyphenator();
+    english = loadEnglishHyphenator();
     HyphenationRegistry.instance.clear();
   });
 
@@ -18,10 +18,10 @@ void main() {
 
   group('HyphenationRegistry', () {
     test('resolves an exact locale', () {
-      HyphenationRegistry.instance.register(const Locale('ru', 'RU'), russian);
+      HyphenationRegistry.instance.register(const Locale('en', 'US'), english);
       expect(
-        HyphenationRegistry.instance.resolve(const Locale('ru', 'RU')),
-        same(russian),
+        HyphenationRegistry.instance.resolve(const Locale('en', 'US')),
+        same(english),
       );
     });
 
@@ -36,10 +36,10 @@ void main() {
     test('prefers the most specific match', () {
       HyphenationRegistry.instance
         ..register(const Locale('en'), latin)
-        ..register(const Locale('en', 'US'), russian);
+        ..register(const Locale('en', 'US'), english);
       expect(
         HyphenationRegistry.instance.resolve(const Locale('en', 'US')),
-        same(russian),
+        same(english),
       );
       expect(
         HyphenationRegistry.instance.resolve(const Locale('en', 'GB')),
@@ -59,15 +59,15 @@ void main() {
     test('an explicit fallback can be set and beats nothing else', () {
       HyphenationRegistry.instance
         ..register(const Locale('en'), latin)
-        ..register(null, russian);
-      expect(HyphenationRegistry.instance.fallback, same(russian));
+        ..register(null, english);
+      expect(HyphenationRegistry.instance.fallback, same(english));
       expect(
         HyphenationRegistry.instance.resolve(const Locale('en')),
         same(latin),
       );
       expect(
         HyphenationRegistry.instance.resolve(const Locale('fr')),
-        same(russian),
+        same(english),
       );
     });
 
@@ -104,10 +104,10 @@ void main() {
     test('locales lists what is registered', () {
       HyphenationRegistry.instance
         ..register(const Locale('en', 'US'), latin)
-        ..register(const Locale('ru'), russian);
+        ..register(const Locale('de'), english);
       expect(
         HyphenationRegistry.instance.locales,
-        containsAll(<Locale>[const Locale('en', 'US'), const Locale('ru')]),
+        containsAll(<Locale>[const Locale('en', 'US'), const Locale('de')]),
       );
     });
 
@@ -163,7 +163,7 @@ void main() {
         HyphenScope(
           hyphenator: latin,
           child: HyphenScope(
-            hyphenator: russian,
+            hyphenator: english,
             child: Builder(
               builder: (BuildContext context) {
                 found = HyphenScope.maybeOf(context);
@@ -173,29 +173,29 @@ void main() {
           ),
         ),
       );
-      expect(found, same(russian));
+      expect(found, same(english));
     });
 
     testWidgets('resolve falls back to the registry', (
       WidgetTester tester,
     ) async {
-      HyphenationRegistry.instance.register(const Locale('ru'), russian);
+      HyphenationRegistry.instance.register(const Locale('de'), english);
       late Hyphenator? found;
       await tester.pumpWidget(
         Builder(
           builder: (BuildContext context) {
-            found = HyphenScope.resolve(context, locale: const Locale('ru'));
+            found = HyphenScope.resolve(context, locale: const Locale('de'));
             return const SizedBox();
           },
         ),
       );
-      expect(found, same(russian));
+      expect(found, same(english));
     });
 
     testWidgets('a scope with a null hyphenator shadows the registry', (
       WidgetTester tester,
     ) async {
-      HyphenationRegistry.instance.register(null, russian);
+      HyphenationRegistry.instance.register(null, english);
       late Hyphenator? found;
       await tester.pumpWidget(
         HyphenScope(
@@ -223,7 +223,7 @@ void main() {
       );
       expect(
         scope.updateShouldNotify(
-          HyphenScope(hyphenator: russian, child: const SizedBox()),
+          HyphenScope(hyphenator: english, child: const SizedBox()),
         ),
         isTrue,
       );
@@ -244,9 +244,9 @@ void main() {
       );
 
       await tester.pumpWidget(build(latin));
-      await tester.pumpWidget(build(russian));
+      await tester.pumpWidget(build(english));
       await tester.pumpWidget(build(null));
-      expect(seen, <Hyphenator?>[latin, russian, null]);
+      expect(seen, <Hyphenator?>[latin, english, null]);
     });
   });
 }

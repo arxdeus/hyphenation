@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_hyphen/src/code_units.dart' as units;
 import 'package:flutter_hyphen/src/hyphenator.dart';
 import 'package:flutter_hyphen/src/lru_cache.dart';
 
@@ -380,6 +381,8 @@ class HyphenLineBreaker {
     }
 
     final wordCount = words.length >> 1;
+    // Hoisted: when the feature is off this is the only cost it has.
+    final dangling = hyphenator?.danglingWords;
     for (var i = 0; i < wordCount; i++) {
       final wordStart = words[i * 2];
       final wordEnd = words[i * 2 + 1];
@@ -406,19 +409,30 @@ class HyphenLineBreaker {
           );
         }
       }
-      candidates.add(
-        _Candidate(
-          end: wordEnd,
-          next: i + 1 < wordCount ? words[(i + 1) * 2] : to,
-          hyphen: false,
-        ),
-      );
+      final isLast = i + 1 >= wordCount;
+      // A dangling word is glued to the word after it simply by not offering
+      // the break that would separate them, so the line runs on and takes
+      // both. Nothing is inserted into the text.
+      //
+      // The last word of a hard line is never glued: there is nothing after
+      // it to carry it down to, and dropping its candidate would drop the
+      // text with it.
+      if (isLast ||
+          dangling == null ||
+          !dangling.matches(content, wordStart, wordEnd)) {
+        candidates.add(
+          _Candidate(
+            end: wordEnd,
+            next: isLast ? to : words[(i + 1) * 2],
+            hyphen: false,
+          ),
+        );
+      }
     }
     return candidates;
   }
 
-  static bool _isHardHyphen(int unit) =>
-      unit == 0x2D || unit == 0x2010 || unit == 0x2011;
+  static bool _isHardHyphen(int unit) => units.isHardHyphen(unit);
 
   static bool _isBreakingSpace(int unit) =>
       unit == 0x20 ||

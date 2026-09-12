@@ -96,12 +96,12 @@ import '../test/test_dictionaries.dart';
 
 /// Text long enough that line breaking dominates the measurement.
 const String kSampleText =
-    'Программирование на Flutter это интересное и увлекательное занятие. '
-    'Конституция Российской Федерации гарантирует непосредственное действие '
-    'прав и свобод человека. Непосредственное взаимодействие пользователя с '
-    'интерфейсом требует внимательного отношения к типографике и переносам. '
-    'Совершенствование вычислительных систем продолжается непрерывно, и '
-    'производительность остаётся определяющим фактором.';
+    'Programming with Flutter is an interesting and entertaining occupation. '
+    'Internationalization of an application guarantees the immediate '
+    'availability of its content. The direct interaction of a user with the '
+    'interface demands extraordinary attention to typography and to '
+    'hyphenation. The improvement of computational systems continues '
+    'uninterrupted, and performance remains the determining factor.';
 
 const TextStyle kStyle = TextStyle(fontSize: 16, height: 1.3);
 
@@ -179,7 +179,7 @@ void main() {
   final comparisons = <Comparison>[];
   late Hyphenator hyphenator;
 
-  setUpAll(() => hyphenator = loadRussianHyphenator());
+  setUpAll(() => hyphenator = loadEnglishHyphenator());
 
   /// Measures [plain] against [hyphen] and records the comparison.
   ///

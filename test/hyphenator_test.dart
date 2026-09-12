@@ -5,25 +5,25 @@ import 'test_dictionaries.dart';
 
 void main() {
   group('Hyphenator', () {
-    late Hyphenator russian;
+    late Hyphenator english;
     late Hyphenator latin;
 
     setUp(() {
-      russian = loadRussianHyphenator();
+      english = loadEnglishHyphenator();
       latin = loadTestLatinHyphenator();
     });
 
-    test('splits a Russian word at dictionary points', () {
-      expect(russian.split('привет'), <String>['при', 'вет']);
+    test('splits a word at dictionary points', () {
+      expect(english.split('hyphenation'), <String>['hy', 'phen', 'ation']);
       expect(
-        russian.split('программирование'),
-        <String>['про', 'грам', 'миро', 'ва', 'ние'],
+        english.split('programming'),
+        <String>['pro', 'gram', 'ming'],
       );
     });
 
     test('break offsets index into the original word', () {
-      const word = 'программирование';
-      final offsets = russian.breakOffsets(word);
+      const word = 'internationalization';
+      final offsets = english.breakOffsets(word);
       expect(offsets, isNotEmpty);
       for (final offset in offsets) {
         expect(offset, greaterThan(0));
@@ -31,35 +31,38 @@ void main() {
       }
       expect(offsets, orderedEquals(<int>[...offsets]..sort()));
       // Rebuilding the word from the offsets must reproduce it exactly.
-      expect(russian.split(word).join(), word);
+      expect(english.split(word).join(), word);
     });
 
     test('hyphenates capitalised and upper-case words', () {
       // The dictionary only holds lowercase patterns, so a widget that did not
       // fold the word would silently stop hyphenating sentence-initial words.
-      expect(russian.split('Привет'), <String>['При', 'вет']);
-      expect(russian.split('ПРИВЕТ'), <String>['ПРИ', 'ВЕТ']);
+      expect(english.split('Hyphenation'), <String>['Hy', 'phen', 'ation']);
+      expect(english.split('HYPHENATION'), <String>['HY', 'PHEN', 'ATION']);
     });
 
     test('leaves short words alone', () {
-      final strict = loadRussianHyphenator(minWordLength: 8);
-      expect(strict.split('привет'), <String>['привет']);
-      expect(russian.split('кот'), <String>['кот']);
+      final strict = loadEnglishHyphenator(minWordLength: 8);
+      expect(strict.split('details'), <String>['details']);
+      expect(english.split('cat'), <String>['cat']);
     });
 
     test('respects leftMin and rightMin', () {
       // lhmin/rhmin constrain the distance from the edges of the word, not the
       // size of the inner chunks, so only the first and last part are bounded.
-      final wide = loadRussianHyphenator(leftMin: 5, rightMin: 5);
-      final parts = wide.split('программирование');
+      final wide = loadEnglishHyphenator(leftMin: 5, rightMin: 5);
+      final parts = wide.split('internationalization');
       expect(parts.length, greaterThan(1));
       expect(parts.first.length, greaterThanOrEqualTo(5));
       expect(parts.last.length, greaterThanOrEqualTo(5));
     });
 
     test('keeps punctuation outside the dictionary lookup', () {
-      expect(russian.split('«привет»'), <String>['«при', 'вет»']);
-      expect(russian.split('привет,'), <String>['при', 'вет,']);
+      expect(
+        english.split('"hyphenation"'),
+        <String>['"hy', 'phen', 'ation"'],
+      );
+      expect(english.split('hyphenation,'), <String>['hy', 'phen', 'ation,']);
     });
 
     test('treats an existing hyphen as a break opportunity', () {
@@ -73,34 +76,34 @@ void main() {
     });
 
     test('hyphenate() inserts soft hyphens without changing the letters', () {
-      final marked = russian.hyphenate('привет мир');
-      expect(marked.replaceAll(kSoftHyphen, ''), 'привет мир');
+      final marked = english.hyphenate('hyphenation works');
+      expect(marked.replaceAll(kSoftHyphen, ''), 'hyphenation works');
       expect(marked, contains(kSoftHyphen));
     });
 
     test('hyphenate() preserves whitespace runs exactly', () {
-      const source = 'привет   мир\nпрограммирование';
+      const source = 'hello   world\nprogramming';
       expect(
-        russian.hyphenate(source).replaceAll(kSoftHyphen, ''),
+        english.hyphenate(source).replaceAll(kSoftHyphen, ''),
         source,
       );
     });
 
     test('caches results without changing them', () {
-      final first = russian.breakOffsets('программирование');
-      final second = russian.breakOffsets('программирование');
+      final first = english.breakOffsets('programming');
+      final second = english.breakOffsets('programming');
       expect(identical(first, second), isTrue);
-      russian.clearCache();
-      expect(russian.breakOffsets('программирование'), first);
+      english.clearCache();
+      expect(english.breakOffsets('programming'), first);
     });
 
     test('honours the cache size limit', () {
-      final small = Hyphenator(russian.hyphen, maxCacheSize: 2);
-      expect(small.split('программирование'), isNotEmpty);
-      expect(small.split('конституция'), isNotEmpty);
-      expect(small.split('предложение'), isNotEmpty);
+      final small = Hyphenator(english.hyphen, maxCacheSize: 2);
+      expect(small.split('programming'), isNotEmpty);
+      expect(small.split('constitution'), isNotEmpty);
+      expect(small.split('information'), isNotEmpty);
       // Still correct after eviction.
-      expect(small.split('программирование').join(), 'программирование');
+      expect(small.split('programming').join(), 'programming');
     });
 
     test('break offsets scale linearly with the number of breaks', () {
@@ -109,9 +112,9 @@ void main() {
       // assert on, so this pins the invariant that lets the scan be linear:
       // offsets are produced in ascending order and duplicate-free.
       int breaksFor(int repeats) {
-        final word = 'непосредственное' * repeats;
+        final word = 'internationalization' * repeats;
         final offsets = Hyphenator(
-          russian.hyphen,
+          english.hyphen,
           maxCacheSize: 0,
         ).breakOffsets(word);
         expect(offsets, isNotEmpty);
@@ -130,13 +133,13 @@ void main() {
     });
     test('every cache stays within its bound', () {
       final small = Hyphenator(
-        russian.hyphen,
+        english.hyphen,
         maxCacheSize: 3,
         maxParagraphCacheSize: 2,
       );
       for (var i = 0; i < 50; i++) {
-        small.breakOffsets('программирование$i');
-        small.hyphenate('конституция страны $i');
+        small.breakOffsets('programming$i');
+        small.hyphenate('constitution of the country $i');
         small.cacheBreak('key$i', 'broken $i');
       }
       final (words, marked, broken) = small.cacheCounts;
@@ -148,7 +151,7 @@ void main() {
     test('paragraph caches are bounded far below the word cache', () {
       // Paragraph entries are ~1000x the size of a word entry, so the default
       // must not be the same number for both.
-      final hyphenator = Hyphenator(russian.hyphen);
+      final hyphenator = Hyphenator(english.hyphen);
       expect(hyphenator.maxCacheSize, 5000);
       expect(
         hyphenator.maxParagraphCacheSize,
@@ -160,13 +163,13 @@ void main() {
       );
       // Disabling the cache still disables all of it.
       expect(
-        Hyphenator(russian.hyphen, maxCacheSize: 0).maxParagraphCacheSize,
+        Hyphenator(english.hyphen, maxCacheSize: 0).maxParagraphCacheSize,
         0,
       );
     });
 
     test('eviction drops the least recently used entry, not the oldest', () {
-      final small = Hyphenator(russian.hyphen, maxParagraphCacheSize: 2);
+      final small = Hyphenator(english.hyphen, maxParagraphCacheSize: 2);
       small
         ..cacheBreak('a', 'A')
         ..cacheBreak('b', 'B');
@@ -179,9 +182,9 @@ void main() {
     });
 
     test('hyphenate() memoises whole strings', () {
-      const text = 'привет мир программирование';
-      final first = russian.hyphenate(text);
-      final second = russian.hyphenate(text);
+      const text = 'hello world programming';
+      final first = english.hyphenate(text);
+      final second = english.hyphenate(text);
       expect(
         identical(first, second),
         isTrue,
@@ -190,39 +193,39 @@ void main() {
       expect(second.replaceAll(kSoftHyphen, ''), text);
 
       // A non-default separator must not be served from, or poison, the cache.
-      final piped = russian.hyphenate(text, separator: '|');
+      final piped = english.hyphenate(text, separator: '|');
       expect(piped.replaceAll('|', ''), text);
-      expect(russian.hyphenate(text), first);
+      expect(english.hyphenate(text), first);
 
-      russian.clearCache();
-      expect(russian.hyphenate(text), first);
+      english.clearCache();
+      expect(english.hyphenate(text), first);
     });
 
     test('the marked cache respects the size limit', () {
-      final small = Hyphenator(russian.hyphen, maxCacheSize: 2);
+      final small = Hyphenator(english.hyphen, maxCacheSize: 2);
       for (final text in <String>[
-        'привет мир',
-        'конституция страны',
-        'предложение тут',
+        'hello world',
+        'constitution of the country',
+        'a sentence here',
       ]) {
         expect(small.hyphenate(text).replaceAll(kSoftHyphen, ''), text);
       }
       // Still correct after eviction.
       expect(
-        small.hyphenate('привет мир').replaceAll(kSoftHyphen, ''),
-        'привет мир',
+        small.hyphenate('hello world').replaceAll(kSoftHyphen, ''),
+        'hello world',
       );
     });
 
     test('handles empty and single-character input', () {
-      expect(russian.split(''), <String>['']);
-      expect(russian.breakOffsets(''), isEmpty);
-      expect(russian.split('я'), <String>['я']);
+      expect(english.split(''), <String>['']);
+      expect(english.breakOffsets(''), isEmpty);
+      expect(english.split('a'), <String>['a']);
     });
 
     test('never proposes an offset inside a surrogate pair', () {
-      const word = 'при😀вет';
-      for (final offset in russian.breakOffsets(word)) {
+      const word = 'hy😀phenation';
+      for (final offset in english.breakOffsets(word)) {
         final unit = word.codeUnitAt(offset);
         expect(
           unit & 0xFC00 == 0xDC00,
@@ -235,6 +238,72 @@ void main() {
     test('a broken dictionary does not break the hyphenator', () {
       final empty = Hyphenator.fromBytes(const <int>[]);
       expect(empty.split('anything'), <String>['anything']);
+    });
+  });
+
+  group('danglingWords', () {
+    test('is null when no list is given', () {
+      expect(loadTestLatinHyphenator().danglingWords, isNull);
+    });
+
+    test('is null when the list is empty', () {
+      expect(
+        loadTestLatinHyphenator(
+          // Passing the default explicitly is the point of the test.
+          // ignore: avoid_redundant_argument_values
+          danglingWords: const <String>[],
+        ).danglingWords,
+        isNull,
+      );
+    });
+
+    test('is compiled when a list is given', () {
+      final hyphenator = loadTestLatinHyphenator(
+        danglingWords: const <String>['the', 'of'],
+      );
+      expect(hyphenator.danglingWords, isNotNull);
+      expect(hyphenator.danglingWords!.contains('the'), isTrue);
+    });
+
+    group('hasBreakOpportunity', () {
+      test('is false for unhyphenable text with no list', () {
+        // None of these words is in the test dictionary.
+        expect(
+          loadTestLatinHyphenator().hasBreakOpportunity('in the woods'),
+          isFalse,
+        );
+      });
+
+      test('is true when the text holds a dangling word', () {
+        // This is what stops RenderHyphenParagraph from handing the text
+        // straight to the engine and ignoring the word list.
+        expect(
+          loadTestLatinHyphenator(
+            danglingWords: const <String>['the'],
+          ).hasBreakOpportunity('in the woods'),
+          isTrue,
+        );
+      });
+
+      test('is false when the dangling word is the last token', () {
+        // Nothing follows it, so it would not be glued to anything and the
+        // breaker has no work to do.
+        expect(
+          loadTestLatinHyphenator(
+            danglingWords: const <String>['the'],
+          ).hasBreakOpportunity('woods the'),
+          isFalse,
+        );
+      });
+
+      test('stays true when the dictionary can break a word anyway', () {
+        expect(
+          loadTestLatinHyphenator(
+            danglingWords: const <String>['the'],
+          ).hasBreakOpportunity('hyphenation'),
+          isTrue,
+        );
+      });
     });
   });
 }

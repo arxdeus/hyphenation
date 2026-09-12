@@ -7,13 +7,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'test_dictionaries.dart';
 
-/// A bundle that serves the example's Russian dictionary from disk, standing
+/// A bundle that serves the example's English dictionary from disk, standing
 /// in for the real asset bundle.
 class _DiskBundle extends CachingAssetBundle {
   @override
   Future<ByteData> load(String key) async {
     final file = File(
-      key == 'assets/dictionary/hyph_ru_RU.dic' ? kRussianDictionaryPath : key,
+      key == 'assets/dictionary/hyph_en_US.dic' ? kEnglishDictionaryPath : key,
     );
     if (!file.existsSync()) {
       throw FlutterError('Asset not found: $key');
@@ -30,13 +30,13 @@ void main() {
     WidgetTester tester,
   ) async {
     final hyphenator = await HyphenationRegistry.instance.registerAsset(
-      const Locale('ru', 'RU'),
-      'assets/dictionary/hyph_ru_RU.dic',
+      const Locale('en', 'US'),
+      'assets/dictionary/hyph_en_US.dic',
       bundle: _DiskBundle(),
     );
-    expect(hyphenator.split('программирование').length, greaterThan(1));
+    expect(hyphenator.split('internationalization').length, greaterThan(1));
     expect(
-      HyphenationRegistry.instance.resolve(const Locale('ru', 'RU')),
+      HyphenationRegistry.instance.resolve(const Locale('en', 'US')),
       same(hyphenator),
     );
   });
@@ -54,8 +54,8 @@ void main() {
     WidgetTester tester,
   ) async {
     await HyphenationRegistry.instance.registerAsset(
-      const Locale('ru', 'RU'),
-      'assets/dictionary/hyph_ru_RU.dic',
+      const Locale('en', 'US'),
+      'assets/dictionary/hyph_en_US.dic',
       bundle: _DiskBundle(),
     );
 
@@ -66,9 +66,9 @@ void main() {
           child: SizedBox(
             width: 120,
             child: HyphenText(
-              'программирование',
+              'internationalization',
               style: TextStyle(fontSize: 20),
-              locale: Locale('ru', 'RU'),
+              locale: Locale('en', 'US'),
             ),
           ),
         ),

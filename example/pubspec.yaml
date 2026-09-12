@@ -36,7 +36,6 @@ dependencies:
   marionette_flutter: ^0.6.0
 
 dev_dependencies:
-  bench_press: ^0.3.0
   flutter_test:
     sdk: flutter
 

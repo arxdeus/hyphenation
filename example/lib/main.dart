@@ -1,18 +1,19 @@
-import 'package:example/dangling_words.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
 import 'package:marionette_flutter/marionette_flutter.dart';
 
-/// The Russian dictionary bundled with this example.
+/// The English dictionary bundled with this example.
 ///
 /// Generate your own with `substrings.pl` from the legacy engine, or grab a
 /// pattern file from CTAN. See the package README.
-const String kRussianDictionary = 'assets/dictionary/hyph_ru_RU.dic';
+const String kEnglishDictionary = 'assets/dictionary/hyph_en_US.dic';
 
-// The dangling-word list and the glue that applies it live in
-// `lib/dangling_words.dart`, so `benchmark/dangling_words_benchmark.dart` can
-// measure them without pulling in the app.
+/// The same dictionary without the dangling-word list, for the demo toggle.
+///
+/// It shares the parsed [Hyphen] engine with the registered one, so the
+/// dictionary is only read and parsed once.
+late final Hyphenator kPlainHyphenator;
 
 Future<void> main() async {
   // Marionette lets an agent drive this demo (tap, screenshot, hot reload)
@@ -25,10 +26,16 @@ Future<void> main() async {
   }
   // Registering here makes every HyphenText in the app hyphenate without any
   // further plumbing.
-  await HyphenationRegistry.instance.registerAsset(
-    const Locale('ru', 'RU'),
-    kRussianDictionary,
+  // `danglingWords` is the whole of the "no hanging prepositions" feature:
+  // HyphenLineBreaker stops offering a break after any of these words, so it
+  // is carried down to the next line with the word it belongs to. Nothing is
+  // inserted into the text. Leave it out to turn the feature off.
+  final hyphenator = await HyphenationRegistry.instance.registerAsset(
+    const Locale('en', 'US'),
+    kEnglishDictionary,
+    danglingWords: kEnglishDanglingWords,
   );
+  kPlainHyphenator = Hyphenator(hyphenator.hyphen);
   runApp(const HyphenDemoApp());
 }
 
@@ -57,9 +64,9 @@ class DemoPage extends StatefulWidget {
 
 class _DemoPageState extends State<DemoPage> {
   static const String _sample =
-      'Программирование на Flutter это интересное и увлекательное '
-      'занятие. Конституция Российской Федерации гарантирует '
-      'непосредственное действие прав и свобод человека.';
+      'Programming with Flutter is an interesting and entertaining '
+      'occupation. Internationalization of an application requires '
+      'extraordinary attention to typographical details.';
 
   double _width = 180;
   double _fontSize = 18;
@@ -70,7 +77,9 @@ class _DemoPageState extends State<DemoPage> {
   Widget build(BuildContext context) {
     final textStyle = TextStyle(fontSize: _fontSize, height: 1.3);
     final align = _justify ? TextAlign.justify : TextAlign.start;
-    final text = _noDangling ? preventDanglingWords(_sample) : _sample;
+    // The text never changes: the toggle only swaps which hyphenator is used.
+    const text = _sample;
+    final hyphenator = _noDangling ? null : kPlainHyphenator;
 
     return Scaffold(
       appBar: AppBar(
@@ -105,12 +114,22 @@ class _DemoPageState extends State<DemoPage> {
                 title: 'HyphenText',
                 subtitle: 'dictionary hyphenation',
                 width: _width,
-                child: HyphenText(text, style: textStyle, textAlign: align),
+                child: HyphenText(
+                  text,
+                  style: textStyle,
+                  textAlign: align,
+                  hyphenator: hyphenator,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 24),
-          _RenderedLines(text: text, width: _width, style: textStyle),
+          _RenderedLines(
+            text: text,
+            width: _width,
+            style: textStyle,
+            hyphenator: hyphenator,
+          ),
           const SizedBox(height: 24),
           const _WordList(),
         ],
@@ -184,7 +203,7 @@ class _Controls extends StatelessWidget {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('No hanging prepositions'),
-              subtitle: const Text('glue short words with U+00A0'),
+              subtitle: const Text('never break after a short word'),
               value: noDangling,
               onChanged: onNoDangling,
             ),
@@ -240,17 +259,21 @@ class _RenderedLines extends StatelessWidget {
     required this.text,
     required this.width,
     required this.style,
+    required this.hyphenator,
   });
 
   final String text;
   final double width;
   final TextStyle style;
 
+  /// The hyphenator to break with, or `null` to use the registered one.
+  final Hyphenator? hyphenator;
+
   @override
   Widget build(BuildContext context) {
-    final hyphenator = HyphenationRegistry.instance.resolve(
-      const Locale('ru', 'RU'),
-    );
+    final hyphenator =
+        this.hyphenator ??
+        HyphenationRegistry.instance.resolve(const Locale('en', 'US'));
     if (hyphenator == null) {
       return const SizedBox.shrink();
     }
@@ -293,17 +316,17 @@ class _WordList extends StatelessWidget {
   const _WordList();
 
   static const List<String> _words = <String>[
-    'программирование',
-    'Конституция',
-    'непосредственное',
-    'увлекательное',
-    'Федерации',
+    'programming',
+    'Internationalization',
+    'extraordinary',
+    'entertaining',
+    'typographical',
   ];
 
   @override
   Widget build(BuildContext context) {
     final hyphenator = HyphenationRegistry.instance.resolve(
-      const Locale('ru', 'RU'),
+      const Locale('en', 'US'),
     );
     if (hyphenator == null) {
       return const SizedBox.shrink();

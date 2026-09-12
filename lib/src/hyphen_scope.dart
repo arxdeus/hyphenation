@@ -54,6 +54,10 @@ class HyphenationRegistry extends ChangeNotifier {
   ///
   /// Returns the loaded [Hyphenator]. Calling this twice for the same locale
   /// replaces the previous dictionary.
+  ///
+  /// [danglingWords] lists words that must not be left hanging at the end of
+  /// a line, such as [kEnglishDanglingWords]. Leave it empty to turn the
+  /// feature off.
   Future<Hyphenator> registerAsset(
     Locale? locale,
     String assetPath, {
@@ -61,6 +65,7 @@ class HyphenationRegistry extends ChangeNotifier {
     int leftMin = 2,
     int rightMin = 2,
     int minWordLength = 5,
+    Iterable<String> danglingWords = const <String>[],
   }) async {
     final hyphenator = await Hyphenator.fromAsset(
       assetPath,
@@ -68,6 +73,7 @@ class HyphenationRegistry extends ChangeNotifier {
       leftMin: leftMin,
       rightMin: rightMin,
       minWordLength: minWordLength,
+      danglingWords: danglingWords,
     );
     register(locale, hyphenator);
     return hyphenator;

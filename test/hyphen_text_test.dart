@@ -45,11 +45,15 @@ Widget host(
 
 void main() {
   late Hyphenator latin;
-  late Hyphenator russian;
+  late Hyphenator english;
+  /// A dictionary with no patterns at all, used where a test needs a
+  /// hyphenator that cannot break anything.
+  late Hyphenator empty;
 
   setUp(() {
     latin = loadTestLatinHyphenator();
-    russian = loadRussianHyphenator();
+    english = loadEnglishHyphenator();
+    empty = Hyphenator.fromBytes(const <int>[]);
     HyphenationRegistry.instance.clear();
   });
 
@@ -246,22 +250,22 @@ void main() {
       expect(renderedTextOf(tester), contains('=\n'));
     });
 
-    testWidgets('works with a real Russian dictionary', (
+    testWidgets('works with a real dictionary', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
         host(
           HyphenText(
-            'программирование',
+            'internationalization',
             style: const TextStyle(fontSize: 20),
-            hyphenator: russian,
+            hyphenator: english,
           ),
           width: 120,
         ),
       );
       final rendered = renderedTextOf(tester);
       expect(rendered, contains('-\n'));
-      expect(rendered.replaceAll('-\n', ''), 'программирование');
+      expect(rendered.replaceAll('-\n', ''), 'internationalization');
     });
 
     testWidgets('softWrap: false disables breaking', (
@@ -401,12 +405,12 @@ void main() {
 
       // Changing the dictionary at the same width, style and text.
       await tester.pumpWidget(
-        build(data: 'hyphenation', fontSize: 20, width: 100, which: russian),
+        build(data: 'hyphenation', fontSize: 20, width: 100, which: empty),
       );
       expect(
         renderedTextOf(tester),
         isNot(contains('-\n')),
-        reason: 'the Russian dictionary cannot break a Latin word',
+        reason: 'an empty dictionary cannot break any word',
       );
     });
 
@@ -705,13 +709,13 @@ void main() {
     testWidgets('the registry supplies the dictionary by locale', (
       WidgetTester tester,
     ) async {
-      HyphenationRegistry.instance.register(const Locale('ru', 'RU'), russian);
+      HyphenationRegistry.instance.register(const Locale('en', 'US'), english);
       await tester.pumpWidget(
         host(
           const HyphenText(
-            'программирование',
+            'internationalization',
             style: TextStyle(fontSize: 20),
-            locale: Locale('ru', 'RU'),
+            locale: Locale('en', 'US'),
           ),
           width: 120,
         ),
@@ -725,7 +729,7 @@ void main() {
       await tester.pumpWidget(
         host(
           HyphenScope(
-            hyphenator: russian,
+            hyphenator: empty,
             child: HyphenText(
               'hyphenation',
               style: const TextStyle(fontSize: 20),
@@ -735,7 +739,7 @@ void main() {
           width: 100,
         ),
       );
-      // The Russian dictionary cannot break a Latin word, so a hyphen here
+      // The empty dictionary cannot break anything, so a hyphen here
       // proves the widget's own hyphenator was used.
       expect(renderedTextOf(tester), contains('-\n'));
     });
@@ -754,7 +758,7 @@ void main() {
         width: 100,
       );
 
-      await tester.pumpWidget(build(russian));
+      await tester.pumpWidget(build(empty));
       expect(renderedTextOf(tester), 'hyphenation');
 
       await tester.pumpWidget(build(latin));
@@ -927,6 +931,69 @@ void main() {
 
       await tester.pumpWidget(build(3));
       expect(renderedTextOf(tester), contains('-\n'));
+    });
+  });
+
+  group('dangling words', () {
+    // The test font is fixed-advance, so at fontSize 10 a character is
+    // exactly 10 wide and the expected breaks can be counted out.
+    const style = TextStyle(fontSize: 10);
+
+    Widget build(Iterable<String> words) => host(
+      HyphenText(
+        'in the woods',
+        style: style,
+        hyphenator: loadTestLatinHyphenator(danglingWords: words),
+      ),
+      width: 70,
+    );
+
+    testWidgets('a listed word is carried down with the next one', (
+      WidgetTester tester,
+    ) async {
+      // None of these words is hyphenable, so this also covers the bypass in
+      // RenderHyphenParagraph: without the word list there is no break
+      // opportunity at all and the text goes straight to the engine.
+      await tester.pumpWidget(build(const <String>[]));
+      expect(renderedTextOf(tester), 'in the woods');
+
+      await tester.pumpWidget(build(const <String>['the']));
+      expect(renderedTextOf(tester), 'in\nthe woods');
+    });
+
+    testWidgets('no no-break space is inserted into the painted text', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(build(const <String>['the']));
+      final rendered = renderedTextOf(tester);
+      expect(rendered.contains('\u00A0'), isFalse);
+      expect(rendered.replaceAll('\n', ' '), 'in the woods');
+    });
+
+    testWidgets('an empty list leaves the text alone', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(build(const <String>['']));
+      expect(renderedTextOf(tester), 'in the woods');
+    });
+
+    testWidgets('intrinsic width accounts for the glued pair', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(build(const <String>[]));
+      final plain = tester
+          .renderObject<RenderBox>(find.byType(HyphenParagraph))
+          .getMinIntrinsicWidth(double.infinity);
+
+      await tester.pumpWidget(build(const <String>['the']));
+      final glued = tester
+          .renderObject<RenderBox>(find.byType(HyphenParagraph))
+          .getMinIntrinsicWidth(double.infinity);
+
+      // 'the woods' cannot be split, so the paragraph needs 90 rather than
+      // the 50 of 'woods' alone.
+      expect(plain, 50);
+      expect(glued, 90);
     });
   });
 }
