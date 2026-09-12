@@ -41,12 +41,26 @@ class TexWordMarker {
   /// the original word. Overwritten by the next call.
   final List<int> breaks = <int>[];
 
+  /// One mark per character of the last marked word: odd where the word may
+  /// be broken after that character, even where it may not.
+  ///
+  /// This is the same shape the byte engine exposes, so a caller that walks
+  /// marks rather than offsets can read either. Valid only until the next
+  /// call on this instance.
+  Uint8List get marks => _characterMarks;
+  Uint8List _characterMarks = Uint8List(64);
+
+  /// How many entries of [marks] the last call wrote.
+  int get markCount => _markCount;
+  int _markCount = 0;
+
   /// Fills [breaks] with the places [word] may be broken.
   ///
   /// [leftMin] and [rightMin] are floors on top of whatever the pattern file
   /// declared, so a caller can be stricter than the language but not looser.
   void mark(String word, {required int leftMin, required int rightMin}) {
     breaks.clear();
+    _markCount = 0;
 
     final length = word.length;
     final left = leftMin > table.leftMin ? leftMin : table.leftMin;
@@ -57,9 +71,14 @@ class TexWordMarker {
 
     final exception = table.exceptions[word.toLowerCase()];
     if (exception != null) {
+      _reserveCharacterMarks(length);
+      _characterMarks.fillRange(0, length, 0);
+      _markCount = length;
       for (final at in exception) {
         if (at >= left && length - at >= right) {
           breaks.add(at);
+          // A break after character `at` is recorded on that character.
+          _characterMarks[at - 1] = 1;
         }
       }
       return;
@@ -143,10 +162,20 @@ class TexWordMarker {
     // A mark at index `i` of `.word.` sits before padded character `i`, which
     // is character `i - 1` of the word. A break after character `n` is
     // therefore mark `n + 1`.
+    _reserveCharacterMarks(length);
+    final characterMarks = _characterMarks..fillRange(0, length, 0);
+    _markCount = length;
     for (var at = left; at <= length - right; at++) {
       if ((marks[at + 1] & 1) == 1) {
         breaks.add(at);
+        characterMarks[at - 1] = 1;
       }
+    }
+  }
+
+  void _reserveCharacterMarks(int size) {
+    if (_characterMarks.length < size) {
+      _characterMarks = Uint8List(size * 2);
     }
   }
 

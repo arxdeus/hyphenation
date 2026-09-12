@@ -1,6 +1,8 @@
 /// A hyphenation dictionary built from TeX pattern files.
 library;
 
+import 'dart:typed_data';
+
 import 'package:flutter_hyphen/src/tex/tex_pattern_parser.dart';
 import 'package:flutter_hyphen/src/tex/tex_pattern_table.dart';
 import 'package:flutter_hyphen/src/tex/tex_word_marker.dart';
@@ -39,6 +41,19 @@ class TexHyphenationPatterns {
 
   /// How many patterns were compiled.
   int get patternNodeCount => _table.edgeStart.length - 1;
+
+  /// One mark per character of the last marked word: odd where the word may
+  /// be broken after that character. Valid until the next call.
+  Uint8List get marks => _marker.marks;
+
+  /// Marks [word] and returns how many entries of [marks] were written.
+  ///
+  /// The allocation-free path: nothing is returned but a count, and the
+  /// caller reads the marks straight out of the buffer.
+  int markWord(String word, {int leftMin = 1, int rightMin = 1}) {
+    _marker.mark(word, leftMin: leftMin, rightMin: rightMin);
+    return _marker.markCount;
+  }
 
   /// The character offsets [word] may be broken after.
   ///

@@ -72,7 +72,11 @@ void main() {
     test('a caller may not be looser than the language', () {
       // The file declares 2/3, so asking for 1/1 still gets 2/3.
       final patterns = _english();
-      for (final at in patterns.breakOffsets('hyphenation', leftMin: 1, rightMin: 1)) {
+      for (final at in patterns.breakOffsets(
+        'hyphenation',
+        leftMin: 1,
+        rightMin: 1,
+      )) {
         expect(at, greaterThanOrEqualTo(2));
         expect('hyphenation'.length - at, greaterThanOrEqualTo(3));
       }
@@ -217,6 +221,59 @@ void main() {
       final patterns = _english();
       final long = 'hyphenation' * 40;
       expect(patterns.split(long, leftMin: 2, rightMin: 3).join(), long);
+    });
+  });
+
+  group('the marks buffer', () {
+    test('agrees with the offsets for the same word', () {
+      final patterns = _english();
+      for (final word in <String>[
+        'hyphenation',
+        'mathematics',
+        'strength',
+        'computer',
+      ]) {
+        final count = patterns.markWord(word, leftMin: 2, rightMin: 3);
+        final marks = patterns.marks;
+        final fromMarks = <int>[
+          for (var i = 0; i < count; i++)
+            if ((marks[i] & 1) == 1) i + 1,
+        ];
+        expect(
+          fromMarks,
+          patterns.breakOffsets(word, leftMin: 2, rightMin: 3),
+          reason: word,
+        );
+      }
+    });
+
+    test('writes one entry per character', () {
+      final patterns = _english();
+      expect(patterns.markWord('hyphenation', leftMin: 2, rightMin: 3), 11);
+    });
+
+    test('a word too short to break writes nothing', () {
+      final patterns = _english();
+      expect(patterns.markWord('at', leftMin: 2, rightMin: 3), 0);
+    });
+
+    test('an exception fills the buffer too', () {
+      final patterns = TexHyphenationPatterns.parse(
+        r'''
+\patterns{ a1b1c1d1e1f1g1h1i1j }
+\hyphenation{ ab-cdefghij }
+''',
+        leftMin: 1,
+        rightMin: 1,
+      );
+      final count = patterns.markWord('abcdefghij', leftMin: 1, rightMin: 1);
+      expect(count, 10);
+      final marks = patterns.marks;
+      final fromMarks = <int>[
+        for (var i = 0; i < count; i++)
+          if ((marks[i] & 1) == 1) i + 1,
+      ];
+      expect(fromMarks, <int>[2]);
     });
   });
 }
