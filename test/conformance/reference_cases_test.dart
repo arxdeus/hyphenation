@@ -1,3 +1,9 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this file,
+// You can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// Derived from the legacy engine. See LICENSE and THIRD_PARTY_LICENSES.md.
+
 // Does this engine still agree with the implementation it descends from?
 //
 // `recorded_cases.json` holds 2688 answers taken from the reference C
