@@ -7,8 +7,8 @@
 import 'dart:typed_data';
 
 import 'package:flutter_hyphen/src/buffer/match_scratch.dart';
-import 'package:flutter_hyphen/src/constant/dictionary_syntax.dart';
 import 'package:flutter_hyphen/src/buffer/rewrite_track.dart';
+import 'package:flutter_hyphen/src/constant/dictionary_syntax.dart';
 import 'package:flutter_hyphen/src/model/edge_limits.dart';
 import 'package:flutter_hyphen/src/model/pattern_automaton.dart';
 import 'package:flutter_hyphen/src/model/pattern_set.dart';

@@ -1,6 +1,5 @@
+import 'package:example/page/demo_page.dart';
 import 'package:flutter/material.dart';
-
-import 'page/demo_page.dart';
 
 class HyphenDemoApp extends StatelessWidget {
   const HyphenDemoApp({super.key});

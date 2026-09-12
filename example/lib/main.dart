@@ -1,10 +1,9 @@
+import 'package:example/app.dart';
+import 'package:example/constant/demo_dictionary.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
 import 'package:marionette_flutter/marionette_flutter.dart';
-
-import 'app.dart';
-import 'constant/demo_dictionary.dart';
 
 Future<void> main() async {
   // Marionette lets an agent drive this demo (tap, screenshot, hot reload)

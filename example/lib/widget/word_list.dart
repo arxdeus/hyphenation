@@ -3,7 +3,7 @@ import 'package:flutter_hyphen/flutter_hyphen.dart';
 
 /// Shows how individual words are split by the dictionary.
 class WordList extends StatelessWidget {
-  const WordList();
+  const WordList({super.key});
 
   static const List<String> _words = <String>[
     'programming',

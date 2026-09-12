@@ -1,7 +1,7 @@
-import '../support/test_dictionaries.dart';
-
 import 'package:flutter_hyphen/flutter_hyphen.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../support/test_dictionaries.dart';
 
 /// A measure function where every character is exactly 10 wide, so the
 /// expected line breaks can be reasoned about by counting characters.

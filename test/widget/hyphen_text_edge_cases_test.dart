@@ -1,8 +1,8 @@
-import '../support/test_dictionaries.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../support/test_dictionaries.dart';
 
 void main() {
   late Hyphenator testDict;

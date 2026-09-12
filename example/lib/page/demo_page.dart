@@ -1,11 +1,10 @@
+import 'package:example/constant/demo_dictionary.dart';
+import 'package:example/widget/demo_column.dart';
+import 'package:example/widget/demo_controls.dart';
+import 'package:example/widget/rendered_lines.dart';
+import 'package:example/widget/word_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
-
-import '../constant/demo_dictionary.dart';
-import '../widget/demo_controls.dart';
-import '../widget/demo_column.dart';
-import '../widget/rendered_lines.dart';
-import '../widget/word_list.dart';
 
 class DemoPage extends StatefulWidget {
   const DemoPage({super.key});

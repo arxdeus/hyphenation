@@ -10,6 +10,7 @@ class DemoControls extends StatelessWidget {
     required this.onJustify,
     required this.noDangling,
     required this.onNoDangling,
+    super.key,
   });
 
   final double width;

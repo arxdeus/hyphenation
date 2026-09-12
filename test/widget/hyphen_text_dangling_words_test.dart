@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -7,9 +6,7 @@ import '../support/test_dictionaries.dart';
 import '../support/widget_harness.dart';
 
 void main() {
-  setUp(() {
-    HyphenationRegistry.instance.clear();
-  });
+  setUp(HyphenationRegistry.instance.clear);
 
   tearDown(HyphenationRegistry.instance.clear);
 

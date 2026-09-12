@@ -6,6 +6,7 @@ class DemoColumn extends StatelessWidget {
     required this.subtitle,
     required this.width,
     required this.child,
+    super.key,
   });
 
   final String title;

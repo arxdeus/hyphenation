@@ -84,13 +84,12 @@
 
 import 'dart:typed_data';
 
-import '../test/support/test_dictionaries.dart';
-
 import 'package:bench_press/bench_press.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../test/support/test_dictionaries.dart';
 import 'support/comparison.dart';
 import 'support/widget_harness.dart';
 

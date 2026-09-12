@@ -11,6 +11,7 @@ class RenderedLines extends StatelessWidget {
     required this.width,
     required this.style,
     required this.hyphenator,
+    super.key,
   });
 
   final String text;
