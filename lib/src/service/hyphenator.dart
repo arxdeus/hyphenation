@@ -16,8 +16,7 @@ const String kSoftHyphen = '\u00AD';
 /// Splits words into their hyphenation parts using a the legacy engine
 /// dictionary.
 ///
-/// A [Hyphenator] is cheap to keep around and caches every word it has already
-/// seen, so the same instance should be shared by the whole application. Use
+/// A [Hyphenator] is cheap to keep around and caches recently seen words, so the same instance should be shared by the whole application. Use
 /// [Hyphenator.fromAsset] to build one from a bundled `hyph_*.dic` file.
 ///
 /// ### Example
@@ -36,11 +35,15 @@ class Hyphenator with Diagnosticable {
     this.minWordLength = 5,
     this.maxCacheSize = 5000,
     int? maxParagraphCacheSize,
+    this.maxParagraphCacheBytes = kDefaultParagraphCacheBytes,
+    this.maxCachedWordLength = kDefaultMaxCachedWordLength,
     Iterable<String> danglingWords = const <String>[],
   }) : danglingWords = DanglingWords.compile(danglingWords),
        maxParagraphCacheSize =
            maxParagraphCacheSize ??
            (maxCacheSize == 0 ? 0 : kDefaultParagraphCacheSize),
+       assert(maxParagraphCacheBytes >= 0),
+       assert(maxCachedWordLength >= 0),
        assert(leftMin >= 1, 'leftMin must be at least 1'),
        assert(rightMin >= 1, 'rightMin must be at least 1'),
        assert(minWordLength >= 1, 'minWordLength must be at least 1'),
@@ -55,8 +58,14 @@ class Hyphenator with Diagnosticable {
   /// Paragraph-sized entries are three orders of magnitude larger than word
   /// entries, so they get their own, much smaller bound: a few hundred covers
   /// a screenful of paragraphs at several widths, which is what the cache is
-  /// for, while keeping the whole thing well under a megabyte.
+  /// for. [maxParagraphCacheBytes] separately bounds retained payload size.
   static const int kDefaultParagraphCacheSize = 200;
+
+  /// Estimated retained bytes allowed in each shared paragraph cache.
+  static const int kDefaultParagraphCacheBytes = 1024 * 1024;
+
+  /// Long tokens are processed normally but not retained in the word cache.
+  static const int kDefaultMaxCachedWordLength = 256;
 
   /// Loads a dictionary from the asset bundle.
   ///
@@ -70,6 +79,8 @@ class Hyphenator with Diagnosticable {
     int minWordLength = 5,
     int maxCacheSize = 5000,
     int? maxParagraphCacheSize,
+    int maxParagraphCacheBytes = kDefaultParagraphCacheBytes,
+    int maxCachedWordLength = kDefaultMaxCachedWordLength,
     Iterable<String> danglingWords = const <String>[],
   }) async {
     final data = await (bundle ?? rootBundle).load(path);
@@ -83,6 +94,8 @@ class Hyphenator with Diagnosticable {
       minWordLength: minWordLength,
       maxCacheSize: maxCacheSize,
       maxParagraphCacheSize: maxParagraphCacheSize,
+      maxParagraphCacheBytes: maxParagraphCacheBytes,
+      maxCachedWordLength: maxCachedWordLength,
       danglingWords: danglingWords,
     );
   }
@@ -95,6 +108,8 @@ class Hyphenator with Diagnosticable {
     int minWordLength = 5,
     int maxCacheSize = 5000,
     int? maxParagraphCacheSize,
+    int maxParagraphCacheBytes = kDefaultParagraphCacheBytes,
+    int maxCachedWordLength = kDefaultMaxCachedWordLength,
     Iterable<String> danglingWords = const <String>[],
   }) => Hyphenator(
     HyphenationDictionary.parse(bytes),
@@ -103,6 +118,8 @@ class Hyphenator with Diagnosticable {
     minWordLength: minWordLength,
     maxCacheSize: maxCacheSize,
     maxParagraphCacheSize: maxParagraphCacheSize,
+    maxParagraphCacheBytes: maxParagraphCacheBytes,
+    maxCachedWordLength: maxCachedWordLength,
     danglingWords: danglingWords,
   );
 
@@ -149,6 +166,23 @@ class Hyphenator with Diagnosticable {
   /// [maxCacheSize] is `0`.
   final int maxParagraphCacheSize;
 
+  /// Estimated retained-byte limit for each paragraph cache. Zero disables
+  /// both. Estimates include UTF-16 source/output payloads and fixed entry
+  /// overhead, not exact VM heap size or externally owned style objects.
+  final int maxParagraphCacheBytes;
+
+  /// Maximum UTF-16 length admitted to the FIFO word cache. Zero disables it.
+  /// Longer tokens still produce the same offsets, without retaining them.
+  final int maxCachedWordLength;
+
+  int _wordEstimatedBytes = 0;
+
+  static int _wordWeight(String word, List<int> offsets) =>
+      64 + 2 * word.length + 8 * offsets.length;
+
+  static int _paragraphWeight(int sourceLength, String value) =>
+      128 + 2 * (sourceLength + value.length);
+
   /// Word offsets, kept in a plain map with oldest-first eviction rather than
   /// in an [LruCache].
   ///
@@ -176,6 +210,7 @@ class Hyphenator with Diagnosticable {
   /// per distinct string per app, not once per widget.
   late final LruCache<String, String> _markedCache = LruCache<String, String>(
     maxParagraphCacheSize,
+    maxWeight: maxParagraphCacheBytes,
   );
 
   /// Memoised broken paragraphs, shared by every widget using this
@@ -189,6 +224,7 @@ class Hyphenator with Diagnosticable {
   /// compared with `==`, so a record of the inputs is a good key.
   late final LruCache<Object, String> _brokenCache = LruCache<Object, String>(
     maxParagraphCacheSize,
+    maxWeight: maxParagraphCacheBytes,
   );
 
   /// Returns the cached broken form for [key], or null.
@@ -203,7 +239,22 @@ class Hyphenator with Diagnosticable {
   ///
   /// See [cachedBreak] for why this is not private.
   @internal
-  void cacheBreak(Object key, String value) => _brokenCache[key] = value;
+  void cacheBreak(Object key, String value, {int? sourceLength}) {
+    assert(sourceLength == null || sourceLength >= 0);
+    _brokenCache.put(
+      key,
+      value,
+      weight: _paragraphWeight(sourceLength ?? value.length, value),
+    );
+  }
+
+  /// Estimated retained bytes, not exact VM heap measurements. Broken-cache
+  /// callers should supply sourceLength to [cacheBreak] for accurate estimates.
+  ({int words, int marked, int broken}) get cacheEstimatedBytes => (
+    words: _wordEstimatedBytes,
+    marked: _markedCache.estimatedWeight,
+    broken: _brokenCache.estimatedWeight,
+  );
 
   /// How many entries each cache currently holds, for tests and diagnostics.
   @visibleForTesting
@@ -224,7 +275,8 @@ class Hyphenator with Diagnosticable {
     if (word.isEmpty) {
       return const <int>[];
     }
-    final cached = _cache[word];
+    final cacheable = maxCacheSize > 0 && word.length <= maxCachedWordLength;
+    final cached = cacheable ? _cache[word] : null;
     if (cached != null) {
       return cached;
     }
@@ -235,11 +287,13 @@ class Hyphenator with Diagnosticable {
     final result = computed.isEmpty
         ? const <int>[]
         : List<int>.unmodifiable(computed);
-    if (maxCacheSize > 0) {
+    if (cacheable) {
       if (_cache.length >= maxCacheSize) {
-        _cache.remove(_cache.keys.first);
+        final oldest = _cache.keys.first;
+        _wordEstimatedBytes -= _wordWeight(oldest, _cache.remove(oldest)!);
       }
       _cache[word] = result;
+      _wordEstimatedBytes += _wordWeight(word, result);
     }
     return result;
   }
@@ -270,6 +324,7 @@ class Hyphenator with Diagnosticable {
   /// identically to the input while giving the text engine extra break
   /// opportunities.
   String hyphenate(String text, {String separator = kSoftHyphen}) {
+    if (separator.isEmpty) return text;
     final isDefaultSeparator =
         identical(separator, kSoftHyphen) || separator == kSoftHyphen;
     if (isDefaultSeparator) {
@@ -279,32 +334,38 @@ class Hyphenator with Diagnosticable {
       }
     }
 
-    final buffer = StringBuffer();
-    _forEachToken(text, (token) {
-      if (_isSeparatorRun(token)) {
-        buffer.write(token);
-        return;
+    // Delay allocation until the first insertion. Preserve the source object
+    // itself when there are no breaks and never allocate whitespace tokens.
+    StringBuffer? buffer;
+    var copiedThrough = 0;
+    var start = 0;
+    while (start < text.length) {
+      if (_isWhitespace(text.codeUnitAt(start))) {
+        start++;
+        continue;
       }
-      // Written straight from the offsets rather than via `split`, which would
-      // allocate a list of substrings for every word. This runs on every
-      // paragraph, so the allocations are worth avoiding.
-      final offsets = breakOffsets(token);
-      if (offsets.isEmpty) {
-        buffer.write(token);
-        return;
+      var end = start + 1;
+      while (end < text.length && !_isWhitespace(text.codeUnitAt(end))) {
+        end++;
       }
-      var previous = 0;
+      final offsets = breakOffsets(text.substring(start, end));
       for (final offset in offsets) {
-        buffer
-          ..write(token.substring(previous, offset))
+        final insertion = start + offset;
+        (buffer ??= StringBuffer())
+          ..write(text.substring(copiedThrough, insertion))
           ..write(separator);
-        previous = offset;
+        copiedThrough = insertion;
       }
-      buffer.write(token.substring(previous));
-    });
-    final result = buffer.toString();
+      start = end;
+    }
+    if (buffer != null) buffer.write(text.substring(copiedThrough));
+    final result = buffer?.toString() ?? text;
     if (isDefaultSeparator) {
-      _markedCache[text] = result;
+      _markedCache.put(
+        text,
+        result,
+        weight: _paragraphWeight(text.length, result),
+      );
     }
     return result;
   }
@@ -372,6 +433,13 @@ class Hyphenator with Diagnosticable {
         defaultValue: null,
       ),
     );
+    properties.add(
+      IntProperty('maxParagraphCacheBytes', maxParagraphCacheBytes),
+    );
+    properties.add(IntProperty('maxCachedWordLength', maxCachedWordLength));
+    properties.add(
+      DiagnosticsProperty('cacheEstimatedBytes', cacheEstimatedBytes),
+    );
     final (words, marked, broken) = cacheCounts;
     properties.add(
       MessageProperty(
@@ -384,12 +452,10 @@ class Hyphenator with Diagnosticable {
   /// Clears the memoisation caches.
   void clearCache() {
     _cache.clear();
+    _wordEstimatedBytes = 0;
     _markedCache.clear();
     _brokenCache.clear();
   }
-
-  static bool _isSeparatorRun(String token) =>
-      token.isNotEmpty && _isWhitespace(token.codeUnitAt(0));
 
   static bool _isWhitespace(int unit) =>
       unit == 0x20 ||
@@ -402,18 +468,4 @@ class Hyphenator with Diagnosticable {
       unit == 0x2028 ||
       unit == 0x2029 ||
       unit == 0x3000;
-
-  static void _forEachToken(String text, void Function(String) visit) {
-    var start = 0;
-    while (start < text.length) {
-      final whitespace = _isWhitespace(text.codeUnitAt(start));
-      var end = start + 1;
-      while (end < text.length &&
-          _isWhitespace(text.codeUnitAt(end)) == whitespace) {
-        end++;
-      }
-      visit(text.substring(start, end));
-      start = end;
-    }
-  }
 }

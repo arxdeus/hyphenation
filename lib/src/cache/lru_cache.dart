@@ -1,54 +1,78 @@
-/// A map that keeps at most [maxSize] entries and discards the least recently
-/// used one when it overflows.
+/// A bounded least-recently-used cache with an optional estimated-weight bound.
 ///
-/// The caches in this package live for as long as the [Hyphenator] does, which
-/// in a normal app means for as long as the app does. They therefore need a
-/// bound, and the bound has to evict by use rather than by insertion order: a
-/// paragraph that is on screen every frame must not be thrown out because it
-/// happened to be cached first.
-///
-/// Recency is tracked by Dart's map iteration order, which is insertion order:
-/// reading an entry removes and reinserts it, moving it to the end, so the
-/// first key is always the least recently used one.
+/// Repeated reads of the most recently used entry do not mutate the map.
+/// Other hits move their entry to the end of Dart's insertion-ordered map.
 class LruCache<K, V extends Object> {
-  /// Creates a cache holding at most [maxSize] entries.
-  ///
-  /// A [maxSize] of zero disables caching entirely.
-  LruCache(this.maxSize) : assert(maxSize >= 0, 'maxSize must not be negative');
+  /// A zero [maxSize] or [maxWeight] disables caching. Weights are caller-defined
+  /// estimates, not measurements of VM heap usage.
+  LruCache(this.maxSize, {this.maxWeight})
+    : assert(maxSize >= 0, 'maxSize must not be negative'),
+      assert(maxWeight == null || maxWeight >= 0);
 
-  /// The most entries this cache will hold.
   final int maxSize;
-
+  final int? maxWeight;
   final Map<K, V> _entries = <K, V>{};
+  late final Map<K, int>? _weights = maxWeight == null ? null : <K, int>{};
+  int _weight = 0;
+  K? _lastKey;
+  V? _lastValue;
 
-  /// How many entries are currently held.
   int get length => _entries.length;
 
-  /// The value for [key], or null when absent. Marks the entry as used.
+  /// Total admitted weight, or zero when weight tracking is disabled.
+  int get estimatedWeight => _weight;
+
+  bool get isEnabled => maxSize > 0 && maxWeight != 0;
+
   V? operator [](K key) {
-    final value = _entries.remove(key);
-    if (value == null) {
-      return null;
+    if (!isEnabled) return null;
+    final last = _lastValue;
+    if (last != null && (identical(key, _lastKey) || key == _lastKey)) {
+      return last;
     }
+    final value = _entries.remove(key);
+    if (value == null) return null;
     _entries[key] = value;
+    _lastKey = key;
+    _lastValue = value;
     return value;
   }
 
-  /// Stores [value] under [key], evicting the least recently used entry when
-  /// the cache is full.
-  void operator []=(K key, V value) {
-    if (maxSize <= 0) {
-      return;
-    }
-    // Remove first, so that overwriting an existing key also refreshes its
-    // position instead of leaving the stale one at the front.
+  void operator []=(K key, V value) => put(key, value);
+
+  /// Stores a value, evicting oldest entries until both bounds are satisfied.
+  /// An oversized entry is not admitted and does not evict unrelated entries.
+  /// Replacing an entry with an oversized value removes its old cached value.
+  void put(K key, V value, {int weight = 1}) {
+    assert(weight >= 0);
+    if (!isEnabled) return;
     _entries.remove(key);
-    if (_entries.length >= maxSize) {
-      _entries.remove(_entries.keys.first);
+    final weights = _weights;
+    if (weights != null) _weight -= weights.remove(key) ?? 0;
+    _lastKey = null;
+    _lastValue = null;
+    final bound = maxWeight;
+    if (bound != null && weight > bound) return;
+    while (_entries.length >= maxSize ||
+        (bound != null && _weight + weight > bound)) {
+      final oldest = _entries.keys.first;
+      _entries.remove(oldest);
+      if (weights != null) _weight -= weights.remove(oldest)!;
     }
     _entries[key] = value;
+    if (weights != null) {
+      weights[key] = weight;
+      _weight += weight;
+    }
+    _lastKey = key;
+    _lastValue = value;
   }
 
-  /// Removes every entry.
-  void clear() => _entries.clear();
+  void clear() {
+    _entries.clear();
+    _weights?.clear();
+    _weight = 0;
+    _lastKey = null;
+    _lastValue = null;
+  }
 }

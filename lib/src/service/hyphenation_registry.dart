@@ -27,6 +27,7 @@ class HyphenationRegistry extends ChangeNotifier {
 
   final Map<String, Hyphenator> _byLanguageTag = <String, Hyphenator>{};
   Hyphenator? _fallback;
+  String? _fallbackOwner;
 
   /// The hyphenator used when no dictionary matches the requested locale.
   Hyphenator? get fallback => _fallback;
@@ -39,13 +40,20 @@ class HyphenationRegistry extends ChangeNotifier {
   ///
   /// Passing a `null` locale sets the [fallback] used for unmatched locales.
   /// The first dictionary registered also becomes the fallback, so a
-  /// single-language app needs no locale plumbing at all.
+  /// single-language app needs no locale plumbing at all. Replacing that locale
+  /// also updates its automatic fallback. An explicitly registered fallback
+  /// is independent of locale registrations and removals.
   void register(Locale? locale, Hyphenator hyphenator) {
     if (locale == null) {
       _fallback = hyphenator;
+      _fallbackOwner = null;
     } else {
-      _byLanguageTag[_keyFor(locale)] = hyphenator;
-      _fallback ??= hyphenator;
+      final key = _keyFor(locale);
+      _byLanguageTag[key] = hyphenator;
+      if (_fallback == null || _fallbackOwner == key) {
+        _fallback = hyphenator;
+        _fallbackOwner = key;
+      }
     }
     notifyListeners();
   }
@@ -66,6 +74,10 @@ class HyphenationRegistry extends ChangeNotifier {
     int leftMin = 2,
     int rightMin = 2,
     int minWordLength = 5,
+    int maxCacheSize = 5000,
+    int? maxParagraphCacheSize,
+    int maxParagraphCacheBytes = Hyphenator.kDefaultParagraphCacheBytes,
+    int maxCachedWordLength = Hyphenator.kDefaultMaxCachedWordLength,
     Iterable<String> danglingWords = const <String>[],
   }) async {
     final hyphenator = await Hyphenator.fromAsset(
@@ -74,6 +86,10 @@ class HyphenationRegistry extends ChangeNotifier {
       leftMin: leftMin,
       rightMin: rightMin,
       minWordLength: minWordLength,
+      maxCacheSize: maxCacheSize,
+      maxParagraphCacheSize: maxParagraphCacheSize,
+      maxParagraphCacheBytes: maxParagraphCacheBytes,
+      maxCachedWordLength: maxCachedWordLength,
       danglingWords: danglingWords,
     );
     register(locale, hyphenator);
@@ -101,10 +117,13 @@ class HyphenationRegistry extends ChangeNotifier {
   void unregister(Locale? locale) {
     if (locale == null) {
       _fallback = null;
+      _fallbackOwner = null;
     } else {
-      final removed = _byLanguageTag.remove(_keyFor(locale));
-      if (identical(removed, _fallback)) {
+      final key = _keyFor(locale);
+      _byLanguageTag.remove(key);
+      if (_fallbackOwner == key) {
         _fallback = null;
+        _fallbackOwner = null;
       }
     }
     notifyListeners();
@@ -114,6 +133,7 @@ class HyphenationRegistry extends ChangeNotifier {
   void clear() {
     _byLanguageTag.clear();
     _fallback = null;
+    _fallbackOwner = null;
     notifyListeners();
   }
 

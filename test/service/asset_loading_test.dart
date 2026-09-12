@@ -41,6 +41,27 @@ void main() {
     );
   });
 
+  test(
+    'registerAsset forwards cache budgets through both loading factories',
+    () async {
+      final h = await HyphenationRegistry.instance.registerAsset(
+        const Locale('en'),
+        'assets/dictionary/hyph_en_US.dic',
+        bundle: _DiskBundle(),
+        maxCacheSize: 7,
+        maxParagraphCacheSize: 3,
+        maxParagraphCacheBytes: 256,
+        maxCachedWordLength: 4,
+      );
+      expect(h.maxCacheSize, 7);
+      expect(h.maxParagraphCacheSize, 3);
+      expect(h.maxParagraphCacheBytes, 256);
+      expect(h.maxCachedWordLength, 4);
+      expect(h.breakOffsets('hyphenation'), isNotEmpty);
+      expect(h.cacheCounts.$1, 0);
+    },
+  );
+
   testWidgets('Hyphenator.fromAsset reports a missing dictionary', (
     WidgetTester tester,
   ) async {
