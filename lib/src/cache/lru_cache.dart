@@ -3,8 +3,8 @@
 /// Repeated reads of the most recently used entry do not mutate the map.
 /// Other hits move their entry to the end of Dart's insertion-ordered map.
 class LruCache<K, V extends Object> {
-  /// A zero [maxSize] or [maxWeight] disables caching. Weights are caller-defined
-  /// estimates, not measurements of VM heap usage.
+  /// A zero [maxSize] or [maxWeight] disables caching. Weights are
+  /// caller-defined estimates, not measurements of VM heap usage.
   LruCache(this.maxSize, {this.maxWeight})
     : assert(maxSize >= 0, 'maxSize must not be negative'),
       assert(maxWeight == null || maxWeight >= 0);

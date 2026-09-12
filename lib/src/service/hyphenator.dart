@@ -16,7 +16,8 @@ const String kSoftHyphen = '\u00AD';
 /// Splits words into their hyphenation parts using a the legacy engine
 /// dictionary.
 ///
-/// A [Hyphenator] is cheap to keep around and caches recently seen words, so the same instance should be shared by the whole application. Use
+/// A [Hyphenator] is cheap to keep around and caches recently seen words, so
+/// the same instance should be shared by the whole application. Use
 /// [Hyphenator.fromAsset] to build one from a bundled `hyph_*.dic` file.
 ///
 /// ### Example
@@ -183,6 +184,14 @@ class Hyphenator with Diagnosticable {
   static int _paragraphWeight(int sourceLength, String value) =>
       128 + 2 * (sourceLength + value.length);
 
+  /// Where word offsets come from before the caches see them.
+  late final WordBreakProcessor _breaks = WordBreakProcessor(
+    dictionary: dictionary,
+    leftMin: leftMin,
+    rightMin: rightMin,
+    minWordLength: minWordLength,
+  );
+
   /// Word offsets, kept in a plain map with oldest-first eviction rather than
   /// in an [LruCache].
   ///
@@ -192,14 +201,6 @@ class Hyphenator with Diagnosticable {
   /// much less for words than for paragraphs, because the bound is large
   /// enough to hold a realistic vocabulary and a miss only costs a few
   /// microseconds, against the hundreds a paragraph miss costs.
-  /// Where the offsets come from before the caches see them.
-  late final WordBreakProcessor _breaks = WordBreakProcessor(
-    dictionary: dictionary,
-    leftMin: leftMin,
-    rightMin: rightMin,
-    minWordLength: minWordLength,
-  );
-
   final Map<String, List<int>> _cache = <String, List<int>>{};
 
   /// Memoised results of [hyphenate], keyed by the input text.
