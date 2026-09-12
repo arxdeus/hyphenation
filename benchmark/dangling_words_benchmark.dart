@@ -280,7 +280,9 @@ String optimisedRewrite(String text, DanglingWords words) {
       index++;
     }
     final spaceCount = index - spaceStart;
-    if (atWordStart && spaceCount == 1 && words.matches(text, start, tokenEnd)) {
+    if (atWordStart &&
+        spaceCount == 1 &&
+        words.matches(text, start, tokenEnd)) {
       (out ??= _copyOf(text))[spaceStart] = 0x00A0;
     }
     atWordStart = spaceCount != 0;
@@ -452,7 +454,7 @@ void main() {
       // One shared engine, and no paragraph break cache: otherwise the first
       // iteration breaks the paragraph and every later one is answered from
       // the cache, which would measure the engine rather than the feature.
-      final engine = loadEnglishHyphenator().hyphen;
+      final engine = loadEnglishHyphenator().dictionary;
       final plain = Hyphenator(engine, maxParagraphCacheSize: 0);
       final glued = Hyphenator(
         engine,

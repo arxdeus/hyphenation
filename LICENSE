@@ -1,1 +1,48 @@
-TODO: Add your license here.
+MIT License
+
+Copyright (c) 2026 Artemis Kushner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Where the hyphenation engine came from
+
+The hyphenation engine in this package is a Dart
+implementation of the hyphenation algorithm of
+[the legacy engine](https://github.com/the legacy engine), whose authors offer it
+under a GPL 2.0 / LGPL 2.1 / MPL 1.1-or-later tri-license.
+
+**The MPL branch of that grant is elected here, at version 2.0.** MPL 2.0
+applies per file, and the four files that carry the algorithm say so in their
+own header:
+
+- `lib/src/hyphenation/patterns.dart`
+- `lib/src/hyphenation/pattern_trie.dart`
+- `lib/src/hyphenation/parser.dart`
+- `lib/src/hyphenation/matcher.dart`
+
+Everything else — the widgets, the line breaker, the caches, the rest of
+`lib/src/hyphenation/`, the tests and the benchmarks — is covered by the MIT
+license above. The full MPL 2.0 text, and what it asks of you if you
+redistribute those four files, is in
+[THIRD_PARTY_LICENSES.md](./THIRD_PARTY_LICENSES.md).
+
+The hyphenation dictionary (`hyph_*.dic`) is **not** bundled with this
+package; you supply your own, and it carries its own license.

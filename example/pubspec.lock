@@ -66,14 +66,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  hyphen:
-    dependency: "direct main"
-    description:
-      name: hyphen
-      sha256: c6fa13666f6b8be2359a686f3347f567583ed845f0d792450b0924517dd1eb76
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.0"
   leak_tracker:
     dependency: transitive
     description:

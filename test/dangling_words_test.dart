@@ -89,18 +89,18 @@ void main() {
     });
 
     test('falls back to toLowerCase for scripts it cannot fold inline', () {
-      // Greek is outside the inline fold's fast path, so these go
-      // through the general String.toLowerCase.
-      final words = DanglingWords(const <String>['και']);
-      expect(words.contains('και'), isTrue);
-      expect(words.contains('ΚΑΙ'), isTrue);
-      expect(words.contains('και,'), isFalse);
-      expect(words.contains('(και'), isTrue);
-      expect(words.contains('αλλα'), isFalse);
+      // Fullwidth letters are outside the inline fold's fast path, so these
+      // go through the general String.toLowerCase.
+      final words = DanglingWords(const <String>['ｔｈｅ']);
+      expect(words.contains('ｔｈｅ'), isTrue);
+      expect(words.contains('ＴＨＥ'), isTrue);
+      expect(words.contains('ｔｈｅ,'), isFalse);
+      expect(words.contains('(ｔｈｅ'), isTrue);
+      expect(words.contains('ｏｆ'), isFalse);
     });
 
     test('a foldable token is not confused with an unfoldable list', () {
-      final words = DanglingWords(const <String>['και']);
+      final words = DanglingWords(const <String>['ｔｈｅ']);
       expect(words.contains('the'), isFalse);
       expect(words.contains('of'), isFalse);
     });

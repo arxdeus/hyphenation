@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hyphen/src/code_units.dart';
 import 'package:flutter_hyphen/src/dangling_words.dart';
+import 'package:flutter_hyphen/src/hyphenation/dictionary.dart';
 import 'package:flutter_hyphen/src/lru_cache.dart';
-import 'package:hyphen/hyphen.dart';
 
 /// The Unicode soft hyphen (`U+00AD`).
 ///
@@ -29,9 +29,9 @@ const String kSoftHyphen = '\u00AD';
 /// hyphenator.split('hyphenation'); // [hy, phen, ation]
 /// ```
 class Hyphenator {
-  /// Creates a hyphenator around an already loaded [Hyphen] engine.
+  /// Creates a hyphenator around an already parsed dictionary.
   Hyphenator(
-    this.hyphen, {
+    this.dictionary, {
     this.leftMin = 2,
     this.rightMin = 2,
     this.minWordLength = 5,
@@ -98,7 +98,7 @@ class Hyphenator {
     int? maxParagraphCacheSize,
     Iterable<String> danglingWords = const <String>[],
   }) => Hyphenator(
-    Hyphen.fromDictionaryBytes(bytes),
+    HyphenationDictionary.parse(bytes),
     leftMin: leftMin,
     rightMin: rightMin,
     minWordLength: minWordLength,
@@ -107,8 +107,12 @@ class Hyphenator {
     danglingWords: danglingWords,
   );
 
-  /// The underlying hyphenation engine.
-  final Hyphen hyphen;
+  /// The dictionary this hyphenator looks words up in.
+  ///
+  /// Shareable: several [Hyphenator]s with different settings may sit on one
+  /// dictionary, which is what keeps a second configuration from costing a
+  /// second parse.
+  final HyphenationDictionary dictionary;
 
   /// Words that must never be left hanging at the end of a line, or `null`
   /// when the feature is off.
@@ -411,9 +415,18 @@ class Hyphenator {
           : run;
     }
 
-    final List<String> parts;
+    // The engine writes one mark per character into a buffer it owns and
+    // reuses, so a word costs no allocation at all here: no list of parts,
+    // no substrings, and no second pass to work out where the parts began.
+    // The marks are read before the next call on the same [Hyphen], which
+    // is the only thing that invalidates them.
+    final int markCount;
     try {
-      parts = hyphen.hyphenate(lookup, lhmin: leftMin, rhmin: rightMin);
+      markCount = dictionary.markWord(
+        lookup,
+        leftMin: leftMin,
+        rightMin: rightMin,
+      );
     } catch (error, stackTrace) {
       // A dictionary that cannot hyphenate one word must never take down the
       // whole widget tree; the word simply stays unbroken.
@@ -427,21 +440,39 @@ class Hyphenator {
       );
       return;
     }
-    if (parts.length < 2) {
+    final marks = dictionary.marks;
+
+    if (simple) {
+      // One code unit is one character is one mark, so the mark index is
+      // the offset of the break that follows it.
+      final limit = markCount < run.length ? markCount : run.length;
+      for (var i = 0; i < limit; i++) {
+        if ((marks[i] & 1) != 1) {
+          continue;
+        }
+        final offset = i + 1;
+        if (offset < leftMin ||
+            characterCount - offset < rightMin ||
+            offset >= run.length) {
+          continue;
+        }
+        _addOffset(offsets, base + offset);
+      }
       return;
     }
 
-    final totalCharacters = characterCount;
     var characterOffset = 0;
     var codeUnitOffset = 0;
-    for (var i = 0; i < parts.length - 1; i++) {
-      final partCharacters = simple
-          ? parts[i].length
-          : parts[i].characters.length;
-      characterOffset += partCharacters;
-      codeUnitOffset += parts[i].length;
+    for (final character in lookup.characters) {
+      codeUnitOffset += character.length;
+      final isBreak =
+          characterOffset < markCount && (marks[characterOffset] & 1) == 1;
+      characterOffset++;
+      if (!isBreak) {
+        continue;
+      }
       if (characterOffset < leftMin ||
-          totalCharacters - characterOffset < rightMin) {
+          characterCount - characterOffset < rightMin) {
         continue;
       }
       if (codeUnitOffset <= 0 || codeUnitOffset >= run.length) {

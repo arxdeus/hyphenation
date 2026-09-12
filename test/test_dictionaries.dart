@@ -23,12 +23,12 @@ Hyphenator loadEnglishHyphenator({
   danglingWords: danglingWords,
 );
 
-/// A dictionary that breaks a handful of Latin words, built inline so the
-/// tests do not depend on a bundled English dictionary.
+/// A dictionary that breaks a handful of English words, built inline so the
+/// tests do not depend on the example dictionary file.
 ///
 /// The patterns use the standard TeX/the legacy engine syntax: odd digits mark a
 /// hyphenation point after the preceding character.
-Hyphenator loadTestLatinHyphenator({
+Hyphenator loadTestHyphenator({
   int minWordLength = 5,
   int leftMin = 2,
   int rightMin = 2,

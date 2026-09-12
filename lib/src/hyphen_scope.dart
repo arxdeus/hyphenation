@@ -150,8 +150,8 @@ class HyphenationRegistry extends ChangeNotifier {
 ///
 /// ```dart
 /// HyphenScope(
-///   hyphenator: germanHyphenator,
-///   child: const HyphenText('Donaudampfschifffahrtsgesellschaft'),
+///   hyphenator: technicalHyphenator,
+///   child: const HyphenText('antidisestablishmentarianism'),
 /// )
 /// ```
 class HyphenScope extends InheritedWidget {

@@ -34,8 +34,8 @@
 //    floor. Further wins have to come from measuring differently, not from
 //    searching better, and the prefix-width note below covers that attempt.
 //  - A cold dictionary adds lookups on top, roughly 3 us per uncached word
-//    against 16 ns cached. That part is the hyphen package's own engine, so it
-//    is a floor set by the dictionary rather than something this package can
+//    against 16 ns cached. That part is the hyphenation engine itself, so it
+//    is a floor set by the dictionary rather than something the breaker can
 //    remove.
 //
 // Earlier findings worth recording, so they are not retried:
@@ -293,7 +293,7 @@ void main() {
           HyphenText(
             kSampleText,
             style: kStyle,
-            hyphenator: Hyphenator(hyphenator.hyphen),
+            hyphenator: Hyphenator(hyphenator.dictionary),
           ),
         ),
       );
@@ -512,9 +512,9 @@ void main() {
           .toList();
 
       // Cache disabled: every word is a fresh dictionary walk.
-      final cold = Hyphenator(hyphenator.hyphen, maxCacheSize: 0);
+      final cold = Hyphenator(hyphenator.dictionary, maxCacheSize: 0);
       // Cache enabled and pre-warmed.
-      final warm = Hyphenator(hyphenator.hyphen);
+      final warm = Hyphenator(hyphenator.dictionary);
       for (final word in words) {
         warm.breakOffsets(word);
       }

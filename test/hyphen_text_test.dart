@@ -10,7 +10,7 @@ import 'test_dictionaries.dart';
 /// Counts fresh breaks; the shared cache is disabled so every miss on the
 /// render object's own cache shows up.
 class _CountingHyphenator extends Hyphenator {
-  _CountingHyphenator(super.hyphen) : super(maxCacheSize: 0);
+  _CountingHyphenator(super.dictionary) : super(maxCacheSize: 0);
 
   int breaks = 0;
 
@@ -44,14 +44,15 @@ Widget host(
 );
 
 void main() {
-  late Hyphenator latin;
+  late Hyphenator testDict;
   late Hyphenator english;
+
   /// A dictionary with no patterns at all, used where a test needs a
   /// hyphenator that cannot break anything.
   late Hyphenator empty;
 
   setUp(() {
-    latin = loadTestLatinHyphenator();
+    testDict = loadTestHyphenator();
     english = loadEnglishHyphenator();
     empty = Hyphenator.fromBytes(const <int>[]);
     HyphenationRegistry.instance.clear();
@@ -92,7 +93,7 @@ void main() {
             textHeightBehavior: const TextHeightBehavior(),
             selectionColor: const Color(0xFF00FF00),
             strutStyle: const StrutStyle(fontSize: 14),
-            hyphenator: latin,
+            hyphenator: testDict,
           ),
         ),
       );
@@ -112,7 +113,7 @@ void main() {
                 TextSpan(text: 'two'),
               ],
             ),
-            hyphenator: latin,
+            hyphenator: testDict,
           ),
         ),
       );
@@ -125,7 +126,7 @@ void main() {
     ) async {
       await tester.pumpWidget(
         host(
-          HyphenText('hyphenation', hyphenator: latin, hyphenate: false),
+          HyphenText('hyphenation', hyphenator: testDict, hyphenate: false),
         ),
       );
       expect(find.byType(HyphenParagraph), findsNothing);
@@ -139,7 +140,7 @@ void main() {
           HyphenText(
             'hyphenation',
             style: const TextStyle(fontSize: 20),
-            hyphenator: latin,
+            hyphenator: testDict,
           ),
           width: 100,
         ),
@@ -155,7 +156,7 @@ void main() {
           HyphenText(
             'hyphenation',
             style: const TextStyle(fontSize: 10),
-            hyphenator: latin,
+            hyphenator: testDict,
           ),
           width: 400,
         ),
@@ -170,7 +171,7 @@ void main() {
         HyphenText(
           'hyphenation',
           style: const TextStyle(fontSize: 20),
-          hyphenator: latin,
+          hyphenator: testDict,
         ),
         width: width,
       );
@@ -201,7 +202,7 @@ void main() {
 
       await tester.pumpWidget(
         host(
-          HyphenText('hyphenation', style: style, hyphenator: latin),
+          HyphenText('hyphenation', style: style, hyphenator: testDict),
           width: 100,
         ),
       );
@@ -241,7 +242,7 @@ void main() {
           HyphenText(
             'hyphenation',
             style: const TextStyle(fontSize: 20),
-            hyphenator: latin,
+            hyphenator: testDict,
             hyphenCharacter: '=',
           ),
           width: 100,
@@ -276,7 +277,7 @@ void main() {
           HyphenText(
             'hyphenation',
             style: const TextStyle(fontSize: 20),
-            hyphenator: latin,
+            hyphenator: testDict,
             softWrap: false,
           ),
           width: 100,
@@ -293,7 +294,7 @@ void main() {
           HyphenText(
             'hyphenation extraordinary computer',
             style: const TextStyle(fontSize: 20),
-            hyphenator: latin,
+            hyphenator: testDict,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -316,7 +317,7 @@ void main() {
           HyphenText(
             'extraordinary hyphenation',
             style: const TextStyle(fontSize: 20),
-            hyphenator: latin,
+            hyphenator: testDict,
           ),
           width: 30,
         ),
@@ -337,7 +338,7 @@ void main() {
             HyphenText(
               'extraordinary hyphenation computer',
               style: const TextStyle(fontSize: 20),
-              hyphenator: latin,
+              hyphenator: testDict,
             ),
             width: width,
           ),
@@ -370,7 +371,7 @@ void main() {
         HyphenText(
           data,
           style: TextStyle(fontSize: fontSize),
-          hyphenator: which ?? latin,
+          hyphenator: which ?? testDict,
         ),
         width: width,
       );
@@ -438,7 +439,7 @@ void main() {
       Future<List<String>> linesAt(double width) async {
         await tester.pumpWidget(
           host(
-            HyphenText(text, style: style, hyphenator: latin),
+            HyphenText(text, style: style, hyphenator: testDict),
             width: width,
           ),
         );
@@ -496,7 +497,7 @@ void main() {
             HyphenText(
               text,
               style: TextStyle(fontSize: fontSize),
-              hyphenator: latin,
+              hyphenator: testDict,
               hyphenCharacter: hyphen,
               textScaler: scaler,
             ),
@@ -540,7 +541,7 @@ void main() {
                 child: HyphenText(
                   text,
                   style: const TextStyle(fontSize: 16),
-                  hyphenator: latin,
+                  hyphenator: testDict,
                 ),
               ),
               SizedBox(
@@ -548,7 +549,7 @@ void main() {
                 child: HyphenText(
                   text,
                   style: const TextStyle(fontSize: 16),
-                  hyphenator: latin,
+                  hyphenator: testDict,
                 ),
               ),
             ],
@@ -566,9 +567,9 @@ void main() {
     testWidgets('empty and whitespace text lay out without error', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(host(HyphenText('', hyphenator: latin)));
+      await tester.pumpWidget(host(HyphenText('', hyphenator: testDict)));
       expect(tester.takeException(), isNull);
-      await tester.pumpWidget(host(HyphenText('   ', hyphenator: latin)));
+      await tester.pumpWidget(host(HyphenText('   ', hyphenator: testDict)));
       expect(tester.takeException(), isNull);
     });
 
@@ -580,7 +581,7 @@ void main() {
           textDirection: TextDirection.ltr,
           child: Row(
             children: <Widget>[
-              HyphenText('hyphenation', hyphenator: latin),
+              HyphenText('hyphenation', hyphenator: testDict),
             ],
           ),
         ),
@@ -602,7 +603,7 @@ void main() {
               child: HyphenText(
                 'hyphenation',
                 style: const TextStyle(fontSize: 20),
-                hyphenator: latin,
+                hyphenator: testDict,
               ),
             ),
           ),
@@ -618,7 +619,7 @@ void main() {
             child: HyphenText(
               'hyphenation extraordinary',
               style: const TextStyle(fontSize: 20),
-              hyphenator: latin,
+              hyphenator: testDict,
             ),
           ),
           width: 100,
@@ -639,7 +640,7 @@ void main() {
                 child: HyphenText(
                   'hyphenation',
                   style: const TextStyle(fontSize: 20),
-                  hyphenator: latin,
+                  hyphenator: testDict,
                 ),
               ),
             ],
@@ -658,7 +659,7 @@ void main() {
           HyphenText(
             'hyphenation',
             style: const TextStyle(fontSize: 20),
-            hyphenator: latin,
+            hyphenator: testDict,
           ),
         ),
       );
@@ -679,7 +680,7 @@ void main() {
       await tester.pumpWidget(
         host(
           HyphenScope(
-            hyphenator: latin,
+            hyphenator: testDict,
             child: const HyphenText(
               'hyphenation',
               style: TextStyle(fontSize: 20),
@@ -694,7 +695,7 @@ void main() {
     testWidgets('a null scope disables hyphenation for the subtree', (
       WidgetTester tester,
     ) async {
-      HyphenationRegistry.instance.register(null, latin);
+      HyphenationRegistry.instance.register(null, testDict);
       await tester.pumpWidget(
         host(
           const HyphenScope(
@@ -733,7 +734,7 @@ void main() {
             child: HyphenText(
               'hyphenation',
               style: const TextStyle(fontSize: 20),
-              hyphenator: latin,
+              hyphenator: testDict,
             ),
           ),
           width: 100,
@@ -761,7 +762,7 @@ void main() {
       await tester.pumpWidget(build(empty));
       expect(renderedTextOf(tester), 'hyphenation');
 
-      await tester.pumpWidget(build(latin));
+      await tester.pumpWidget(build(testDict));
       expect(renderedTextOf(tester), contains('-\n'));
     });
   });
@@ -779,7 +780,7 @@ void main() {
               child: HyphenText(
                 'hyphenation',
                 style: const TextStyle(fontSize: 20),
-                hyphenator: latin,
+                hyphenator: testDict,
               ),
             ),
           ),
@@ -800,7 +801,7 @@ void main() {
               child: HyphenText(
                 'hyphenation',
                 style: const TextStyle(fontSize: 20),
-                hyphenator: latin,
+                hyphenator: testDict,
                 semanticsLabel: 'custom',
               ),
             ),
@@ -818,7 +819,7 @@ void main() {
         HyphenText(
           data,
           style: const TextStyle(fontSize: 20),
-          hyphenator: latin,
+          hyphenator: testDict,
         ),
         width: 100,
       );
@@ -835,7 +836,7 @@ void main() {
         HyphenText(
           'hyphenation',
           style: TextStyle(fontSize: fontSize),
-          hyphenator: latin,
+          hyphenator: testDict,
         ),
         width: 100,
       );
@@ -849,7 +850,7 @@ void main() {
 
     testWidgets('a paint-only style change keeps the breaks without '
         're-breaking', (WidgetTester tester) async {
-      final counting = _CountingHyphenator(latin.hyphen);
+      final counting = _CountingHyphenator(testDict.dictionary);
       Widget build(Color color) => host(
         HyphenText(
           'wonderful hyphenation',
@@ -887,7 +888,7 @@ void main() {
 
     testWidgets('a dry layout at another width does not evict the painted '
         'width', (WidgetTester tester) async {
-      final counting = _CountingHyphenator(latin.hyphen);
+      final counting = _CountingHyphenator(testDict.dictionary);
       await tester.pumpWidget(
         host(
           HyphenText(
@@ -920,7 +921,7 @@ void main() {
           HyphenText(
             'hyphenation',
             style: const TextStyle(fontSize: 10),
-            hyphenator: latin,
+            hyphenator: testDict,
           ),
           width: 100,
         ),
@@ -943,7 +944,7 @@ void main() {
       HyphenText(
         'in the woods',
         style: style,
-        hyphenator: loadTestLatinHyphenator(danglingWords: words),
+        hyphenator: loadTestHyphenator(danglingWords: words),
       ),
       width: 70,
     );

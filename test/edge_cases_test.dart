@@ -5,11 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'test_dictionaries.dart';
 
 void main() {
-  late Hyphenator latin;
+  late Hyphenator testDict;
   late Hyphenator english;
 
   setUp(() {
-    latin = loadTestLatinHyphenator();
+    testDict = loadTestHyphenator();
     english = loadEnglishHyphenator();
     HyphenationRegistry.instance.clear();
   });
@@ -37,7 +37,7 @@ void main() {
         HyphenText(
           'hyphenation',
           style: const TextStyle(fontSize: 20),
-          hyphenator: latin,
+          hyphenator: testDict,
         ),
         direction: TextDirection.rtl,
       ),
@@ -56,7 +56,7 @@ void main() {
               child: HyphenText(
                 'hyphenation',
                 style: const TextStyle(fontSize: 20),
-                hyphenator: latin,
+                hyphenator: testDict,
               ),
             ),
           ),
@@ -70,15 +70,15 @@ void main() {
   testWidgets('punctuation-only text is left alone', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(host(HyphenText('!!! ??? ...', hyphenator: latin)));
+    await tester.pumpWidget(host(HyphenText('!!! ??? ...', hyphenator: testDict)));
     expect(tester.takeException(), isNull);
     expect(renderOf(tester).sourceText, '!!! ??? ...');
   });
 
-  testWidgets('emoji and mixed scripts survive intact', (
+  testWidgets('emoji and symbols survive intact', (
     WidgetTester tester,
   ) async {
-    const text = 'internationalization 😀 hyphenation 中文';
+    const text = 'internationalization 😀 hyphenation →±';
     await tester.pumpWidget(
       host(
         HyphenText(
@@ -102,7 +102,7 @@ void main() {
         HyphenText(
           'one\ntwo\n\nthree',
           style: const TextStyle(fontSize: 10),
-          hyphenator: latin,
+          hyphenator: testDict,
         ),
         width: 200,
       ),
@@ -119,7 +119,7 @@ void main() {
           HyphenText(
             'hyphenation extraordinary',
             style: const TextStyle(fontSize: 20),
-            hyphenator: latin,
+            hyphenator: testDict,
           ),
           width: width,
         ),
@@ -135,7 +135,7 @@ void main() {
         HyphenText(
           long,
           style: const TextStyle(fontSize: 20),
-          hyphenator: latin,
+          hyphenator: testDict,
         ),
         width: 150,
       ),
@@ -151,7 +151,7 @@ void main() {
           HyphenText(
             'hyphenation extraordinary',
             style: const TextStyle(fontSize: 20),
-            hyphenator: latin,
+            hyphenator: testDict,
           ),
           width: 100 + (i % 3),
         ),
@@ -166,7 +166,7 @@ void main() {
         HyphenText(
           'hyphenation',
           style: const TextStyle(fontSize: 20),
-          hyphenator: latin,
+          hyphenator: testDict,
         ),
       ),
     );

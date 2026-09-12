@@ -15,7 +15,7 @@ import 'package:flutter_hyphen/src/hyphenator.dart';
 ///
 /// ```dart
 /// const HyphenText(
-///   'Donaudampfschifffahrtsgesellschaft',
+///   'antidisestablishmentarianism',
 ///   style: TextStyle(fontSize: 20),
 /// )
 /// ```

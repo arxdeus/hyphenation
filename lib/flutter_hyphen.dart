@@ -25,6 +25,8 @@ export 'package:flutter_hyphen/src/hyphen_paragraph.dart'
 export 'package:flutter_hyphen/src/hyphen_scope.dart'
     show HyphenScope, HyphenationRegistry;
 export 'package:flutter_hyphen/src/hyphen_text.dart' show HyphenText;
+export 'package:flutter_hyphen/src/hyphenation/dictionary.dart'
+    show HyphenationDictionary;
 export 'package:flutter_hyphen/src/hyphenator.dart'
     show Hyphenator, kSoftHyphen;
 export 'package:flutter_hyphen/src/line_breaker.dart' show HyphenLineBreaker;

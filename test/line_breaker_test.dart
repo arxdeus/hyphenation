@@ -9,9 +9,9 @@ double measureByCharacter(String text) => text.length * 10.0;
 
 void main() {
   group('HyphenLineBreaker', () {
-    late Hyphenator latin;
+    late Hyphenator testDict;
 
-    setUp(() => latin = loadTestLatinHyphenator());
+    setUp(() => testDict = loadTestHyphenator());
 
     HyphenLineBreaker breakerFor(Hyphenator? hyphenator) => HyphenLineBreaker(
       measure: measureByCharacter,
@@ -27,7 +27,7 @@ void main() {
     });
 
     test('splits a long word and paints a hyphen', () {
-      final breaker = breakerFor(latin);
+      final breaker = breakerFor(testDict);
       // 'hyphenation' breaks as hy-phen-ation. At width 70 the longest prefix
       // that fits once the hyphen is added is 'hyphen-' (7 characters).
       expect(breaker.breakText('hyphenation', 70), <String>[
@@ -37,7 +37,7 @@ void main() {
     });
 
     test('a wider column keeps more of the word on the first line', () {
-      final breaker = breakerFor(latin);
+      final breaker = breakerFor(testDict);
       // At 60 'hyphen-' no longer fits, so the earlier break point wins.
       expect(
         breaker.breakText('hyphenation', 60),
@@ -56,7 +56,7 @@ void main() {
     });
 
     test('no line exceeds the requested width where a break exists', () {
-      final breaker = breakerFor(latin);
+      final breaker = breakerFor(testDict);
       const text = 'always wonderful extraordinary computer hyphenation';
       for (final width in <double>[40, 70, 100, 130]) {
         for (final line in breaker.breakText(text, width)) {
@@ -74,7 +74,7 @@ void main() {
     });
 
     test('the original text survives the round trip', () {
-      final breaker = breakerFor(latin);
+      final breaker = breakerFor(testDict);
       const text = 'always wonderful extraordinary computer hyphenation';
       for (final width in <double>[30, 55, 80, 200]) {
         final rebuilt = breaker
@@ -91,18 +91,18 @@ void main() {
     });
 
     test('hard newlines are preserved', () {
-      final breaker = breakerFor(latin);
+      final breaker = breakerFor(testDict);
       expect(breaker.breakText('aa\nbb', 100), <String>['aa', 'bb']);
       expect(breaker.breakText('aa\n\nbb', 100), <String>['aa', '', 'bb']);
     });
 
     test('a trailing newline yields a trailing empty line', () {
-      final breaker = breakerFor(latin);
+      final breaker = breakerFor(testDict);
       expect(breaker.breakText('aa\n', 100), <String>['aa', '']);
     });
 
     test('soft hyphens are consumed, never painted', () {
-      final breaker = breakerFor(latin);
+      final breaker = breakerFor(testDict);
       final lines = breaker.breakText('wonder${kSoftHyphen}land', 70);
       expect(lines, <String>['wonder-', 'land']);
       for (final line in lines) {
@@ -111,7 +111,7 @@ void main() {
     });
 
     test('an existing hyphen is not doubled', () {
-      final breaker = breakerFor(latin);
+      final breaker = breakerFor(testDict);
       expect(breaker.breakText('e-mail', 20), <String>['e-', 'mail']);
     });
 
@@ -121,11 +121,11 @@ void main() {
     });
 
     test('empty text yields one empty line', () {
-      expect(breakerFor(latin).breakText('', 100), <String>['']);
+      expect(breakerFor(testDict).breakText('', 100), <String>['']);
     });
 
     test('minIntrinsicWidth is the widest unbreakable chunk', () {
-      final breaker = breakerFor(latin);
+      final breaker = breakerFor(testDict);
       // Every chunk is measured with the hyphen it would carry: 'al-' (3),
       // 'ways' (4), 'hy-' (3), 'phen-' (5) and 'ation' (5). The widest is 5
       // characters at 10 each.
@@ -141,7 +141,7 @@ void main() {
       // The implementation sorts the chunks by length and stops once no
       // shorter chunk can win, which is only sound if the bound it uses is
       // conservative. Checked here against measuring every chunk.
-      final breaker = breakerFor(latin);
+      final breaker = breakerFor(testDict);
       for (final text in <String>[
         'hyphenation extraordinary computer always wonderful',
         'always',
@@ -157,7 +157,7 @@ void main() {
             }
             // The widest a chunk of this word can be is the whole word, and
             // the narrowest is bounded below by any of its hyphenated parts.
-            for (final part in latin.split(word)) {
+            for (final part in testDict.split(word)) {
               final width = measureByCharacter(part);
               if (width > exhaustive) {
                 exhaustive = width;
@@ -198,7 +198,7 @@ void main() {
         final ends = <(int, bool)>[];
         var offset = 0;
         for (final word in words) {
-          for (final cut in latin.breakOffsets(word)) {
+          for (final cut in testDict.breakOffsets(word)) {
             ends.add((offset + cut, true));
           }
           offset += word.length;
@@ -235,7 +235,7 @@ void main() {
       for (final text in texts) {
         // One breaker per text so its running estimate evolves across widths
         // the way it does across a resize.
-        final breaker = HyphenLineBreaker(measure: uneven, hyphenator: latin);
+        final breaker = HyphenLineBreaker(measure: uneven, hyphenator: testDict);
         for (var width = 20.0; width <= 320; width += 3) {
           expect(
             breaker.breakText(text, width),
@@ -251,7 +251,7 @@ void main() {
       // grow it without limit.
       final breaker = HyphenLineBreaker(
         measure: measureByCharacter,
-        hyphenator: latin,
+        hyphenator: testDict,
         maxMeasurementCacheSize: 8,
       );
       const text = 'always wonderful extraordinary computer hyphenation';
@@ -273,7 +273,7 @@ void main() {
           calls++;
           return measureByCharacter(text);
         },
-        hyphenator: latin,
+        hyphenator: testDict,
       );
       final first = breaker.breakText('hyphenation hyphenation', 60);
       final callsAfterFirst = calls;
@@ -293,7 +293,7 @@ void main() {
     /// A dictionary that also refuses to leave 'the' at the end of a line.
     HyphenLineBreaker breakerWith(Iterable<String> words) => HyphenLineBreaker(
       measure: measureByCharacter,
-      hyphenator: loadTestLatinHyphenator(danglingWords: words),
+      hyphenator: loadTestHyphenator(danglingWords: words),
     );
 
     test('carries a dangling word down to the next line', () {

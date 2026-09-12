@@ -6,11 +6,11 @@ import 'test_dictionaries.dart';
 void main() {
   group('Hyphenator', () {
     late Hyphenator english;
-    late Hyphenator latin;
+    late Hyphenator testDict;
 
     setUp(() {
       english = loadEnglishHyphenator();
-      latin = loadTestLatinHyphenator();
+      testDict = loadTestHyphenator();
     });
 
     test('splits a word at dictionary points', () {
@@ -66,12 +66,12 @@ void main() {
     });
 
     test('treats an existing hyphen as a break opportunity', () {
-      final offsets = latin.breakOffsets('e-mail');
+      final offsets = testDict.breakOffsets('e-mail');
       expect(offsets, contains(2));
     });
 
     test('treats a soft hyphen as an author-supplied break', () {
-      final offsets = latin.breakOffsets('wonder${kSoftHyphen}land');
+      final offsets = testDict.breakOffsets('wonder${kSoftHyphen}land');
       expect(offsets, contains(6));
     });
 
@@ -98,7 +98,7 @@ void main() {
     });
 
     test('honours the cache size limit', () {
-      final small = Hyphenator(english.hyphen, maxCacheSize: 2);
+      final small = Hyphenator(english.dictionary, maxCacheSize: 2);
       expect(small.split('programming'), isNotEmpty);
       expect(small.split('constitution'), isNotEmpty);
       expect(small.split('information'), isNotEmpty);
@@ -114,7 +114,7 @@ void main() {
       int breaksFor(int repeats) {
         final word = 'internationalization' * repeats;
         final offsets = Hyphenator(
-          english.hyphen,
+          english.dictionary,
           maxCacheSize: 0,
         ).breakOffsets(word);
         expect(offsets, isNotEmpty);
@@ -133,7 +133,7 @@ void main() {
     });
     test('every cache stays within its bound', () {
       final small = Hyphenator(
-        english.hyphen,
+        english.dictionary,
         maxCacheSize: 3,
         maxParagraphCacheSize: 2,
       );
@@ -151,7 +151,7 @@ void main() {
     test('paragraph caches are bounded far below the word cache', () {
       // Paragraph entries are ~1000x the size of a word entry, so the default
       // must not be the same number for both.
-      final hyphenator = Hyphenator(english.hyphen);
+      final hyphenator = Hyphenator(english.dictionary);
       expect(hyphenator.maxCacheSize, 5000);
       expect(
         hyphenator.maxParagraphCacheSize,
@@ -163,13 +163,13 @@ void main() {
       );
       // Disabling the cache still disables all of it.
       expect(
-        Hyphenator(english.hyphen, maxCacheSize: 0).maxParagraphCacheSize,
+        Hyphenator(english.dictionary, maxCacheSize: 0).maxParagraphCacheSize,
         0,
       );
     });
 
     test('eviction drops the least recently used entry, not the oldest', () {
-      final small = Hyphenator(english.hyphen, maxParagraphCacheSize: 2);
+      final small = Hyphenator(english.dictionary, maxParagraphCacheSize: 2);
       small
         ..cacheBreak('a', 'A')
         ..cacheBreak('b', 'B');
@@ -202,7 +202,7 @@ void main() {
     });
 
     test('the marked cache respects the size limit', () {
-      final small = Hyphenator(english.hyphen, maxCacheSize: 2);
+      final small = Hyphenator(english.dictionary, maxCacheSize: 2);
       for (final text in <String>[
         'hello world',
         'constitution of the country',
@@ -243,12 +243,12 @@ void main() {
 
   group('danglingWords', () {
     test('is null when no list is given', () {
-      expect(loadTestLatinHyphenator().danglingWords, isNull);
+      expect(loadTestHyphenator().danglingWords, isNull);
     });
 
     test('is null when the list is empty', () {
       expect(
-        loadTestLatinHyphenator(
+        loadTestHyphenator(
           // Passing the default explicitly is the point of the test.
           // ignore: avoid_redundant_argument_values
           danglingWords: const <String>[],
@@ -258,7 +258,7 @@ void main() {
     });
 
     test('is compiled when a list is given', () {
-      final hyphenator = loadTestLatinHyphenator(
+      final hyphenator = loadTestHyphenator(
         danglingWords: const <String>['the', 'of'],
       );
       expect(hyphenator.danglingWords, isNotNull);
@@ -269,7 +269,7 @@ void main() {
       test('is false for unhyphenable text with no list', () {
         // None of these words is in the test dictionary.
         expect(
-          loadTestLatinHyphenator().hasBreakOpportunity('in the woods'),
+          loadTestHyphenator().hasBreakOpportunity('in the woods'),
           isFalse,
         );
       });
@@ -278,7 +278,7 @@ void main() {
         // This is what stops RenderHyphenParagraph from handing the text
         // straight to the engine and ignoring the word list.
         expect(
-          loadTestLatinHyphenator(
+          loadTestHyphenator(
             danglingWords: const <String>['the'],
           ).hasBreakOpportunity('in the woods'),
           isTrue,
@@ -289,7 +289,7 @@ void main() {
         // Nothing follows it, so it would not be glued to anything and the
         // breaker has no work to do.
         expect(
-          loadTestLatinHyphenator(
+          loadTestHyphenator(
             danglingWords: const <String>['the'],
           ).hasBreakOpportunity('woods the'),
           isFalse,
@@ -298,7 +298,7 @@ void main() {
 
       test('stays true when the dictionary can break a word anyway', () {
         expect(
-          loadTestLatinHyphenator(
+          loadTestHyphenator(
             danglingWords: const <String>['the'],
           ).hasBreakOpportunity('hyphenation'),
           isTrue,

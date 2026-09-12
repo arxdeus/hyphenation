@@ -35,7 +35,7 @@ Future<void> main() async {
     kEnglishDictionary,
     danglingWords: kEnglishDanglingWords,
   );
-  kPlainHyphenator = Hyphenator(hyphenator.hyphen);
+  kPlainHyphenator = Hyphenator(hyphenator.dictionary);
   runApp(const HyphenDemoApp());
 }
 
