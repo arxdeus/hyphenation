@@ -49,12 +49,19 @@ class PatternAutomaton {
     required this.priorityAt,
     required this.priorityLength,
     required this.priorityBytes,
-    required this.replacementRef,
-    required this.replacementAt,
-    required this.replacementCut,
+    required Int32List? replacementRef,
+    required Int32List? replacementAt,
+    required Int32List? replacementCut,
     required this.replacements,
     required this.rewritesWords,
-  });
+    // Keep the existing public parameter names while storing the optional
+    // arrays privately for lazy materialization by the inspection getters.
+    // ignore: prefer_initializing_formals
+  }) : _replacementRef = replacementRef,
+       // ignore: prefer_initializing_formals
+       _replacementAt = replacementAt,
+       // ignore: prefer_initializing_formals
+       _replacementCut = replacementCut;
 
   /// How many nodes the trie has, root included.
   final int nodeCount;
@@ -87,12 +94,21 @@ class PatternAutomaton {
   final Uint8List priorityBytes;
 
   /// Packed `(offset << 8) | length` into [replacements], or -1.
-  final Int32List replacementRef;
+  ///
+  /// Non-rewriting automatons omit this storage until explicitly inspected.
+  /// The getter preserves the node-sized array API for inspection callers.
+  Int32List get replacementRef =>
+      _replacementRef ??= (Int32List(nodeCount)..fillRange(0, nodeCount, -1));
+  Int32List? _replacementRef;
 
   /// Where in the matched pattern the replacement starts, and how many
   /// characters of it the replacement consumes.
-  final Int32List replacementAt;
-  final Int32List replacementCut;
+  Int32List get replacementAt => _replacementAt ??= Int32List(nodeCount);
+  Int32List? _replacementAt;
+
+  /// How many characters the replacement consumes, indexed by node.
+  Int32List get replacementCut => _replacementCut ??= Int32List(nodeCount);
+  Int32List? _replacementCut;
 
   /// The text every replacement in the whole dictionary points into.
   ///
@@ -148,7 +164,12 @@ class PatternAutomaton {
 
   /// The replacement text of the pattern ending at [node], or null.
   Uint8List? replacementOf(int node) {
-    final ref = replacementRef[node];
+    final references = _replacementRef;
+    if (references == null) {
+      RangeError.checkValidIndex(node, priorityAt, 'node');
+      return null;
+    }
+    final ref = references[node];
     if (ref < 0) {
       return null;
     }

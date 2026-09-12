@@ -204,6 +204,11 @@ class BreakMarker {
     final priorityAt = automaton.priorityAt;
     final priorityLength = automaton.priorityLength;
     final priorityBytes = automaton.priorityBytes;
+    // Read lazy rewrite metadata once per level, never once per pattern, and
+    // do not materialize absent arrays on the non-rewriting fast path.
+    final replacementRef = rewrites ? automaton.replacementRef : null;
+    final replacementAt = rewrites ? automaton.replacementAt : null;
+    final replacementCut = rewrites ? automaton.replacementCut : null;
 
     var node = 0;
     for (var i = 0; i < end; i++) {
@@ -262,9 +267,9 @@ class BreakMarker {
         continue;
       }
 
-      final reference = automaton.replacementRef[node];
-      final replaceAt = automaton.replacementAt[node];
-      final replaceCut = automaton.replacementCut[node];
+      final reference = replacementRef![node];
+      final replaceAt = replacementAt![node];
+      final replaceCut = replacementCut![node];
 
       if (reference >= 0) {
         if (tracking == 0) {

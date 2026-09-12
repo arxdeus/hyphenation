@@ -18,35 +18,25 @@ class BreakCandidateGenerator {
   /// Break opportunities in `content[from..to)`.
   List<BreakCandidate> generate(String content, int from, int to) {
     final candidates = <BreakCandidate>[];
-    // Word bounds are kept flat, as start/end pairs in one list, rather than
-    // as a list of two-element lists: this runs for every word of every hard
-    // line on every break, and the inner lists were pure allocation churn.
-    final words = <int>[];
+    final dangling = hyphenator?.danglingWords;
+    // Only the next word's start is needed. Keep that lookahead in a scalar
+    // rather than allocating and then traversing two bounds for every word.
     var index = from;
+    while (index < to && _isBreakingSpace(content.codeUnitAt(index))) {
+      index++;
+    }
     while (index < to) {
-      while (index < to && _isBreakingSpace(content.codeUnitAt(index))) {
-        index++;
-      }
-      if (index >= to) {
-        break;
-      }
       final wordStart = index;
       while (index < to && !_isBreakingSpace(content.codeUnitAt(index))) {
         index++;
       }
-      words
-        ..add(wordStart)
-        ..add(index);
-    }
-
-    final wordCount = words.length >> 1;
-    // Hoisted: when the feature is off this is the only cost it has.
-    final dangling = hyphenator?.danglingWords;
-    for (var i = 0; i < wordCount; i++) {
-      final wordStart = words[i * 2];
-      final wordEnd = words[i * 2 + 1];
-      final word = content.substring(wordStart, wordEnd);
-      final offsets = hyphenator?.breakOffsets(word) ?? const <int>[];
+      final wordEnd = index;
+      while (index < to && _isBreakingSpace(content.codeUnitAt(index))) {
+        index++;
+      }
+      final offsets =
+          hyphenator?.breakOffsets(content.substring(wordStart, wordEnd)) ??
+          const <int>[];
       for (final offset in offsets) {
         final absolute = wordStart + offset;
         if (absolute <= wordStart || absolute >= wordEnd) {
@@ -68,7 +58,7 @@ class BreakCandidateGenerator {
           );
         }
       }
-      final isLast = i + 1 >= wordCount;
+      final isLast = index >= to;
       // A dangling word is glued to the word after it simply by not offering
       // the break that would separate them, so the line runs on and takes
       // both. Nothing is inserted into the text.
@@ -82,7 +72,7 @@ class BreakCandidateGenerator {
         candidates.add(
           BreakCandidate(
             end: wordEnd,
-            next: isLast ? to : words[(i + 1) * 2],
+            next: index,
             hyphen: false,
           ),
         );
