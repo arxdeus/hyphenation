@@ -4,6 +4,7 @@ import 'package:flutter_hyphen/src/cache/lru_cache.dart';
 import 'package:flutter_hyphen/src/model/hyphenation_dictionary.dart';
 import 'package:flutter_hyphen/src/processor/dangling_words.dart';
 import 'package:flutter_hyphen/src/processor/word_break_processor.dart';
+import 'package:meta/meta.dart';
 
 /// The Unicode soft hyphen (`U+00AD`).
 ///
@@ -192,9 +193,17 @@ class Hyphenator {
   );
 
   /// Returns the cached broken form for [key], or null.
+  ///
+  /// Public only so [RenderHyphenParagraph] can reach the cache that has to
+  /// live on the shared hyphenator rather than on a render object; two
+  /// identical paragraphs must be able to see each other's work.
+  @internal
   String? cachedBreak(Object key) => _brokenCache[key];
 
   /// Records [value] as the broken form for [key].
+  ///
+  /// See [cachedBreak] for why this is not private.
+  @internal
   void cacheBreak(Object key, String value) => _brokenCache[key] = value;
 
   /// How many entries each cache currently holds, for tests and diagnostics.

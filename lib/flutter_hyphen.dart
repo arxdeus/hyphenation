@@ -18,17 +18,11 @@
 /// ```
 library;
 
-export 'package:flutter_hyphen/src/model/hyphenation_dictionary.dart'
-    show HyphenationDictionary;
-export 'package:flutter_hyphen/src/processor/dangling_words.dart'
-    show DanglingWords;
-export 'package:flutter_hyphen/src/processor/hyphen_line_breaker.dart'
-    show HyphenLineBreaker;
-export 'package:flutter_hyphen/src/service/hyphenation_registry.dart'
-    show HyphenationRegistry;
-export 'package:flutter_hyphen/src/service/hyphenator.dart'
-    show Hyphenator, kSoftHyphen;
-export 'package:flutter_hyphen/src/widget/hyphen_paragraph.dart'
-    show HyphenParagraph, RenderHyphenParagraph;
-export 'package:flutter_hyphen/src/widget/hyphen_scope.dart' show HyphenScope;
-export 'package:flutter_hyphen/src/widget/hyphen_text.dart' show HyphenText;
+export 'package:flutter_hyphen/src/model/hyphenation_dictionary.dart';
+export 'package:flutter_hyphen/src/processor/dangling_words.dart';
+export 'package:flutter_hyphen/src/processor/hyphen_line_breaker.dart';
+export 'package:flutter_hyphen/src/service/hyphenation_registry.dart';
+export 'package:flutter_hyphen/src/service/hyphenator.dart';
+export 'package:flutter_hyphen/src/widget/hyphen_paragraph.dart';
+export 'package:flutter_hyphen/src/widget/hyphen_scope.dart';
+export 'package:flutter_hyphen/src/widget/hyphen_text.dart';
