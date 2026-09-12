@@ -32,6 +32,8 @@ class TexPatternTable {
     required this.edgeStart,
     required this.edgeUnit,
     required this.edgeTarget,
+    required this.tableBase,
+    required this.tableEntries,
     required this.priorityAt,
     required this.priorityLength,
     required this.priorityBytes,
@@ -46,6 +48,16 @@ class TexPatternTable {
   final Int32List edgeStart;
   final Uint16List edgeUnit;
   final Int32List edgeTarget;
+
+  /// Offset of a node's direct table in [tableEntries], or -1 when the node
+  /// has few enough edges to be worth searching instead.
+  ///
+  /// A direct table turns the lookup into a single indexed load. It costs
+  /// [kTableSpan] entries, so only nodes wide enough to pay for it get one:
+  /// in a real pattern set that is the root and its busiest children, which
+  /// between them absorb most of the lookups.
+  final Int32List tableBase;
+  final Int32List tableEntries;
 
   /// Where this node's priority vector starts in [priorityBytes], or -1 when
   /// no pattern ends here.
@@ -84,10 +96,18 @@ class TexPatternTable {
 
   /// The node [unit] leads to from [node], or -1.
   ///
-  /// Binary search rather than a linear scan: the root has hundreds of
-  /// children and is visited once per character of every word, so this is
-  /// the single hottest lookup in the package.
+  /// A direct table where the node has one, a binary search where it does
+  /// not. This is the single hottest lookup in the package: it runs once per
+  /// character of every pattern prefix tried, which is several times per
+  /// character of every word.
   int edgeFrom(int node, int unit) {
+    final base = tableBase[node];
+    if (base >= 0) {
+      if (unit >= kTableSpan) {
+        return -1;
+      }
+      return tableEntries[base + unit];
+    }
     var low = edgeStart[node];
     var high = edgeStart[node + 1] - 1;
     while (low <= high) {
@@ -105,6 +125,20 @@ class TexPatternTable {
     return -1;
   }
 }
+
+/// How many code units a direct table covers.
+///
+/// Patterns are letters and the boundary dot, which in every Latin-script
+/// pattern file live below 128. A wider table would cover the occasional
+/// accented letter too, but those sit in nodes far too narrow to be given a
+/// table at all.
+const int kTableSpan = 128;
+
+/// How many edges a node needs before a direct table is worth its memory.
+///
+/// Below this a binary search is two or three steps, which is cheaper than
+/// the cache miss a sparse table would cost.
+const int kTableThreshold = 12;
 
 /// Grows a trie one pattern at a time, then freezes it into typed arrays.
 ///
@@ -157,14 +191,32 @@ class _TrieBuilder {
     final priorityAt = Int32List(nodeCount)..fillRange(0, nodeCount, -1);
     final priorityLength = Uint8List(nodeCount);
     final priorityBlob = <int>[];
+    final tableBase = Int32List(nodeCount)..fillRange(0, nodeCount, -1);
+
+    // Lay the direct tables out before filling anything, so their storage is
+    // one allocation rather than one per node.
+    var tableCount = 0;
+    for (var node = 0; node < nodeCount; node++) {
+      if (_edges[node].length >= kTableThreshold) {
+        tableBase[node] = tableCount * kTableSpan;
+        tableCount++;
+      }
+    }
+    final tableEntries = Int32List(tableCount * kTableSpan)
+      ..fillRange(0, tableCount * kTableSpan, -1);
 
     for (var node = 0; node < nodeCount; node++) {
       // Sorted so the matcher can binary search.
       final units = _edges[node].keys.toList(growable: false)..sort();
       var at = edgeStart[node];
+      final base = tableBase[node];
       for (final unit in units) {
+        final target = _edges[node][unit]!;
         edgeUnit[at] = unit;
-        edgeTarget[at] = _edges[node][unit]!;
+        edgeTarget[at] = target;
+        if (base >= 0 && unit < kTableSpan) {
+          tableEntries[base + unit] = target;
+        }
         at++;
       }
 
@@ -180,6 +232,8 @@ class _TrieBuilder {
       edgeStart: edgeStart,
       edgeUnit: edgeUnit,
       edgeTarget: edgeTarget,
+      tableBase: tableBase,
+      tableEntries: tableEntries,
       priorityAt: priorityAt,
       priorityLength: priorityLength,
       priorityBytes: Uint8List.fromList(priorityBlob),

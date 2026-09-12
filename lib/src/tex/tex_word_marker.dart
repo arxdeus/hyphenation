@@ -85,6 +85,8 @@ class TexWordMarker {
     final edgeStart = table.edgeStart;
     final edgeUnit = table.edgeUnit;
     final edgeTarget = table.edgeTarget;
+    final tableBase = table.tableBase;
+    final tableEntries = table.tableEntries;
     final priorityAt = table.priorityAt;
     final priorityLength = table.priorityLength;
     final priorityBytes = table.priorityBytes;
@@ -94,23 +96,29 @@ class TexWordMarker {
       for (var i = start; i < paddedLength; i++) {
         final unit = padded[i];
 
-        // Inlined binary search. Hoisting the arrays above and inlining here
-        // is worth roughly a third of the total marking time: this is the
+        // Inlined lookup. Hoisting the arrays above and inlining here is
+        // worth roughly a third of the total marking time: this is the
         // innermost loop of the whole package.
-        var low = edgeStart[node];
-        var high = edgeStart[node + 1] - 1;
-        var next = -1;
-        while (low <= high) {
-          final mid = (low + high) >> 1;
-          final at = edgeUnit[mid];
-          if (at == unit) {
-            next = edgeTarget[mid];
-            break;
-          }
-          if (at < unit) {
-            low = mid + 1;
-          } else {
-            high = mid - 1;
+        int next;
+        final base = tableBase[node];
+        if (base >= 0) {
+          next = unit < kTableSpan ? tableEntries[base + unit] : -1;
+        } else {
+          next = -1;
+          var low = edgeStart[node];
+          var high = edgeStart[node + 1] - 1;
+          while (low <= high) {
+            final mid = (low + high) >> 1;
+            final at = edgeUnit[mid];
+            if (at == unit) {
+              next = edgeTarget[mid];
+              break;
+            }
+            if (at < unit) {
+              low = mid + 1;
+            } else {
+              high = mid - 1;
+            }
           }
         }
         if (next < 0) {

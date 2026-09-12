@@ -66,7 +66,7 @@ TexPatternSource parseTexPatterns(String source) {
       if (open < 0) {
         break;
       }
-      i = _readGroup(units, open + 1, (token) => patterns.add(token));
+      i = _readGroup(units, open + 1, patterns.add);
       continue;
     }
     if (name == 'hyphenation') {
