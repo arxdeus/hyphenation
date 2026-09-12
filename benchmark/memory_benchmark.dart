@@ -19,7 +19,7 @@ void prepare(String phase) {
   retainedDictionaries.clear();
   switch (phase) {
     case 'empty':
-      break;
+      return;
     case 'one':
     case 'twenty':
     case 'giant':
@@ -31,7 +31,7 @@ void prepare(String phase) {
       if (phase == 'giant') {
         checksum += retainedDictionaries.single.markWord('x' * 1000000);
       }
-      break;
+      return;
     case 'nohyphen':
       // Small input view backed by an otherwise unreachable 8 MiB parent.
       final parent = Uint8List(8 * 1024 * 1024);
@@ -42,7 +42,7 @@ void prepare(String phase) {
           Uint8List.sublistView(parent, 0, source.length),
         ),
       );
-      break;
+      return;
     default:
       throw ArgumentError.value(phase, 'phase');
   }
