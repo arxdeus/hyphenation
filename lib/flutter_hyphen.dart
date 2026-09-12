@@ -18,10 +18,12 @@
 /// ```
 library;
 
+export 'package:flutter_hyphen/src/constant/dangling_word_defaults.dart'
+    show kEnglishDanglingWords;
 export 'package:flutter_hyphen/src/model/hyphenation_dictionary.dart'
     show HyphenationDictionary;
 export 'package:flutter_hyphen/src/processor/dangling_words.dart'
-    show DanglingWords, kEnglishDanglingWords;
+    show DanglingWords;
 export 'package:flutter_hyphen/src/processor/hyphen_line_breaker.dart'
     show HyphenLineBreaker;
 export 'package:flutter_hyphen/src/service/hyphenation_registry.dart'

@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:flutter_hyphen/src/encoder/word_encoder.dart';
+import 'package:flutter_hyphen/src/exception/dictionary_format_exception.dart';
 import 'package:flutter_hyphen/src/model/dictionary_charset.dart';
 import 'package:flutter_hyphen/src/model/edge_limits.dart';
 import 'package:flutter_hyphen/src/model/pattern_set.dart';
