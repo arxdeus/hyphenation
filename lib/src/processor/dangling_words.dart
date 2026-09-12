@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:flutter_hyphen/src/constant/dangling_word_defaults.dart';
 import 'package:flutter_hyphen/src/util/code_units.dart';
 
 /// A word list compiled into a form that can be probed without allocating.
@@ -105,9 +104,6 @@ class DanglingWords {
     final compiled = DanglingWords(words);
     return compiled.source.isEmpty ? null : compiled;
   }
-
-  /// The bundled English list, compiled once.
-  static final DanglingWords english = DanglingWords(kEnglishDanglingWords);
 
   /// The words as given, used when a token contains a unit [_fold] cannot map.
   final Set<String> source;

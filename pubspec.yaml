@@ -1,6 +1,6 @@
 name: flutter_hyphen
 description: "HyphenText, a drop-in replacement for Flutter's Text that hyphenates long words correctly using a the legacy engine dictionary."
-version: 0.1.0
+version: 1.0.0
 # TODO: point these at the repository before publishing.
 # homepage:
 # repository:
@@ -17,6 +17,7 @@ dependencies:
   characters: ^1.4.1
   flutter:
     sdk: flutter
+  meta: ^1.19.0
 
 dev_dependencies:
   bench_press: ^0.3.0

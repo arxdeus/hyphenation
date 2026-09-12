@@ -91,6 +91,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../test/support/test_dictionaries.dart';
 import 'support/comparison.dart';
+import 'support/dangling_word_lists.dart';
 import 'support/widget_harness.dart';
 
 /// Realistic prose: a normal density of short words to glue.
@@ -291,7 +292,7 @@ Int32List wordRanges(String text) {
 
 void main() {
   final comparisons = <ThroughputComparison>[];
-  final words = DanglingWords.english;
+  final words = DanglingWords(kEnglishDanglingWords);
 
   Future<void> compare(
     String name,

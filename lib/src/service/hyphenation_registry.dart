@@ -56,8 +56,9 @@ class HyphenationRegistry extends ChangeNotifier {
   /// replaces the previous dictionary.
   ///
   /// [danglingWords] lists words that must not be left hanging at the end of
-  /// a line, such as [kEnglishDanglingWords]. Leave it empty to turn the
-  /// feature off.
+  /// a line, such as English prepositions and conjunctions. No list is
+  /// bundled; supply one for your language and house style. Leave it empty to
+  /// turn the feature off.
   Future<Hyphenator> registerAsset(
     Locale? locale,
     String assetPath, {

@@ -1,4 +1,5 @@
 import 'package:example/app.dart';
+import 'package:example/constant/dangling_words.dart';
 import 'package:example/constant/demo_dictionary.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';

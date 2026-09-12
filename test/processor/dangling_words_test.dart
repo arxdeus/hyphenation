@@ -1,6 +1,8 @@
 import 'package:flutter_hyphen/flutter_hyphen.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/dangling_word_lists.dart';
+
 void main() {
   group('DanglingWords.compile', () {
     test('an empty list turns the feature off', () {
@@ -20,7 +22,7 @@ void main() {
   });
 
   group('DanglingWords.contains', () {
-    final english = DanglingWords.english;
+    final english = DanglingWords(kEnglishDanglingWords);
 
     test('matches a listed word', () {
       expect(english.contains('the'), isTrue);
