@@ -24,11 +24,15 @@
 //    shared `Hyphenator`, so a paragraph whose text, style and width have been
 //    seen before is answered from cache, while a plain `Text` re-breaks every
 //    time.
-//  - The expensive rows are the ones that actually decide line breaks. What
-//    they cost is engine measurements of strings it has not seen, so the
-//    breaker aims its search (predict from the average glyph width, gallop
+//  - The expensive rows are the ones that actually decide line breaks, and
+//    measurement is 88% of that; everything else the breaker does is 12%. So
+//    the breaker aims its search (predict from the average glyph width, gallop
 //    outwards, then bisect the remaining gap) instead of bisecting blindly:
 //    5.7 measurements per line down to 2.2, and about 2.3x faster breaking.
+//    Greedy breaking needs at least 2.0 per line, one to show a candidate fits
+//    and one to show the next does not, so the search is within 9% of its
+//    floor. Further wins have to come from measuring differently, not from
+//    searching better, and the prefix-width note below covers that attempt.
 //  - A cold dictionary adds lookups on top, roughly 3 us per uncached word
 //    against 16 ns cached. That part is the hyphen package's own engine, so it
 //    is a floor set by the dictionary rather than something this package can
@@ -53,6 +57,17 @@
 //    17 us for a string the engine has not seen. It still lost badly, because
 //    on a cold cache it measures many more distinct short strings than the
 //    binary search measures long ones: the cold row went from 13.9x to 40.8x.
+//  - Prefix widths from a single layout: lay the line out once at infinite
+//    width and take any candidate's width as the difference of two
+//    `getOffsetForCaret` values, so the search needs no measurement at all.
+//    Rejected on measurement, twice over. Accuracy: the default test font is
+//    fixed-advance (i, m and W all 16.0), which makes the idea look exact, but
+//    with a real kerned font (Times New Roman via FontLoader) the error is up
+//    to 0.74px and nonzero in 45% of Latin ranges, because a run shaped alone
+//    kerns differently at its edges than in context. Cost: layout is about
+//    7us + 0.22us per character, so one pass over a 398-character paragraph is
+//    95.8us plus ~100 caret lookups at 0.76us, against the ~264us of
+//    measurement it would save. Roughly break-even, for a loss of exactness.
 //  - Memoising the break candidates per hard line on the breaker was removed
 //    again. Rebuilding them is a tokenise plus one cached dictionary lookup
 //    per word, tens of nanoseconds against the hundreds of microseconds a

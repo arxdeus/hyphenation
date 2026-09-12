@@ -358,7 +358,10 @@ class HyphenLineBreaker {
 
   List<_Candidate> _candidatesFor(String content, int from, int to) {
     final candidates = <_Candidate>[];
-    final words = <List<int>>[];
+    // Word bounds are kept flat, as start/end pairs in one list, rather than
+    // as a list of two-element lists: this runs for every word of every hard
+    // line on every break, and the inner lists were pure allocation churn.
+    final words = <int>[];
     var index = from;
     while (index < to) {
       while (index < to && _isBreakingSpace(content.codeUnitAt(index))) {
@@ -371,12 +374,15 @@ class HyphenLineBreaker {
       while (index < to && !_isBreakingSpace(content.codeUnitAt(index))) {
         index++;
       }
-      words.add(<int>[wordStart, index]);
+      words
+        ..add(wordStart)
+        ..add(index);
     }
 
-    for (var i = 0; i < words.length; i++) {
-      final wordStart = words[i][0];
-      final wordEnd = words[i][1];
+    final wordCount = words.length >> 1;
+    for (var i = 0; i < wordCount; i++) {
+      final wordStart = words[i * 2];
+      final wordEnd = words[i * 2 + 1];
       final word = content.substring(wordStart, wordEnd);
       final offsets = hyphenator?.breakOffsets(word) ?? const <int>[];
       for (final offset in offsets) {
@@ -403,7 +409,7 @@ class HyphenLineBreaker {
       candidates.add(
         _Candidate(
           end: wordEnd,
-          next: i + 1 < words.length ? words[i + 1][0] : to,
+          next: i + 1 < wordCount ? words[(i + 1) * 2] : to,
           hyphen: false,
         ),
       );

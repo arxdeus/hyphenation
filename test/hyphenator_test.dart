@@ -103,6 +103,31 @@ void main() {
       expect(small.split('программирование').join(), 'программирование');
     });
 
+    test('break offsets scale linearly with the number of breaks', () {
+      // `_addOffset` used to scan the offsets it had already collected, which
+      // made a long word quadratic in its break points. Timing is too noisy to
+      // assert on, so this pins the invariant that lets the scan be linear:
+      // offsets are produced in ascending order and duplicate-free.
+      int breaksFor(int repeats) {
+        final word = 'непосредственное' * repeats;
+        final offsets = Hyphenator(
+          russian.hyphen,
+          maxCacheSize: 0,
+        ).breakOffsets(word);
+        expect(offsets, isNotEmpty);
+        for (var i = 1; i < offsets.length; i++) {
+          expect(
+            offsets[i],
+            greaterThan(offsets[i - 1]),
+            reason: 'offsets must ascend without duplicates',
+          );
+        }
+        return offsets.length;
+      }
+
+      expect(breaksFor(12), greaterThan(50));
+      expect(breaksFor(200), greaterThan(1000));
+    });
     test('every cache stays within its bound', () {
       final small = Hyphenator(
         russian.hyphen,
