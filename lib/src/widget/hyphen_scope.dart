@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:flutter_hyphen/src/hyphenator.dart';
+import 'package:flutter_hyphen/src/service/hyphenator.dart';
 
 /// Holds the [Hyphenator] instances an application has loaded, keyed by
 /// [Locale].

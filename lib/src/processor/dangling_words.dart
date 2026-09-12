@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:flutter_hyphen/src/code_units.dart';
+import 'package:flutter_hyphen/src/util/code_units.dart';
 
 /// English words that should not be left dangling at the end of a line.
 ///

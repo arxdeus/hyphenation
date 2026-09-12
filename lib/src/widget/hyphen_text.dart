@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_hyphen/src/hyphen_paragraph.dart';
-import 'package:flutter_hyphen/src/hyphen_scope.dart';
-import 'package:flutter_hyphen/src/hyphenator.dart';
+import 'package:flutter_hyphen/src/service/hyphenator.dart';
+import 'package:flutter_hyphen/src/widget/hyphen_paragraph.dart';
+import 'package:flutter_hyphen/src/widget/hyphen_scope.dart';
 
 /// A drop-in replacement for [Text] that hyphenates words at the end of a
 /// line.

@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
-import 'package:flutter_hyphen/src/code_units.dart' as units;
-import 'package:flutter_hyphen/src/hyphenator.dart';
-import 'package:flutter_hyphen/src/lru_cache.dart';
+import 'package:flutter_hyphen/src/cache/lru_cache.dart';
+import 'package:flutter_hyphen/src/service/hyphenator.dart';
+import 'package:flutter_hyphen/src/util/code_units.dart' as units;
 
 /// One break opportunity inside a hard line.
 @immutable

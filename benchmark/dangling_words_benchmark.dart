@@ -84,12 +84,11 @@
 
 import 'dart:typed_data';
 
+import '../test/test_dictionaries.dart';
 import 'package:bench_press/bench_press.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import '../test/test_dictionaries.dart';
 import 'text_layout_benchmark.dart' show buildHost, kStyle, pumpSync;
 
 /// Realistic prose: a normal density of short words to glue.

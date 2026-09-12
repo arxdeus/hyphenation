@@ -1,10 +1,10 @@
 import 'package:characters/characters.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_hyphen/src/code_units.dart';
-import 'package:flutter_hyphen/src/dangling_words.dart';
-import 'package:flutter_hyphen/src/hyphenation/dictionary.dart';
-import 'package:flutter_hyphen/src/lru_cache.dart';
+import 'package:flutter_hyphen/src/cache/lru_cache.dart';
+import 'package:flutter_hyphen/src/model/hyphenation_dictionary.dart';
+import 'package:flutter_hyphen/src/processor/dangling_words.dart';
+import 'package:flutter_hyphen/src/util/code_units.dart';
 
 /// The Unicode soft hyphen (`U+00AD`).
 ///

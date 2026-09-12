@@ -1,7 +1,7 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_hyphen/src/hyphenator.dart';
-import 'package:flutter_hyphen/src/line_breaker.dart';
+import 'package:flutter_hyphen/src/processor/hyphen_line_breaker.dart';
+import 'package:flutter_hyphen/src/service/hyphenator.dart';
 
 /// The paragraph widget behind [HyphenText].
 ///

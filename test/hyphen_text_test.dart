@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'test_dictionaries.dart';
 
 /// The text the paragraph actually paints, including inserted hyphens and

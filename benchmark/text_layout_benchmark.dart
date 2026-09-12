@@ -87,12 +87,11 @@
 //    that row keeps its render object, as a scrolling list does, while this
 //    one re-creates all 25 every frame.
 
+import '../test/test_dictionaries.dart';
 import 'package:bench_press/bench_press.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import '../test/test_dictionaries.dart';
 
 /// Text long enough that line breaking dominates the measurement.
 const String kSampleText =

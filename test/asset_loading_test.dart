@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'test_dictionaries.dart';
 
 /// A bundle that serves the example's English dictionary from disk, standing
