@@ -124,6 +124,54 @@ void main() {
       expect(breakerFor(testDict).breakText('', 100), <String>['']);
     });
 
+    test('intrinsics measure shorter but wider proportional chunks', () {
+      final breaker = HyphenLineBreaker(
+        hyphenator: null,
+        measure: (text) => text.codeUnits.fold<double>(
+          0,
+          (width, unit) => width + (unit == 87 ? 10 : 1),
+        ),
+      );
+      expect(breaker.minIntrinsicWidth('iiii WWW'), 30);
+      expect(breaker.minIntrinsicWidth('iiii\nWWW'), 30);
+    });
+
+    test('cold search does not shape half a long document', () {
+      var largest = 0;
+      final breaker = HyphenLineBreaker(
+        hyphenator: null,
+        measure: (text) {
+          if (text.length > largest) largest = text.length;
+          return text.length.toDouble();
+        },
+      );
+      final text = List.filled(1000, 'aa bb').join(' ');
+      final lines = breaker.breakText(text, 5);
+      expect(lines, List.filled(1000, 'aa bb'));
+      expect(largest, lessThan(30));
+    });
+
+    test('measurement byte bounds preserve uncached results', () {
+      final bounded = HyphenLineBreaker(
+        hyphenator: testDict,
+        measure: measureByCharacter,
+        maxMeasurementCacheBytes: 128,
+      );
+      final uncached = HyphenLineBreaker(
+        hyphenator: testDict,
+        measure: measureByCharacter,
+        maxMeasurementCacheBytes: 0,
+      );
+      for (var width = 10.0; width < 200; width += 7) {
+        const text = 'hyphenation extraordinary always wonderful';
+        expect(bounded.breakText(text, width), uncached.breakText(text, width));
+        expect(bounded.estimatedMeasurementCacheBytes, lessThanOrEqualTo(128));
+        expect(uncached.measurementCacheSize, 0);
+      }
+      bounded.clearCache();
+      expect(bounded.estimatedMeasurementCacheBytes, 0);
+    });
+
     test('minIntrinsicWidth is the widest unbreakable chunk', () {
       final breaker = breakerFor(testDict);
       // Every chunk is measured with the hyphen it would carry: 'al-' (3),
@@ -138,9 +186,8 @@ void main() {
     });
 
     test('minIntrinsicWidth matches an exhaustive measurement', () {
-      // The implementation sorts the chunks by length and stops once no
-      // shorter chunk can win, which is only sound if the bound it uses is
-      // conservative. Checked here against measuring every chunk.
+      // Check the dictionary parts provide a lower bound on exact candidate
+      // chunk measurements, which also include inserted hyphens.
       final breaker = breakerFor(testDict);
       for (final text in <String>[
         'hyphenation extraordinary computer always wonderful',

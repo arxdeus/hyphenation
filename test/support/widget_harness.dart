@@ -12,9 +12,9 @@ class CountingHyphenator extends Hyphenator {
   int breaks = 0;
 
   @override
-  void cacheBreak(Object key, String value) {
+  void cacheBreak(Object key, String value, {int? sourceLength}) {
     breaks++;
-    super.cacheBreak(key, value);
+    super.cacheBreak(key, value, sourceLength: sourceLength);
   }
 }
 

@@ -22,7 +22,11 @@ class HyphenLineBreaker {
     required this.hyphenator,
     this.hyphenCharacter = '-',
     int maxMeasurementCacheSize = kDefaultMeasurementCacheSize,
-  }) : _widths = LruCache<String, double>(maxMeasurementCacheSize);
+    int maxMeasurementCacheBytes = 256 * 1024,
+  }) : _widths = LruCache<String, double>(
+         maxMeasurementCacheSize,
+         maxWeight: maxMeasurementCacheBytes,
+       );
 
   /// Default bound for the measurement cache.
   ///
@@ -64,13 +68,17 @@ class HyphenLineBreaker {
   @visibleForTesting
   int get measurementCacheSize => _widths.length;
 
+  /// Conservative retained-key estimate, not a VM heap measurement.
+  @visibleForTesting
+  int get estimatedMeasurementCacheBytes => _widths.estimatedWeight;
+
   double _width(String text) {
     final cached = _widths[text];
     if (cached != null) {
       return cached;
     }
     final width = measure(text);
-    _widths[text] = width;
+    _widths.put(text, width, weight: text.length * 2 + 64);
     if (text.isNotEmpty) {
       _measuredWidth += width;
       _measuredUnits += text.length;
@@ -122,45 +130,19 @@ class HyphenLineBreaker {
     // Only the chunks between two consecutive breaks matter: a line can always
     // be broken at every candidate, so the widest unbreakable chunk decides
     // the minimum width.
-    final chunks = <String>[];
+    var widest = 0.0;
     for (final line in text.split('\n')) {
       var start = 0;
       for (final candidate in _candidatesForLine(line)) {
-        chunks.add(
-          _clean(
-            line.substring(start, candidate.end) +
-                (candidate.hyphen ? hyphenCharacter : ''),
-          ),
+        final chunk = _clean(
+          line.substring(start, candidate.end) +
+              (candidate.hyphen ? hyphenCharacter : ''),
         );
+        // Character count cannot bound shaped width in proportional fonts.
+        // Stream exact measurements instead of allocating and sorting chunks.
+        final width = _width(chunk);
+        if (width > widest) widest = width;
         start = candidate.next;
-      }
-    }
-    if (chunks.isEmpty) {
-      return 0;
-    }
-
-    // Measuring every chunk is wasteful: most are obviously too short to win.
-    // Sorting by length and stopping once no unmeasured chunk can beat the
-    // widest one found keeps this to a handful of measurements, which matters
-    // because parents like Center query intrinsics on every layout pass.
-    chunks.sort((String a, String b) => b.length.compareTo(a.length));
-    var widest = 0.0;
-    var widestPerUnit = 0.0;
-    for (final chunk in chunks) {
-      // No chunk shorter than this can exceed `widest`, given the widest
-      // per-code-unit width seen so far.
-      if (widestPerUnit > 0 && chunk.length * widestPerUnit <= widest) {
-        break;
-      }
-      final width = _width(chunk);
-      if (width > widest) {
-        widest = width;
-      }
-      if (chunk.isNotEmpty) {
-        final perUnit = width / chunk.length;
-        if (perUnit > widestPerUnit) {
-          widestPerUnit = perUnit;
-        }
       }
     }
     return widest;
@@ -232,9 +214,14 @@ class HyphenLineBreaker {
     double maxWidth,
   ) {
     final last = candidates.length - 1;
-    final fit = _measuredUnits == 0
-        ? _bisect(content, start, candidates, first - 1, last + 1, maxWidth)
-        : _gallop(content, start, candidates, first, last, maxWidth);
+    if (_measuredUnits == 0) {
+      // A blind first bisection shapes half of the entire hard line, which
+      // can be a document rather than a display line. Seed the predictor
+      // with its smallest candidate instead. All decisions still use exact
+      // measurements, and subsequent lines reuse the same running estimate.
+      _width(_lineText(content, start, candidates[first]));
+    }
+    final fit = _gallop(content, start, candidates, first, last, maxWidth);
     return fit < first ? -1 : fit;
   }
 

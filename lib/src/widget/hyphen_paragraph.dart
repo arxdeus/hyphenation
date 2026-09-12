@@ -390,7 +390,7 @@ class RenderHyphenParagraph extends RenderParagraph
       broken = (_breakable ??= _hyphenator.hasBreakOpportunity(source))
           ? _lineBreaker.breakIntoString(source, maxWidth)
           : source;
-      _hyphenator.cacheBreak(sharedKey, broken);
+      _hyphenator.cacheBreak(sharedKey, broken, sourceLength: source.length);
     }
     _promote(maxWidth, broken);
     return broken;
