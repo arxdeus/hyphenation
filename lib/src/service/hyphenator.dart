@@ -4,7 +4,6 @@ import 'package:flutter_hyphen/src/cache/lru_cache.dart';
 import 'package:flutter_hyphen/src/model/hyphenation_dictionary.dart';
 import 'package:flutter_hyphen/src/processor/dangling_words.dart';
 import 'package:flutter_hyphen/src/processor/word_break_processor.dart';
-import 'package:meta/meta.dart';
 
 /// The Unicode soft hyphen (`U+00AD`).
 ///
@@ -28,7 +27,7 @@ const String kSoftHyphen = '\u00AD';
 /// );
 /// hyphenator.split('hyphenation'); // [hy, phen, ation]
 /// ```
-class Hyphenator {
+class Hyphenator with Diagnosticable {
   /// Creates a hyphenator around an already parsed dictionary.
   Hyphenator(
     this.dictionary, {
@@ -349,6 +348,37 @@ class Hyphenator {
       start = end;
     }
     return false;
+  }
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    // A [Hyphenator] shows up in [HyphenText]'s own diagnostics, where
+    // "Instance of 'Hyphenator'" says nothing about which dictionary is in
+    // play or whether the caches are doing anything.
+    properties.add(
+      DiagnosticsProperty<HyphenationDictionary>(
+        'dictionary',
+        dictionary,
+      ),
+    );
+    properties.add(IntProperty('leftMin', leftMin));
+    properties.add(IntProperty('rightMin', rightMin));
+    properties.add(IntProperty('minWordLength', minWordLength));
+    properties.add(
+      DiagnosticsProperty<DanglingWords>(
+        'danglingWords',
+        danglingWords,
+        defaultValue: null,
+      ),
+    );
+    final (words, marked, broken) = cacheCounts;
+    properties.add(
+      MessageProperty(
+        'cached',
+        '$words words, $marked paragraphs, $broken broken',
+      ),
+    );
   }
 
   /// Clears the memoisation caches.

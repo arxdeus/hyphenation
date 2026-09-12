@@ -74,6 +74,11 @@ class HyphenationDictionary {
   /// and for nothing else.
   PatternSet get patterns => _patterns;
 
+  @override
+  String toString() =>
+      'HyphenationDictionary(${charsetName.isEmpty ? 'no charset' : charsetName}, '
+      '${_patterns.automaton.nodeCount} patterns nodes)';
+
   /// The charset name the dictionary's first line declared.
   String get charsetName => _patterns.charsetName;
 

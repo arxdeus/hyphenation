@@ -17,7 +17,6 @@ dependencies:
   characters: ^1.4.1
   flutter:
     sdk: flutter
-  meta: ^1.19.0
 
 dev_dependencies:
   bench_press: ^0.3.0

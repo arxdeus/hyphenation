@@ -239,5 +239,17 @@ void main() {
       final empty = Hyphenator.fromBytes(const <int>[]);
       expect(empty.split('anything'), <String>['anything']);
     });
+
+    test('describes itself for the widget inspector', () {
+      // A Hyphenator is handed to DiagnosticsProperty by HyphenText, where
+      // the default "Instance of 'Hyphenator'" tells a reader nothing about
+      // which dictionary is in play.
+      final described = loadTestHyphenator().toString();
+      expect(described, contains('Hyphenator'));
+      expect(described, contains('leftMin: 2'));
+      expect(described, contains('minWordLength: 5'));
+      expect(described, contains('HyphenationDictionary'));
+      expect(described, isNot(contains("Instance of 'Hyphenator'")));
+    });
   });
 }
