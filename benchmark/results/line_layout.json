@@ -1,0 +1,248 @@
+[
+  {
+    "variant": "baseline",
+    "trial": 0,
+    "rows": [
+      {
+        "scenario": "cold",
+        "characters": 396,
+        "median_us": 1057,
+        "measure_calls": 46,
+        "measured_code_units": 1211,
+        "largest_probe": 192,
+        "lines": 21,
+        "output_hash": 624978672
+      },
+      {
+        "scenario": "cold",
+        "characters": 3969,
+        "median_us": 1607,
+        "measure_calls": 50,
+        "measured_code_units": 4784,
+        "largest_probe": 1984,
+        "lines": 210,
+        "output_hash": 951235210
+      },
+      {
+        "scenario": "cold",
+        "characters": 39699,
+        "median_us": 5670,
+        "measure_calls": 54,
+        "measured_code_units": 40496,
+        "largest_probe": 19849,
+        "lines": 2100,
+        "output_hash": 812586442
+      },
+      {
+        "scenario": "warm_resize_100",
+        "median_us": 1458,
+        "measurement_entries": 145
+      }
+    ]
+  },
+  {
+    "variant": "current",
+    "trial": 0,
+    "rows": [
+      {
+        "scenario": "cold",
+        "characters": 396,
+        "median_us": 1053,
+        "measure_calls": 42,
+        "measured_code_units": 840,
+        "largest_probe": 24,
+        "lines": 21,
+        "output_hash": 624978672
+      },
+      {
+        "scenario": "cold",
+        "characters": 3969,
+        "median_us": 1136,
+        "measure_calls": 43,
+        "measured_code_units": 864,
+        "largest_probe": 24,
+        "lines": 210,
+        "output_hash": 951235210
+      },
+      {
+        "scenario": "cold",
+        "characters": 39699,
+        "median_us": 2543,
+        "measure_calls": 43,
+        "measured_code_units": 864,
+        "largest_probe": 24,
+        "lines": 2100,
+        "output_hash": 812586442
+      },
+      {
+        "scenario": "warm_resize_100",
+        "median_us": 1618,
+        "measurement_entries": 142
+      }
+    ]
+  },
+  {
+    "variant": "current",
+    "trial": 1,
+    "rows": [
+      {
+        "scenario": "cold",
+        "characters": 396,
+        "median_us": 1042,
+        "measure_calls": 42,
+        "measured_code_units": 840,
+        "largest_probe": 24,
+        "lines": 21,
+        "output_hash": 624978672
+      },
+      {
+        "scenario": "cold",
+        "characters": 3969,
+        "median_us": 1097,
+        "measure_calls": 43,
+        "measured_code_units": 864,
+        "largest_probe": 24,
+        "lines": 210,
+        "output_hash": 951235210
+      },
+      {
+        "scenario": "cold",
+        "characters": 39699,
+        "median_us": 2484,
+        "measure_calls": 43,
+        "measured_code_units": 864,
+        "largest_probe": 24,
+        "lines": 2100,
+        "output_hash": 812586442
+      },
+      {
+        "scenario": "warm_resize_100",
+        "median_us": 1500,
+        "measurement_entries": 142
+      }
+    ]
+  },
+  {
+    "variant": "baseline",
+    "trial": 1,
+    "rows": [
+      {
+        "scenario": "cold",
+        "characters": 396,
+        "median_us": 1082,
+        "measure_calls": 46,
+        "measured_code_units": 1211,
+        "largest_probe": 192,
+        "lines": 21,
+        "output_hash": 624978672
+      },
+      {
+        "scenario": "cold",
+        "characters": 3969,
+        "median_us": 1579,
+        "measure_calls": 50,
+        "measured_code_units": 4784,
+        "largest_probe": 1984,
+        "lines": 210,
+        "output_hash": 951235210
+      },
+      {
+        "scenario": "cold",
+        "characters": 39699,
+        "median_us": 5623,
+        "measure_calls": 54,
+        "measured_code_units": 40496,
+        "largest_probe": 19849,
+        "lines": 2100,
+        "output_hash": 812586442
+      },
+      {
+        "scenario": "warm_resize_100",
+        "median_us": 1467,
+        "measurement_entries": 145
+      }
+    ]
+  },
+  {
+    "variant": "baseline",
+    "trial": 2,
+    "rows": [
+      {
+        "scenario": "cold",
+        "characters": 396,
+        "median_us": 1060,
+        "measure_calls": 46,
+        "measured_code_units": 1211,
+        "largest_probe": 192,
+        "lines": 21,
+        "output_hash": 624978672
+      },
+      {
+        "scenario": "cold",
+        "characters": 3969,
+        "median_us": 1585,
+        "measure_calls": 50,
+        "measured_code_units": 4784,
+        "largest_probe": 1984,
+        "lines": 210,
+        "output_hash": 951235210
+      },
+      {
+        "scenario": "cold",
+        "characters": 39699,
+        "median_us": 5726,
+        "measure_calls": 54,
+        "measured_code_units": 40496,
+        "largest_probe": 19849,
+        "lines": 2100,
+        "output_hash": 812586442
+      },
+      {
+        "scenario": "warm_resize_100",
+        "median_us": 1457,
+        "measurement_entries": 145
+      }
+    ]
+  },
+  {
+    "variant": "current",
+    "trial": 2,
+    "rows": [
+      {
+        "scenario": "cold",
+        "characters": 396,
+        "median_us": 1018,
+        "measure_calls": 42,
+        "measured_code_units": 840,
+        "largest_probe": 24,
+        "lines": 21,
+        "output_hash": 624978672
+      },
+      {
+        "scenario": "cold",
+        "characters": 3969,
+        "median_us": 1133,
+        "measure_calls": 43,
+        "measured_code_units": 864,
+        "largest_probe": 24,
+        "lines": 210,
+        "output_hash": 951235210
+      },
+      {
+        "scenario": "cold",
+        "characters": 39699,
+        "median_us": 2442,
+        "measure_calls": 43,
+        "measured_code_units": 864,
+        "largest_probe": 24,
+        "lines": 2100,
+        "output_hash": 812586442
+      },
+      {
+        "scenario": "warm_resize_100",
+        "median_us": 1484,
+        "measurement_entries": 142
+      }
+    ]
+  }
+]

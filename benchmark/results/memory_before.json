@@ -1,0 +1,3535 @@
+{
+  "lib_sha256": "86ac4d7c39dec0a857f6017f50fc84bde1a16f79c1b8e45ab9e33d808c5e5cfb",
+  "source_label": "d1fd375",
+  "harness_sha256": "31ae8fea588fe4525efef363eaf2ffd697642f1b2b12f5ce0cccc2bd0c5dcabc",
+  "dictionary_sha256": "486fb6840b1049d5d252ef784be11cd4dc2be0bf296568b74b41e4f4e17cba7d",
+  "dart": "Dart SDK version: 3.13.2 (stable) (Tue Aug 25 01:01:12 2026 -0700) on \"macos_arm64\"",
+  "phases": [
+    {
+      "phase": "empty",
+      "workload": {
+        "phase": "empty",
+        "retainedDictionaries": 0,
+        "checksum": 1000011
+      },
+      "memory": {
+        "type": "MemoryUsage",
+        "heapUsage": 7340624,
+        "heapCapacity": 19546112,
+        "externalUsage": 80
+      },
+      "classes": [
+        {
+          "class": "_List",
+          "instances": 22701,
+          "bytes": 1670016
+        },
+        {
+          "class": "Function",
+          "instances": 8600,
+          "bytes": 1100800
+        },
+        {
+          "class": "Instructions",
+          "instances": 1142,
+          "bytes": 712192
+        },
+        {
+          "class": "_OneByteString",
+          "instances": 9436,
+          "bytes": 524480
+        },
+        {
+          "class": "_Uint32List",
+          "instances": 464,
+          "bytes": 491392
+        },
+        {
+          "class": "_FunctionType",
+          "instances": 5666,
+          "bytes": 453280
+        },
+        {
+          "class": "_TwoByteString",
+          "instances": 15,
+          "bytes": 334720
+        },
+        {
+          "class": "Class",
+          "instances": 1291,
+          "bytes": 289184
+        },
+        {
+          "class": "ICData",
+          "instances": 4031,
+          "bytes": 257984
+        },
+        {
+          "class": "Code",
+          "instances": 1142,
+          "bytes": 200992
+        },
+        {
+          "class": "_Uint16List",
+          "instances": 271,
+          "bytes": 191808
+        },
+        {
+          "class": "Field",
+          "instances": 1591,
+          "bytes": 178192
+        },
+        {
+          "class": "PcDescriptors",
+          "instances": 865,
+          "bytes": 150208
+        },
+        {
+          "class": "WeakArray",
+          "instances": 78,
+          "bytes": 142576
+        },
+        {
+          "class": "ObjectPool",
+          "instances": 871,
+          "bytes": 141520
+        },
+        {
+          "class": "CodeSourceMap",
+          "instances": 892,
+          "bytes": 129072
+        },
+        {
+          "class": "_Type",
+          "instances": 1729,
+          "bytes": 82992
+        },
+        {
+          "class": "_Uint8List",
+          "instances": 611,
+          "bytes": 53040
+        },
+        {
+          "class": "_TypeParameter",
+          "instances": 618,
+          "bytes": 39552
+        },
+        {
+          "class": "TypeParameters",
+          "instances": 817,
+          "bytes": 39216
+        },
+        {
+          "class": "TypeArguments",
+          "instances": 723,
+          "bytes": 37104
+        },
+        {
+          "class": "_Int8List",
+          "instances": 892,
+          "bytes": 28544
+        },
+        {
+          "class": "Script",
+          "instances": 282,
+          "bytes": 22560
+        },
+        {
+          "class": "_GrowableList",
+          "instances": 568,
+          "bytes": 18176
+        },
+        {
+          "class": "_ImmutableList",
+          "instances": 187,
+          "bytes": 14176
+        },
+        {
+          "class": "_Uint8ArrayView",
+          "instances": 290,
+          "bytes": 13920
+        },
+        {
+          "class": "Namespace",
+          "instances": 277,
+          "bytes": 13296
+        },
+        {
+          "class": "Library",
+          "instances": 48,
+          "bytes": 7680
+        },
+        {
+          "class": "PatchClass",
+          "instances": 153,
+          "bytes": 7344
+        },
+        {
+          "class": "ContextScope",
+          "instances": 33,
+          "bytes": 4448
+        },
+        {
+          "class": "CompressedStackMaps",
+          "instances": 35,
+          "bytes": 2976
+        },
+        {
+          "class": "pragma",
+          "instances": 90,
+          "bytes": 2880
+        },
+        {
+          "class": "ClosureData",
+          "instances": 49,
+          "bytes": 2352
+        },
+        {
+          "class": "_Closure",
+          "instances": 49,
+          "bytes": 2352
+        },
+        {
+          "class": "_RecordType",
+          "instances": 18,
+          "bytes": 1152
+        },
+        {
+          "class": "Context",
+          "instances": 14,
+          "bytes": 640
+        },
+        {
+          "class": "_LibraryPrefix",
+          "instances": 9,
+          "bytes": 432
+        },
+        {
+          "class": "ExceptionHandlers",
+          "instances": 9,
+          "bytes": 400
+        },
+        {
+          "class": "_Uint64List",
+          "instances": 1,
+          "bytes": 288
+        },
+        {
+          "class": "LanguageError",
+          "instances": 5,
+          "bytes": 240
+        },
+        {
+          "class": "_NativeSocket",
+          "instances": 1,
+          "bytes": 240
+        },
+        {
+          "class": "SubtypeTestCache",
+          "instances": 7,
+          "bytes": 224
+        },
+        {
+          "class": "_Uri",
+          "instances": 2,
+          "bytes": 224
+        },
+        {
+          "class": "KernelProgramInfo",
+          "instances": 2,
+          "bytes": 192
+        },
+        {
+          "class": "_ControllerSubscription",
+          "instances": 2,
+          "bytes": 160
+        },
+        {
+          "class": "_SyncStreamController",
+          "instances": 2,
+          "bytes": 160
+        },
+        {
+          "class": "_Map",
+          "instances": 2,
+          "bytes": 128
+        },
+        {
+          "class": "_Future",
+          "instances": 2,
+          "bytes": 96
+        },
+        {
+          "class": "_IOSinkImpl",
+          "instances": 1,
+          "bytes": 96
+        },
+        {
+          "class": "_SimpleUri",
+          "instances": 1,
+          "bytes": 80
+        },
+        {
+          "class": "FileMode",
+          "instances": 5,
+          "bytes": 80
+        },
+        {
+          "class": "_Socket",
+          "instances": 1,
+          "bytes": 80
+        },
+        {
+          "class": "Sentinel",
+          "instances": 4,
+          "bytes": 64
+        },
+        {
+          "class": "UnwindError",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_SendPort",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_ExternalUint8Array",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_Int64List",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_RawSocket",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "_SocketStreamConsumer",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "DictionaryCharset",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_RawReceivePort",
+          "instances": 1,
+          "bytes": 48
+        },
+        {
+          "class": "_StackTrace",
+          "instances": 1,
+          "bytes": 48
+        },
+        {
+          "class": "UnhandledException",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "bool",
+          "instances": 2,
+          "bytes": 32
+        },
+        {
+          "class": "_UserTag",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_Int32List",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Stopwatch",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_AsyncCompleter",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_SyncCompleter",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "AsciiCodec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "AsciiEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "JsonCodec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "JsonEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Latin1Codec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Utf8Codec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "ThreadLocal",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Stdin",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "LocalVarDescriptors",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "ApiError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Object",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Mint",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Double",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Null",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "OutOfMemoryError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "StackOverflowError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "IntegerDivisionByZeroException",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_RootZone",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Utf8Encoder",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Patch",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "SocketDirection",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_NamespaceImpl",
+          "instances": 1,
+          "bytes": 16
+        }
+      ],
+      "profile_memory": {
+        "type": "MemoryUsage",
+        "heapUsage": 7310336,
+        "heapCapacity": 19546112,
+        "externalUsage": 80
+      }
+    },
+    {
+      "phase": "one",
+      "workload": {
+        "phase": "one",
+        "retainedDictionaries": 1,
+        "checksum": 1000011
+      },
+      "memory": {
+        "type": "MemoryUsage",
+        "heapUsage": 7969376,
+        "heapCapacity": 21643264,
+        "externalUsage": 80
+      },
+      "classes": [
+        {
+          "class": "_List",
+          "instances": 22713,
+          "bytes": 1671648
+        },
+        {
+          "class": "Function",
+          "instances": 8600,
+          "bytes": 1100800
+        },
+        {
+          "class": "Instructions",
+          "instances": 1148,
+          "bytes": 715520
+        },
+        {
+          "class": "_Int32List",
+          "instances": 19,
+          "bytes": 542400
+        },
+        {
+          "class": "_OneByteString",
+          "instances": 9437,
+          "bytes": 524512
+        },
+        {
+          "class": "_Uint32List",
+          "instances": 464,
+          "bytes": 491392
+        },
+        {
+          "class": "_FunctionType",
+          "instances": 5666,
+          "bytes": 453280
+        },
+        {
+          "class": "_TwoByteString",
+          "instances": 15,
+          "bytes": 334720
+        },
+        {
+          "class": "Class",
+          "instances": 1291,
+          "bytes": 289184
+        },
+        {
+          "class": "ICData",
+          "instances": 4031,
+          "bytes": 257984
+        },
+        {
+          "class": "Code",
+          "instances": 1148,
+          "bytes": 202048
+        },
+        {
+          "class": "_Uint16List",
+          "instances": 271,
+          "bytes": 191808
+        },
+        {
+          "class": "Field",
+          "instances": 1591,
+          "bytes": 178192
+        },
+        {
+          "class": "PcDescriptors",
+          "instances": 867,
+          "bytes": 150368
+        },
+        {
+          "class": "WeakArray",
+          "instances": 80,
+          "bytes": 142880
+        },
+        {
+          "class": "ObjectPool",
+          "instances": 874,
+          "bytes": 141904
+        },
+        {
+          "class": "_Uint8List",
+          "instances": 661,
+          "bytes": 130448
+        },
+        {
+          "class": "CodeSourceMap",
+          "instances": 898,
+          "bytes": 129936
+        },
+        {
+          "class": "_Type",
+          "instances": 1729,
+          "bytes": 82992
+        },
+        {
+          "class": "_TypeParameter",
+          "instances": 618,
+          "bytes": 39552
+        },
+        {
+          "class": "TypeParameters",
+          "instances": 817,
+          "bytes": 39216
+        },
+        {
+          "class": "TypeArguments",
+          "instances": 723,
+          "bytes": 37104
+        },
+        {
+          "class": "_Int8List",
+          "instances": 898,
+          "bytes": 28736
+        },
+        {
+          "class": "Script",
+          "instances": 282,
+          "bytes": 22560
+        },
+        {
+          "class": "_GrowableList",
+          "instances": 570,
+          "bytes": 18240
+        },
+        {
+          "class": "_ImmutableList",
+          "instances": 187,
+          "bytes": 14176
+        },
+        {
+          "class": "_Uint8ArrayView",
+          "instances": 294,
+          "bytes": 14112
+        },
+        {
+          "class": "Namespace",
+          "instances": 277,
+          "bytes": 13296
+        },
+        {
+          "class": "Library",
+          "instances": 48,
+          "bytes": 7680
+        },
+        {
+          "class": "PatchClass",
+          "instances": 153,
+          "bytes": 7344
+        },
+        {
+          "class": "ContextScope",
+          "instances": 33,
+          "bytes": 4448
+        },
+        {
+          "class": "CompressedStackMaps",
+          "instances": 37,
+          "bytes": 3120
+        },
+        {
+          "class": "pragma",
+          "instances": 90,
+          "bytes": 2880
+        },
+        {
+          "class": "ClosureData",
+          "instances": 49,
+          "bytes": 2352
+        },
+        {
+          "class": "_Closure",
+          "instances": 49,
+          "bytes": 2352
+        },
+        {
+          "class": "_RecordType",
+          "instances": 18,
+          "bytes": 1152
+        },
+        {
+          "class": "Context",
+          "instances": 14,
+          "bytes": 640
+        },
+        {
+          "class": "_LibraryPrefix",
+          "instances": 9,
+          "bytes": 432
+        },
+        {
+          "class": "ExceptionHandlers",
+          "instances": 9,
+          "bytes": 400
+        },
+        {
+          "class": "_Uint64List",
+          "instances": 1,
+          "bytes": 288
+        },
+        {
+          "class": "PatternAutomaton",
+          "instances": 2,
+          "bytes": 256
+        },
+        {
+          "class": "LanguageError",
+          "instances": 5,
+          "bytes": 240
+        },
+        {
+          "class": "_NativeSocket",
+          "instances": 1,
+          "bytes": 240
+        },
+        {
+          "class": "SubtypeTestCache",
+          "instances": 7,
+          "bytes": 224
+        },
+        {
+          "class": "_Uri",
+          "instances": 2,
+          "bytes": 224
+        },
+        {
+          "class": "KernelProgramInfo",
+          "instances": 2,
+          "bytes": 192
+        },
+        {
+          "class": "_ControllerSubscription",
+          "instances": 2,
+          "bytes": 160
+        },
+        {
+          "class": "_SyncStreamController",
+          "instances": 2,
+          "bytes": 160
+        },
+        {
+          "class": "_Map",
+          "instances": 2,
+          "bytes": 128
+        },
+        {
+          "class": "PatternSet",
+          "instances": 2,
+          "bytes": 128
+        },
+        {
+          "class": "_Future",
+          "instances": 2,
+          "bytes": 96
+        },
+        {
+          "class": "_IOSinkImpl",
+          "instances": 1,
+          "bytes": 96
+        },
+        {
+          "class": "EdgeLimits",
+          "instances": 2,
+          "bytes": 96
+        },
+        {
+          "class": "_SimpleUri",
+          "instances": 1,
+          "bytes": 80
+        },
+        {
+          "class": "FileMode",
+          "instances": 5,
+          "bytes": 80
+        },
+        {
+          "class": "_Socket",
+          "instances": 1,
+          "bytes": 80
+        },
+        {
+          "class": "Sentinel",
+          "instances": 4,
+          "bytes": 64
+        },
+        {
+          "class": "UnwindError",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_SendPort",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_ExternalUint8Array",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_Int64List",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_RawSocket",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "_SocketStreamConsumer",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "HyphenationDictionary",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "DictionaryCharset",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_RawReceivePort",
+          "instances": 1,
+          "bytes": 48
+        },
+        {
+          "class": "_StackTrace",
+          "instances": 1,
+          "bytes": 48
+        },
+        {
+          "class": "UnhandledException",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "bool",
+          "instances": 2,
+          "bytes": 32
+        },
+        {
+          "class": "_UserTag",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Stopwatch",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_AsyncCompleter",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_SyncCompleter",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "AsciiCodec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "AsciiEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "JsonCodec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "JsonEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Latin1Codec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Utf8Codec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "ThreadLocal",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Stdin",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "ReplacementPool",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "WordEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "LocalVarDescriptors",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "ApiError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Object",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Mint",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Double",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Null",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "OutOfMemoryError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "StackOverflowError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "IntegerDivisionByZeroException",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_RootZone",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Utf8Encoder",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Patch",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "SocketDirection",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_NamespaceImpl",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "BreakMarker",
+          "instances": 1,
+          "bytes": 16
+        }
+      ],
+      "profile_memory": {
+        "type": "MemoryUsage",
+        "heapUsage": 7939088,
+        "heapCapacity": 21643264,
+        "externalUsage": 80
+      }
+    },
+    {
+      "phase": "twenty",
+      "workload": {
+        "phase": "twenty",
+        "retainedDictionaries": 20,
+        "checksum": 1000011
+      },
+      "memory": {
+        "type": "MemoryUsage",
+        "heapUsage": 19723808,
+        "heapCapacity": 25837568,
+        "externalUsage": 80
+      },
+      "classes": [
+        {
+          "class": "_Int32List",
+          "instances": 361,
+          "bytes": 10847392
+        },
+        {
+          "class": "_List",
+          "instances": 22742,
+          "bytes": 1675200
+        },
+        {
+          "class": "_Uint8List",
+          "instances": 872,
+          "bytes": 1556224
+        },
+        {
+          "class": "Function",
+          "instances": 8600,
+          "bytes": 1100800
+        },
+        {
+          "class": "Instructions",
+          "instances": 1149,
+          "bytes": 717344
+        },
+        {
+          "class": "_OneByteString",
+          "instances": 9456,
+          "bytes": 525120
+        },
+        {
+          "class": "_Uint32List",
+          "instances": 464,
+          "bytes": 491392
+        },
+        {
+          "class": "_FunctionType",
+          "instances": 5666,
+          "bytes": 453280
+        },
+        {
+          "class": "_TwoByteString",
+          "instances": 15,
+          "bytes": 334720
+        },
+        {
+          "class": "Class",
+          "instances": 1291,
+          "bytes": 289184
+        },
+        {
+          "class": "ICData",
+          "instances": 4031,
+          "bytes": 257984
+        },
+        {
+          "class": "Code",
+          "instances": 1149,
+          "bytes": 202224
+        },
+        {
+          "class": "_Uint16List",
+          "instances": 271,
+          "bytes": 191808
+        },
+        {
+          "class": "Field",
+          "instances": 1591,
+          "bytes": 178192
+        },
+        {
+          "class": "PcDescriptors",
+          "instances": 868,
+          "bytes": 150448
+        },
+        {
+          "class": "WeakArray",
+          "instances": 80,
+          "bytes": 142880
+        },
+        {
+          "class": "ObjectPool",
+          "instances": 875,
+          "bytes": 142128
+        },
+        {
+          "class": "CodeSourceMap",
+          "instances": 899,
+          "bytes": 130272
+        },
+        {
+          "class": "_Type",
+          "instances": 1729,
+          "bytes": 82992
+        },
+        {
+          "class": "_TypeParameter",
+          "instances": 618,
+          "bytes": 39552
+        },
+        {
+          "class": "TypeParameters",
+          "instances": 817,
+          "bytes": 39216
+        },
+        {
+          "class": "TypeArguments",
+          "instances": 723,
+          "bytes": 37104
+        },
+        {
+          "class": "_Int8List",
+          "instances": 899,
+          "bytes": 28768
+        },
+        {
+          "class": "Script",
+          "instances": 282,
+          "bytes": 22560
+        },
+        {
+          "class": "_GrowableList",
+          "instances": 608,
+          "bytes": 19456
+        },
+        {
+          "class": "_Uint8ArrayView",
+          "instances": 370,
+          "bytes": 17760
+        },
+        {
+          "class": "_ImmutableList",
+          "instances": 187,
+          "bytes": 14176
+        },
+        {
+          "class": "Namespace",
+          "instances": 277,
+          "bytes": 13296
+        },
+        {
+          "class": "Library",
+          "instances": 48,
+          "bytes": 7680
+        },
+        {
+          "class": "PatchClass",
+          "instances": 153,
+          "bytes": 7344
+        },
+        {
+          "class": "PatternAutomaton",
+          "instances": 40,
+          "bytes": 5120
+        },
+        {
+          "class": "ContextScope",
+          "instances": 33,
+          "bytes": 4448
+        },
+        {
+          "class": "CompressedStackMaps",
+          "instances": 38,
+          "bytes": 3200
+        },
+        {
+          "class": "pragma",
+          "instances": 90,
+          "bytes": 2880
+        },
+        {
+          "class": "PatternSet",
+          "instances": 40,
+          "bytes": 2560
+        },
+        {
+          "class": "ClosureData",
+          "instances": 49,
+          "bytes": 2352
+        },
+        {
+          "class": "_Closure",
+          "instances": 49,
+          "bytes": 2352
+        },
+        {
+          "class": "EdgeLimits",
+          "instances": 40,
+          "bytes": 1920
+        },
+        {
+          "class": "HyphenationDictionary",
+          "instances": 20,
+          "bytes": 1280
+        },
+        {
+          "class": "_RecordType",
+          "instances": 18,
+          "bytes": 1152
+        },
+        {
+          "class": "Context",
+          "instances": 14,
+          "bytes": 640
+        },
+        {
+          "class": "ReplacementPool",
+          "instances": 20,
+          "bytes": 640
+        },
+        {
+          "class": "WordEncoder",
+          "instances": 20,
+          "bytes": 640
+        },
+        {
+          "class": "_LibraryPrefix",
+          "instances": 9,
+          "bytes": 432
+        },
+        {
+          "class": "ExceptionHandlers",
+          "instances": 9,
+          "bytes": 400
+        },
+        {
+          "class": "BreakMarker",
+          "instances": 20,
+          "bytes": 320
+        },
+        {
+          "class": "_Uint64List",
+          "instances": 1,
+          "bytes": 288
+        },
+        {
+          "class": "SubtypeTestCache",
+          "instances": 8,
+          "bytes": 256
+        },
+        {
+          "class": "LanguageError",
+          "instances": 5,
+          "bytes": 240
+        },
+        {
+          "class": "_NativeSocket",
+          "instances": 1,
+          "bytes": 240
+        },
+        {
+          "class": "_Uri",
+          "instances": 2,
+          "bytes": 224
+        },
+        {
+          "class": "KernelProgramInfo",
+          "instances": 2,
+          "bytes": 192
+        },
+        {
+          "class": "_ControllerSubscription",
+          "instances": 2,
+          "bytes": 160
+        },
+        {
+          "class": "_SyncStreamController",
+          "instances": 2,
+          "bytes": 160
+        },
+        {
+          "class": "_Map",
+          "instances": 2,
+          "bytes": 128
+        },
+        {
+          "class": "_Future",
+          "instances": 2,
+          "bytes": 96
+        },
+        {
+          "class": "_IOSinkImpl",
+          "instances": 1,
+          "bytes": 96
+        },
+        {
+          "class": "_SimpleUri",
+          "instances": 1,
+          "bytes": 80
+        },
+        {
+          "class": "FileMode",
+          "instances": 5,
+          "bytes": 80
+        },
+        {
+          "class": "_Socket",
+          "instances": 1,
+          "bytes": 80
+        },
+        {
+          "class": "Sentinel",
+          "instances": 4,
+          "bytes": 64
+        },
+        {
+          "class": "UnwindError",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_SendPort",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_ExternalUint8Array",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_Int64List",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_RawSocket",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "_SocketStreamConsumer",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "DictionaryCharset",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_RawReceivePort",
+          "instances": 1,
+          "bytes": 48
+        },
+        {
+          "class": "_StackTrace",
+          "instances": 1,
+          "bytes": 48
+        },
+        {
+          "class": "UnhandledException",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "bool",
+          "instances": 2,
+          "bytes": 32
+        },
+        {
+          "class": "_UserTag",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Stopwatch",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_AsyncCompleter",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_SyncCompleter",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "AsciiCodec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "AsciiEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "JsonCodec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "JsonEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Latin1Codec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Utf8Codec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "ThreadLocal",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Stdin",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "LocalVarDescriptors",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "ApiError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Object",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Mint",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Double",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Null",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "OutOfMemoryError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "StackOverflowError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "IntegerDivisionByZeroException",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_RootZone",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Utf8Encoder",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Patch",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "SocketDirection",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_NamespaceImpl",
+          "instances": 1,
+          "bytes": 16
+        }
+      ],
+      "profile_memory": {
+        "type": "MemoryUsage",
+        "heapUsage": 19693520,
+        "heapCapacity": 25837568,
+        "externalUsage": 80
+      }
+    },
+    {
+      "phase": "giant",
+      "workload": {
+        "phase": "giant",
+        "retainedDictionaries": 1,
+        "checksum": 2000011
+      },
+      "memory": {
+        "type": "MemoryUsage",
+        "heapUsage": 23977680,
+        "heapCapacity": 39305216,
+        "externalUsage": 80
+      },
+      "classes": [
+        {
+          "class": "_Uint8List",
+          "instances": 695,
+          "bytes": 16132336
+        },
+        {
+          "class": "_List",
+          "instances": 22727,
+          "bytes": 1673872
+        },
+        {
+          "class": "Function",
+          "instances": 8600,
+          "bytes": 1100800
+        },
+        {
+          "class": "Instructions",
+          "instances": 1150,
+          "bytes": 717952
+        },
+        {
+          "class": "_Int32List",
+          "instances": 19,
+          "bytes": 542400
+        },
+        {
+          "class": "_OneByteString",
+          "instances": 9437,
+          "bytes": 524512
+        },
+        {
+          "class": "_Uint32List",
+          "instances": 464,
+          "bytes": 491392
+        },
+        {
+          "class": "_FunctionType",
+          "instances": 5666,
+          "bytes": 453280
+        },
+        {
+          "class": "_TwoByteString",
+          "instances": 15,
+          "bytes": 334720
+        },
+        {
+          "class": "Class",
+          "instances": 1291,
+          "bytes": 289184
+        },
+        {
+          "class": "ICData",
+          "instances": 4031,
+          "bytes": 257984
+        },
+        {
+          "class": "Code",
+          "instances": 1150,
+          "bytes": 202400
+        },
+        {
+          "class": "_Uint16List",
+          "instances": 271,
+          "bytes": 191808
+        },
+        {
+          "class": "Field",
+          "instances": 1591,
+          "bytes": 178192
+        },
+        {
+          "class": "PcDescriptors",
+          "instances": 869,
+          "bytes": 150512
+        },
+        {
+          "class": "WeakArray",
+          "instances": 80,
+          "bytes": 142912
+        },
+        {
+          "class": "ObjectPool",
+          "instances": 876,
+          "bytes": 142240
+        },
+        {
+          "class": "CodeSourceMap",
+          "instances": 900,
+          "bytes": 130480
+        },
+        {
+          "class": "_Type",
+          "instances": 1729,
+          "bytes": 82992
+        },
+        {
+          "class": "_TypeParameter",
+          "instances": 618,
+          "bytes": 39552
+        },
+        {
+          "class": "TypeParameters",
+          "instances": 817,
+          "bytes": 39216
+        },
+        {
+          "class": "TypeArguments",
+          "instances": 723,
+          "bytes": 37104
+        },
+        {
+          "class": "_Int8List",
+          "instances": 900,
+          "bytes": 28800
+        },
+        {
+          "class": "Script",
+          "instances": 282,
+          "bytes": 22560
+        },
+        {
+          "class": "_GrowableList",
+          "instances": 570,
+          "bytes": 18240
+        },
+        {
+          "class": "_ImmutableList",
+          "instances": 187,
+          "bytes": 14176
+        },
+        {
+          "class": "_Uint8ArrayView",
+          "instances": 294,
+          "bytes": 14112
+        },
+        {
+          "class": "Namespace",
+          "instances": 277,
+          "bytes": 13296
+        },
+        {
+          "class": "Library",
+          "instances": 48,
+          "bytes": 7680
+        },
+        {
+          "class": "PatchClass",
+          "instances": 153,
+          "bytes": 7344
+        },
+        {
+          "class": "ContextScope",
+          "instances": 33,
+          "bytes": 4448
+        },
+        {
+          "class": "CompressedStackMaps",
+          "instances": 39,
+          "bytes": 3248
+        },
+        {
+          "class": "pragma",
+          "instances": 90,
+          "bytes": 2880
+        },
+        {
+          "class": "ClosureData",
+          "instances": 49,
+          "bytes": 2352
+        },
+        {
+          "class": "_Closure",
+          "instances": 49,
+          "bytes": 2352
+        },
+        {
+          "class": "_RecordType",
+          "instances": 18,
+          "bytes": 1152
+        },
+        {
+          "class": "Context",
+          "instances": 14,
+          "bytes": 640
+        },
+        {
+          "class": "_LibraryPrefix",
+          "instances": 9,
+          "bytes": 432
+        },
+        {
+          "class": "ExceptionHandlers",
+          "instances": 9,
+          "bytes": 400
+        },
+        {
+          "class": "_Uint64List",
+          "instances": 1,
+          "bytes": 288
+        },
+        {
+          "class": "SubtypeTestCache",
+          "instances": 8,
+          "bytes": 256
+        },
+        {
+          "class": "PatternAutomaton",
+          "instances": 2,
+          "bytes": 256
+        },
+        {
+          "class": "LanguageError",
+          "instances": 5,
+          "bytes": 240
+        },
+        {
+          "class": "_NativeSocket",
+          "instances": 1,
+          "bytes": 240
+        },
+        {
+          "class": "_Uri",
+          "instances": 2,
+          "bytes": 224
+        },
+        {
+          "class": "KernelProgramInfo",
+          "instances": 2,
+          "bytes": 192
+        },
+        {
+          "class": "_ControllerSubscription",
+          "instances": 2,
+          "bytes": 160
+        },
+        {
+          "class": "_SyncStreamController",
+          "instances": 2,
+          "bytes": 160
+        },
+        {
+          "class": "_Map",
+          "instances": 2,
+          "bytes": 128
+        },
+        {
+          "class": "PatternSet",
+          "instances": 2,
+          "bytes": 128
+        },
+        {
+          "class": "MatchScratch",
+          "instances": 2,
+          "bytes": 128
+        },
+        {
+          "class": "_Future",
+          "instances": 2,
+          "bytes": 96
+        },
+        {
+          "class": "_IOSinkImpl",
+          "instances": 1,
+          "bytes": 96
+        },
+        {
+          "class": "EdgeLimits",
+          "instances": 2,
+          "bytes": 96
+        },
+        {
+          "class": "_SimpleUri",
+          "instances": 1,
+          "bytes": 80
+        },
+        {
+          "class": "FileMode",
+          "instances": 5,
+          "bytes": 80
+        },
+        {
+          "class": "_Socket",
+          "instances": 1,
+          "bytes": 80
+        },
+        {
+          "class": "Sentinel",
+          "instances": 4,
+          "bytes": 64
+        },
+        {
+          "class": "UnwindError",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_SendPort",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_ExternalUint8Array",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_Int64List",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_RawSocket",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "_SocketStreamConsumer",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "HyphenationDictionary",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "DictionaryCharset",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_RawReceivePort",
+          "instances": 1,
+          "bytes": 48
+        },
+        {
+          "class": "_StackTrace",
+          "instances": 1,
+          "bytes": 48
+        },
+        {
+          "class": "UnhandledException",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "bool",
+          "instances": 2,
+          "bytes": 32
+        },
+        {
+          "class": "_UserTag",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Stopwatch",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_AsyncCompleter",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_SyncCompleter",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "AsciiCodec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "AsciiEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "JsonCodec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "JsonEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Latin1Codec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Utf8Codec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "ThreadLocal",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Stdin",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "ReplacementPool",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "WordEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "LocalVarDescriptors",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "ApiError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Object",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Mint",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Double",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Null",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "OutOfMemoryError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "StackOverflowError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "IntegerDivisionByZeroException",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_RootZone",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Utf8Encoder",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Patch",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "SocketDirection",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_NamespaceImpl",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "BreakMarker",
+          "instances": 1,
+          "bytes": 16
+        }
+      ],
+      "profile_memory": {
+        "type": "MemoryUsage",
+        "heapUsage": 23947392,
+        "heapCapacity": 39305216,
+        "externalUsage": 80
+      }
+    },
+    {
+      "phase": "normal",
+      "workload": {
+        "phase": "normal",
+        "retainedDictionaries": 1,
+        "checksum": 2000022
+      },
+      "memory": {
+        "type": "MemoryUsage",
+        "heapUsage": 23977680,
+        "heapCapacity": 39305216,
+        "externalUsage": 80
+      },
+      "classes": [
+        {
+          "class": "_Uint8List",
+          "instances": 695,
+          "bytes": 16132336
+        },
+        {
+          "class": "_List",
+          "instances": 22727,
+          "bytes": 1673872
+        },
+        {
+          "class": "Function",
+          "instances": 8600,
+          "bytes": 1100800
+        },
+        {
+          "class": "Instructions",
+          "instances": 1150,
+          "bytes": 717952
+        },
+        {
+          "class": "_Int32List",
+          "instances": 19,
+          "bytes": 542400
+        },
+        {
+          "class": "_OneByteString",
+          "instances": 9437,
+          "bytes": 524512
+        },
+        {
+          "class": "_Uint32List",
+          "instances": 464,
+          "bytes": 491392
+        },
+        {
+          "class": "_FunctionType",
+          "instances": 5666,
+          "bytes": 453280
+        },
+        {
+          "class": "_TwoByteString",
+          "instances": 15,
+          "bytes": 334720
+        },
+        {
+          "class": "Class",
+          "instances": 1291,
+          "bytes": 289184
+        },
+        {
+          "class": "ICData",
+          "instances": 4031,
+          "bytes": 257984
+        },
+        {
+          "class": "Code",
+          "instances": 1150,
+          "bytes": 202400
+        },
+        {
+          "class": "_Uint16List",
+          "instances": 271,
+          "bytes": 191808
+        },
+        {
+          "class": "Field",
+          "instances": 1591,
+          "bytes": 178192
+        },
+        {
+          "class": "PcDescriptors",
+          "instances": 869,
+          "bytes": 150512
+        },
+        {
+          "class": "WeakArray",
+          "instances": 80,
+          "bytes": 142912
+        },
+        {
+          "class": "ObjectPool",
+          "instances": 876,
+          "bytes": 142240
+        },
+        {
+          "class": "CodeSourceMap",
+          "instances": 900,
+          "bytes": 130480
+        },
+        {
+          "class": "_Type",
+          "instances": 1729,
+          "bytes": 82992
+        },
+        {
+          "class": "_TypeParameter",
+          "instances": 618,
+          "bytes": 39552
+        },
+        {
+          "class": "TypeParameters",
+          "instances": 817,
+          "bytes": 39216
+        },
+        {
+          "class": "TypeArguments",
+          "instances": 723,
+          "bytes": 37104
+        },
+        {
+          "class": "_Int8List",
+          "instances": 900,
+          "bytes": 28800
+        },
+        {
+          "class": "Script",
+          "instances": 282,
+          "bytes": 22560
+        },
+        {
+          "class": "_GrowableList",
+          "instances": 570,
+          "bytes": 18240
+        },
+        {
+          "class": "_ImmutableList",
+          "instances": 187,
+          "bytes": 14176
+        },
+        {
+          "class": "_Uint8ArrayView",
+          "instances": 294,
+          "bytes": 14112
+        },
+        {
+          "class": "Namespace",
+          "instances": 277,
+          "bytes": 13296
+        },
+        {
+          "class": "Library",
+          "instances": 48,
+          "bytes": 7680
+        },
+        {
+          "class": "PatchClass",
+          "instances": 153,
+          "bytes": 7344
+        },
+        {
+          "class": "ContextScope",
+          "instances": 33,
+          "bytes": 4448
+        },
+        {
+          "class": "CompressedStackMaps",
+          "instances": 39,
+          "bytes": 3248
+        },
+        {
+          "class": "pragma",
+          "instances": 90,
+          "bytes": 2880
+        },
+        {
+          "class": "ClosureData",
+          "instances": 49,
+          "bytes": 2352
+        },
+        {
+          "class": "_Closure",
+          "instances": 49,
+          "bytes": 2352
+        },
+        {
+          "class": "_RecordType",
+          "instances": 18,
+          "bytes": 1152
+        },
+        {
+          "class": "Context",
+          "instances": 14,
+          "bytes": 640
+        },
+        {
+          "class": "_LibraryPrefix",
+          "instances": 9,
+          "bytes": 432
+        },
+        {
+          "class": "ExceptionHandlers",
+          "instances": 9,
+          "bytes": 400
+        },
+        {
+          "class": "_Uint64List",
+          "instances": 1,
+          "bytes": 288
+        },
+        {
+          "class": "SubtypeTestCache",
+          "instances": 8,
+          "bytes": 256
+        },
+        {
+          "class": "PatternAutomaton",
+          "instances": 2,
+          "bytes": 256
+        },
+        {
+          "class": "LanguageError",
+          "instances": 5,
+          "bytes": 240
+        },
+        {
+          "class": "_NativeSocket",
+          "instances": 1,
+          "bytes": 240
+        },
+        {
+          "class": "_Uri",
+          "instances": 2,
+          "bytes": 224
+        },
+        {
+          "class": "KernelProgramInfo",
+          "instances": 2,
+          "bytes": 192
+        },
+        {
+          "class": "_ControllerSubscription",
+          "instances": 2,
+          "bytes": 160
+        },
+        {
+          "class": "_SyncStreamController",
+          "instances": 2,
+          "bytes": 160
+        },
+        {
+          "class": "_Map",
+          "instances": 2,
+          "bytes": 128
+        },
+        {
+          "class": "PatternSet",
+          "instances": 2,
+          "bytes": 128
+        },
+        {
+          "class": "MatchScratch",
+          "instances": 2,
+          "bytes": 128
+        },
+        {
+          "class": "_Future",
+          "instances": 2,
+          "bytes": 96
+        },
+        {
+          "class": "_IOSinkImpl",
+          "instances": 1,
+          "bytes": 96
+        },
+        {
+          "class": "EdgeLimits",
+          "instances": 2,
+          "bytes": 96
+        },
+        {
+          "class": "_SimpleUri",
+          "instances": 1,
+          "bytes": 80
+        },
+        {
+          "class": "FileMode",
+          "instances": 5,
+          "bytes": 80
+        },
+        {
+          "class": "_Socket",
+          "instances": 1,
+          "bytes": 80
+        },
+        {
+          "class": "Sentinel",
+          "instances": 4,
+          "bytes": 64
+        },
+        {
+          "class": "UnwindError",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_SendPort",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_ExternalUint8Array",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_Int64List",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_RawSocket",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "_SocketStreamConsumer",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "HyphenationDictionary",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "DictionaryCharset",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_RawReceivePort",
+          "instances": 1,
+          "bytes": 48
+        },
+        {
+          "class": "_StackTrace",
+          "instances": 1,
+          "bytes": 48
+        },
+        {
+          "class": "UnhandledException",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "bool",
+          "instances": 2,
+          "bytes": 32
+        },
+        {
+          "class": "_UserTag",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Stopwatch",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_AsyncCompleter",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_SyncCompleter",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "AsciiCodec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "AsciiEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "JsonCodec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "JsonEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Latin1Codec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Utf8Codec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "ThreadLocal",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Stdin",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "ReplacementPool",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "WordEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "LocalVarDescriptors",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "ApiError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Object",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Mint",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Double",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Null",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "OutOfMemoryError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "StackOverflowError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "IntegerDivisionByZeroException",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_RootZone",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Utf8Encoder",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Patch",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "SocketDirection",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_NamespaceImpl",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "BreakMarker",
+          "instances": 1,
+          "bytes": 16
+        }
+      ],
+      "profile_memory": {
+        "type": "MemoryUsage",
+        "heapUsage": 23947392,
+        "heapCapacity": 39305216,
+        "externalUsage": 80
+      }
+    },
+    {
+      "phase": "nohyphen",
+      "workload": {
+        "phase": "nohyphen",
+        "retainedDictionaries": 1,
+        "checksum": 2000022
+      },
+      "memory": {
+        "type": "MemoryUsage",
+        "heapUsage": 15750320,
+        "heapCapacity": 31621120,
+        "externalUsage": 80
+      },
+      "classes": [
+        {
+          "class": "_Uint8List",
+          "instances": 692,
+          "bytes": 8446464
+        },
+        {
+          "class": "_List",
+          "instances": 22727,
+          "bytes": 1673872
+        },
+        {
+          "class": "Function",
+          "instances": 8600,
+          "bytes": 1100800
+        },
+        {
+          "class": "Instructions",
+          "instances": 1150,
+          "bytes": 717952
+        },
+        {
+          "class": "_OneByteString",
+          "instances": 9437,
+          "bytes": 524512
+        },
+        {
+          "class": "_Uint32List",
+          "instances": 464,
+          "bytes": 491392
+        },
+        {
+          "class": "_FunctionType",
+          "instances": 5666,
+          "bytes": 453280
+        },
+        {
+          "class": "_TwoByteString",
+          "instances": 15,
+          "bytes": 334720
+        },
+        {
+          "class": "Class",
+          "instances": 1291,
+          "bytes": 289184
+        },
+        {
+          "class": "ICData",
+          "instances": 4031,
+          "bytes": 257984
+        },
+        {
+          "class": "Code",
+          "instances": 1150,
+          "bytes": 202400
+        },
+        {
+          "class": "_Uint16List",
+          "instances": 271,
+          "bytes": 191808
+        },
+        {
+          "class": "Field",
+          "instances": 1591,
+          "bytes": 178192
+        },
+        {
+          "class": "PcDescriptors",
+          "instances": 869,
+          "bytes": 150512
+        },
+        {
+          "class": "WeakArray",
+          "instances": 80,
+          "bytes": 142912
+        },
+        {
+          "class": "ObjectPool",
+          "instances": 876,
+          "bytes": 142240
+        },
+        {
+          "class": "CodeSourceMap",
+          "instances": 900,
+          "bytes": 130480
+        },
+        {
+          "class": "_Type",
+          "instances": 1729,
+          "bytes": 82992
+        },
+        {
+          "class": "_TypeParameter",
+          "instances": 618,
+          "bytes": 39552
+        },
+        {
+          "class": "TypeParameters",
+          "instances": 817,
+          "bytes": 39216
+        },
+        {
+          "class": "TypeArguments",
+          "instances": 723,
+          "bytes": 37104
+        },
+        {
+          "class": "_Int8List",
+          "instances": 900,
+          "bytes": 28800
+        },
+        {
+          "class": "Script",
+          "instances": 282,
+          "bytes": 22560
+        },
+        {
+          "class": "_GrowableList",
+          "instances": 571,
+          "bytes": 18272
+        },
+        {
+          "class": "_ImmutableList",
+          "instances": 187,
+          "bytes": 14176
+        },
+        {
+          "class": "_Uint8ArrayView",
+          "instances": 295,
+          "bytes": 14160
+        },
+        {
+          "class": "Namespace",
+          "instances": 277,
+          "bytes": 13296
+        },
+        {
+          "class": "Library",
+          "instances": 48,
+          "bytes": 7680
+        },
+        {
+          "class": "PatchClass",
+          "instances": 153,
+          "bytes": 7344
+        },
+        {
+          "class": "ContextScope",
+          "instances": 33,
+          "bytes": 4448
+        },
+        {
+          "class": "CompressedStackMaps",
+          "instances": 39,
+          "bytes": 3248
+        },
+        {
+          "class": "pragma",
+          "instances": 90,
+          "bytes": 2880
+        },
+        {
+          "class": "ClosureData",
+          "instances": 49,
+          "bytes": 2352
+        },
+        {
+          "class": "_Closure",
+          "instances": 49,
+          "bytes": 2352
+        },
+        {
+          "class": "_RecordType",
+          "instances": 18,
+          "bytes": 1152
+        },
+        {
+          "class": "_Int32List",
+          "instances": 19,
+          "bytes": 960
+        },
+        {
+          "class": "Context",
+          "instances": 14,
+          "bytes": 640
+        },
+        {
+          "class": "_LibraryPrefix",
+          "instances": 9,
+          "bytes": 432
+        },
+        {
+          "class": "ExceptionHandlers",
+          "instances": 9,
+          "bytes": 400
+        },
+        {
+          "class": "_Uint64List",
+          "instances": 1,
+          "bytes": 288
+        },
+        {
+          "class": "SubtypeTestCache",
+          "instances": 8,
+          "bytes": 256
+        },
+        {
+          "class": "PatternAutomaton",
+          "instances": 2,
+          "bytes": 256
+        },
+        {
+          "class": "LanguageError",
+          "instances": 5,
+          "bytes": 240
+        },
+        {
+          "class": "_NativeSocket",
+          "instances": 1,
+          "bytes": 240
+        },
+        {
+          "class": "_Uri",
+          "instances": 2,
+          "bytes": 224
+        },
+        {
+          "class": "KernelProgramInfo",
+          "instances": 2,
+          "bytes": 192
+        },
+        {
+          "class": "_ControllerSubscription",
+          "instances": 2,
+          "bytes": 160
+        },
+        {
+          "class": "_SyncStreamController",
+          "instances": 2,
+          "bytes": 160
+        },
+        {
+          "class": "_Map",
+          "instances": 2,
+          "bytes": 128
+        },
+        {
+          "class": "PatternSet",
+          "instances": 2,
+          "bytes": 128
+        },
+        {
+          "class": "_Future",
+          "instances": 2,
+          "bytes": 96
+        },
+        {
+          "class": "_IOSinkImpl",
+          "instances": 1,
+          "bytes": 96
+        },
+        {
+          "class": "EdgeLimits",
+          "instances": 2,
+          "bytes": 96
+        },
+        {
+          "class": "_SimpleUri",
+          "instances": 1,
+          "bytes": 80
+        },
+        {
+          "class": "FileMode",
+          "instances": 5,
+          "bytes": 80
+        },
+        {
+          "class": "_Socket",
+          "instances": 1,
+          "bytes": 80
+        },
+        {
+          "class": "Sentinel",
+          "instances": 4,
+          "bytes": 64
+        },
+        {
+          "class": "UnwindError",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_SendPort",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_ExternalUint8Array",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_Int64List",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_RawSocket",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "_SocketStreamConsumer",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "HyphenationDictionary",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "DictionaryCharset",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_RawReceivePort",
+          "instances": 1,
+          "bytes": 48
+        },
+        {
+          "class": "_StackTrace",
+          "instances": 1,
+          "bytes": 48
+        },
+        {
+          "class": "UnhandledException",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "bool",
+          "instances": 2,
+          "bytes": 32
+        },
+        {
+          "class": "_UserTag",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Stopwatch",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_AsyncCompleter",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_SyncCompleter",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "AsciiCodec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "AsciiEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "JsonCodec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "JsonEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Latin1Codec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Utf8Codec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "ThreadLocal",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Stdin",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "ReplacementPool",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "WordEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "LocalVarDescriptors",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "ApiError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Object",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Mint",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Double",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Null",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "OutOfMemoryError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "StackOverflowError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "IntegerDivisionByZeroException",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_RootZone",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Utf8Encoder",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Patch",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "SocketDirection",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_NamespaceImpl",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "BreakMarker",
+          "instances": 1,
+          "bytes": 16
+        }
+      ],
+      "profile_memory": {
+        "type": "MemoryUsage",
+        "heapUsage": 15720032,
+        "heapCapacity": 31621120,
+        "externalUsage": 80
+      }
+    },
+    {
+      "phase": "empty",
+      "workload": {
+        "phase": "empty",
+        "retainedDictionaries": 0,
+        "checksum": 2000022
+      },
+      "memory": {
+        "type": "MemoryUsage",
+        "heapUsage": 7359104,
+        "heapCapacity": 23216128,
+        "externalUsage": 80
+      },
+      "classes": [
+        {
+          "class": "_List",
+          "instances": 22724,
+          "bytes": 1673696
+        },
+        {
+          "class": "Function",
+          "instances": 8600,
+          "bytes": 1100800
+        },
+        {
+          "class": "Instructions",
+          "instances": 1150,
+          "bytes": 717952
+        },
+        {
+          "class": "_OneByteString",
+          "instances": 9436,
+          "bytes": 524480
+        },
+        {
+          "class": "_Uint32List",
+          "instances": 464,
+          "bytes": 491392
+        },
+        {
+          "class": "_FunctionType",
+          "instances": 5666,
+          "bytes": 453280
+        },
+        {
+          "class": "_TwoByteString",
+          "instances": 15,
+          "bytes": 334720
+        },
+        {
+          "class": "Class",
+          "instances": 1291,
+          "bytes": 289184
+        },
+        {
+          "class": "ICData",
+          "instances": 4031,
+          "bytes": 257984
+        },
+        {
+          "class": "Code",
+          "instances": 1150,
+          "bytes": 202400
+        },
+        {
+          "class": "_Uint16List",
+          "instances": 271,
+          "bytes": 191808
+        },
+        {
+          "class": "Field",
+          "instances": 1591,
+          "bytes": 178192
+        },
+        {
+          "class": "PcDescriptors",
+          "instances": 869,
+          "bytes": 150512
+        },
+        {
+          "class": "WeakArray",
+          "instances": 80,
+          "bytes": 142912
+        },
+        {
+          "class": "ObjectPool",
+          "instances": 876,
+          "bytes": 142240
+        },
+        {
+          "class": "CodeSourceMap",
+          "instances": 900,
+          "bytes": 130480
+        },
+        {
+          "class": "_Type",
+          "instances": 1729,
+          "bytes": 82992
+        },
+        {
+          "class": "_Uint8List",
+          "instances": 681,
+          "bytes": 57344
+        },
+        {
+          "class": "_TypeParameter",
+          "instances": 618,
+          "bytes": 39552
+        },
+        {
+          "class": "TypeParameters",
+          "instances": 817,
+          "bytes": 39216
+        },
+        {
+          "class": "TypeArguments",
+          "instances": 723,
+          "bytes": 37104
+        },
+        {
+          "class": "_Int8List",
+          "instances": 900,
+          "bytes": 28800
+        },
+        {
+          "class": "Script",
+          "instances": 282,
+          "bytes": 22560
+        },
+        {
+          "class": "_GrowableList",
+          "instances": 568,
+          "bytes": 18176
+        },
+        {
+          "class": "_ImmutableList",
+          "instances": 187,
+          "bytes": 14176
+        },
+        {
+          "class": "_Uint8ArrayView",
+          "instances": 290,
+          "bytes": 13920
+        },
+        {
+          "class": "Namespace",
+          "instances": 277,
+          "bytes": 13296
+        },
+        {
+          "class": "Library",
+          "instances": 48,
+          "bytes": 7680
+        },
+        {
+          "class": "PatchClass",
+          "instances": 153,
+          "bytes": 7344
+        },
+        {
+          "class": "ContextScope",
+          "instances": 33,
+          "bytes": 4448
+        },
+        {
+          "class": "CompressedStackMaps",
+          "instances": 39,
+          "bytes": 3248
+        },
+        {
+          "class": "pragma",
+          "instances": 90,
+          "bytes": 2880
+        },
+        {
+          "class": "ClosureData",
+          "instances": 49,
+          "bytes": 2352
+        },
+        {
+          "class": "_Closure",
+          "instances": 49,
+          "bytes": 2352
+        },
+        {
+          "class": "_RecordType",
+          "instances": 18,
+          "bytes": 1152
+        },
+        {
+          "class": "Context",
+          "instances": 14,
+          "bytes": 640
+        },
+        {
+          "class": "_LibraryPrefix",
+          "instances": 9,
+          "bytes": 432
+        },
+        {
+          "class": "ExceptionHandlers",
+          "instances": 9,
+          "bytes": 400
+        },
+        {
+          "class": "_Uint64List",
+          "instances": 1,
+          "bytes": 288
+        },
+        {
+          "class": "SubtypeTestCache",
+          "instances": 8,
+          "bytes": 256
+        },
+        {
+          "class": "LanguageError",
+          "instances": 5,
+          "bytes": 240
+        },
+        {
+          "class": "_NativeSocket",
+          "instances": 1,
+          "bytes": 240
+        },
+        {
+          "class": "_Uri",
+          "instances": 2,
+          "bytes": 224
+        },
+        {
+          "class": "KernelProgramInfo",
+          "instances": 2,
+          "bytes": 192
+        },
+        {
+          "class": "_ControllerSubscription",
+          "instances": 2,
+          "bytes": 160
+        },
+        {
+          "class": "_SyncStreamController",
+          "instances": 2,
+          "bytes": 160
+        },
+        {
+          "class": "_Map",
+          "instances": 2,
+          "bytes": 128
+        },
+        {
+          "class": "_Future",
+          "instances": 2,
+          "bytes": 96
+        },
+        {
+          "class": "_IOSinkImpl",
+          "instances": 1,
+          "bytes": 96
+        },
+        {
+          "class": "_SimpleUri",
+          "instances": 1,
+          "bytes": 80
+        },
+        {
+          "class": "FileMode",
+          "instances": 5,
+          "bytes": 80
+        },
+        {
+          "class": "_Socket",
+          "instances": 1,
+          "bytes": 80
+        },
+        {
+          "class": "Sentinel",
+          "instances": 4,
+          "bytes": 64
+        },
+        {
+          "class": "UnwindError",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_SendPort",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_ExternalUint8Array",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_Int64List",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_RawSocket",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "_SocketStreamConsumer",
+          "instances": 1,
+          "bytes": 64
+        },
+        {
+          "class": "DictionaryCharset",
+          "instances": 2,
+          "bytes": 64
+        },
+        {
+          "class": "_RawReceivePort",
+          "instances": 1,
+          "bytes": 48
+        },
+        {
+          "class": "_StackTrace",
+          "instances": 1,
+          "bytes": 48
+        },
+        {
+          "class": "UnhandledException",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "bool",
+          "instances": 2,
+          "bytes": 32
+        },
+        {
+          "class": "_UserTag",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_Int32List",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Stopwatch",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_AsyncCompleter",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "_SyncCompleter",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "AsciiCodec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "AsciiEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "JsonCodec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "JsonEncoder",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Latin1Codec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Utf8Codec",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "ThreadLocal",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "Stdin",
+          "instances": 1,
+          "bytes": 32
+        },
+        {
+          "class": "LocalVarDescriptors",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "ApiError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Object",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Mint",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Double",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Null",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "OutOfMemoryError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "StackOverflowError",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "IntegerDivisionByZeroException",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_RootZone",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "Utf8Encoder",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_Patch",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "SocketDirection",
+          "instances": 1,
+          "bytes": 16
+        },
+        {
+          "class": "_NamespaceImpl",
+          "instances": 1,
+          "bytes": 16
+        }
+      ],
+      "profile_memory": {
+        "type": "MemoryUsage",
+        "heapUsage": 7328816,
+        "heapCapacity": 23216128,
+        "externalUsage": 80
+      }
+    }
+  ],
+  "git_head": null,
+  "source_unchanged": true
+}

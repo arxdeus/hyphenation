@@ -1,0 +1,326 @@
+[
+  {
+    "mode": "aot",
+    "repeat": 0,
+    "version": "baseline",
+    "data": {
+      "english_mark": {
+        "ns_per_call": 573.32,
+        "checksum": 15210924
+      },
+      "english_split": {
+        "ns_per_call": 643.58,
+        "checksum": 820309
+      },
+      "compounds_mark": {
+        "ns_per_call": 1208.24,
+        "checksum": 16850000
+      },
+      "unicode_mark": {
+        "ns_per_call": 598.22,
+        "checksum": 14321423
+      },
+      "rewrites_mark": {
+        "ns_per_call": 1068.745,
+        "checksum": 13958330
+      }
+    }
+  },
+  {
+    "mode": "aot",
+    "repeat": 0,
+    "version": "current",
+    "data": {
+      "english_mark": {
+        "ns_per_call": 555.375,
+        "checksum": 15210924
+      },
+      "english_split": {
+        "ns_per_call": 611.225,
+        "checksum": 820309
+      },
+      "compounds_mark": {
+        "ns_per_call": 1166.505,
+        "checksum": 16850000
+      },
+      "unicode_mark": {
+        "ns_per_call": 590.24,
+        "checksum": 14321423
+      },
+      "rewrites_mark": {
+        "ns_per_call": 936.345,
+        "checksum": 13958330
+      }
+    }
+  },
+  {
+    "mode": "aot",
+    "repeat": 1,
+    "version": "current",
+    "data": {
+      "english_mark": {
+        "ns_per_call": 550.6,
+        "checksum": 15210924
+      },
+      "english_split": {
+        "ns_per_call": 624.585,
+        "checksum": 820309
+      },
+      "compounds_mark": {
+        "ns_per_call": 1190.795,
+        "checksum": 16850000
+      },
+      "unicode_mark": {
+        "ns_per_call": 597.1,
+        "checksum": 14321423
+      },
+      "rewrites_mark": {
+        "ns_per_call": 974.58,
+        "checksum": 13958330
+      }
+    }
+  },
+  {
+    "mode": "aot",
+    "repeat": 1,
+    "version": "baseline",
+    "data": {
+      "english_mark": {
+        "ns_per_call": 575.985,
+        "checksum": 15210924
+      },
+      "english_split": {
+        "ns_per_call": 639.755,
+        "checksum": 820309
+      },
+      "compounds_mark": {
+        "ns_per_call": 1212.32,
+        "checksum": 16850000
+      },
+      "unicode_mark": {
+        "ns_per_call": 593.115,
+        "checksum": 14321423
+      },
+      "rewrites_mark": {
+        "ns_per_call": 1017.185,
+        "checksum": 13958330
+      }
+    }
+  },
+  {
+    "mode": "aot",
+    "repeat": 2,
+    "version": "baseline",
+    "data": {
+      "english_mark": {
+        "ns_per_call": 579.185,
+        "checksum": 15210924
+      },
+      "english_split": {
+        "ns_per_call": 646.735,
+        "checksum": 820309
+      },
+      "compounds_mark": {
+        "ns_per_call": 1204.17,
+        "checksum": 16850000
+      },
+      "unicode_mark": {
+        "ns_per_call": 599.415,
+        "checksum": 14321423
+      },
+      "rewrites_mark": {
+        "ns_per_call": 1124.645,
+        "checksum": 13958330
+      }
+    }
+  },
+  {
+    "mode": "aot",
+    "repeat": 2,
+    "version": "current",
+    "data": {
+      "english_mark": {
+        "ns_per_call": 537.2,
+        "checksum": 15210924
+      },
+      "english_split": {
+        "ns_per_call": 603.325,
+        "checksum": 820309
+      },
+      "compounds_mark": {
+        "ns_per_call": 1148.785,
+        "checksum": 16850000
+      },
+      "unicode_mark": {
+        "ns_per_call": 585.075,
+        "checksum": 14321423
+      },
+      "rewrites_mark": {
+        "ns_per_call": 993.245,
+        "checksum": 13958330
+      }
+    }
+  },
+  {
+    "mode": "jit",
+    "repeat": 0,
+    "version": "baseline",
+    "data": {
+      "english_mark": {
+        "ns_per_call": 574.07,
+        "checksum": 15210924
+      },
+      "english_split": {
+        "ns_per_call": 652.465,
+        "checksum": 820309
+      },
+      "compounds_mark": {
+        "ns_per_call": 1213.39,
+        "checksum": 16850000
+      },
+      "unicode_mark": {
+        "ns_per_call": 563.67,
+        "checksum": 14321423
+      },
+      "rewrites_mark": {
+        "ns_per_call": 636.815,
+        "checksum": 13958330
+      }
+    }
+  },
+  {
+    "mode": "jit",
+    "repeat": 0,
+    "version": "current",
+    "data": {
+      "english_mark": {
+        "ns_per_call": 530.54,
+        "checksum": 15210924
+      },
+      "english_split": {
+        "ns_per_call": 600.75,
+        "checksum": 820309
+      },
+      "compounds_mark": {
+        "ns_per_call": 1134.625,
+        "checksum": 16850000
+      },
+      "unicode_mark": {
+        "ns_per_call": 540.635,
+        "checksum": 14321423
+      },
+      "rewrites_mark": {
+        "ns_per_call": 605.745,
+        "checksum": 13958330
+      }
+    }
+  },
+  {
+    "mode": "jit",
+    "repeat": 1,
+    "version": "current",
+    "data": {
+      "english_mark": {
+        "ns_per_call": 524.845,
+        "checksum": 15210924
+      },
+      "english_split": {
+        "ns_per_call": 599.1,
+        "checksum": 820309
+      },
+      "compounds_mark": {
+        "ns_per_call": 1137.81,
+        "checksum": 16850000
+      },
+      "unicode_mark": {
+        "ns_per_call": 533.64,
+        "checksum": 14321423
+      },
+      "rewrites_mark": {
+        "ns_per_call": 606.495,
+        "checksum": 13958330
+      }
+    }
+  },
+  {
+    "mode": "jit",
+    "repeat": 1,
+    "version": "baseline",
+    "data": {
+      "english_mark": {
+        "ns_per_call": 577.62,
+        "checksum": 15210924
+      },
+      "english_split": {
+        "ns_per_call": 642.3,
+        "checksum": 820309
+      },
+      "compounds_mark": {
+        "ns_per_call": 1209.135,
+        "checksum": 16850000
+      },
+      "unicode_mark": {
+        "ns_per_call": 559.305,
+        "checksum": 14321423
+      },
+      "rewrites_mark": {
+        "ns_per_call": 650.0,
+        "checksum": 13958330
+      }
+    }
+  },
+  {
+    "mode": "jit",
+    "repeat": 2,
+    "version": "baseline",
+    "data": {
+      "english_mark": {
+        "ns_per_call": 575.085,
+        "checksum": 15210924
+      },
+      "english_split": {
+        "ns_per_call": 642.61,
+        "checksum": 820309
+      },
+      "compounds_mark": {
+        "ns_per_call": 1235.085,
+        "checksum": 16850000
+      },
+      "unicode_mark": {
+        "ns_per_call": 569.465,
+        "checksum": 14321423
+      },
+      "rewrites_mark": {
+        "ns_per_call": 653.41,
+        "checksum": 13958330
+      }
+    }
+  },
+  {
+    "mode": "jit",
+    "repeat": 2,
+    "version": "current",
+    "data": {
+      "english_mark": {
+        "ns_per_call": 521.335,
+        "checksum": 15210924
+      },
+      "english_split": {
+        "ns_per_call": 597.585,
+        "checksum": 820309
+      },
+      "compounds_mark": {
+        "ns_per_call": 1150.735,
+        "checksum": 16850000
+      },
+      "unicode_mark": {
+        "ns_per_call": 541.895,
+        "checksum": 14321423
+      },
+      "rewrites_mark": {
+        "ns_per_call": 605.855,
+        "checksum": 13958330
+      }
+    }
+  }
+]
