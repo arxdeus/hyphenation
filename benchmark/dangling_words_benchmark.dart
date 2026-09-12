@@ -84,7 +84,7 @@
 
 import 'dart:typed_data';
 
-import '../test/test_dictionaries.dart';
+import '../test/support/test_dictionaries.dart';
 import 'package:bench_press/bench_press.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
