@@ -20,16 +20,21 @@
 // What the numbers say, measured on an M-series Mac:
 //
 //  - In steady state `HyphenText` costs about what a plain `Text` costs, and
-//    on a list of paragraphs it is faster: marked text and break results are
-//    memoised on the shared `Hyphenator`, so a paragraph whose text, style and
-//    width have been seen before is answered from cache, while a plain `Text`
-//    re-breaks every time.
-//  - The one expensive row is a cold dictionary, the very first paragraph
-//    after startup. That time is the hyphen package's own engine at roughly
-//    27 us per uncached word, so it is a floor set by the dictionary rather
-//    than something this package can remove.
+//    on a list of paragraphs it is faster: break results are memoised on the
+//    shared `Hyphenator`, so a paragraph whose text, style and width have been
+//    seen before is answered from cache, while a plain `Text` re-breaks every
+//    time.
+//  - The expensive rows are the ones that actually decide line breaks. What
+//    they cost is engine measurements of strings it has not seen, so the
+//    breaker aims its search (predict from the average glyph width, gallop
+//    outwards, then bisect the remaining gap) instead of bisecting blindly:
+//    5.7 measurements per line down to 2.2, and about 2.3x faster breaking.
+//  - A cold dictionary adds lookups on top, roughly 3 us per uncached word
+//    against 16 ns cached. That part is the hyphen package's own engine, so it
+//    is a floor set by the dictionary rather than something this package can
+//    remove.
 //
-// Two earlier findings are worth recording, so they are not retried:
+// Earlier findings worth recording, so they are not retried:
 //
 //  - Estimating line widths from cached per-segment measurements and only
 //    confirming near the answer measured about twice as slow as the plain
@@ -48,6 +53,24 @@
 //    17 us for a string the engine has not seen. It still lost badly, because
 //    on a cold cache it measures many more distinct short strings than the
 //    binary search measures long ones: the cold row went from 13.9x to 40.8x.
+//  - Memoising the break candidates per hard line on the breaker was removed
+//    again. Rebuilding them is a tokenise plus one cached dictionary lookup
+//    per word, tens of nanoseconds against the hundreds of microseconds a
+//    break spends measuring, and keeping them alive measured slower.
+//  - The '25 paragraphs in a list' row moved from 0.47x to about 0.60x when
+//    the aimed search landed, and that is not work this package does. In that
+//    row every frame builds 25 fresh paragraphs whose breaks are already
+//    cached: instrumentation shows zero breaker constructions, zero
+//    breakText calls and zero dictionary lookups per frame after the first,
+//    and the rendered strings are byte-identical either way. The difference
+//    survives a 600-frame warmup and disappears when the same pre-broken
+//    strings are timed through a plain `Text`, so it is VM/engine state
+//    seeded by the first break, not steady-state cost. Reverting the
+//    (never-executed) breaker file is the only thing that moves it; moving
+//    the cold path behind `vm:never-inline` and reordering the file do not.
+//    Note the realistic reuse case, 'relayout, same width', improved instead:
+//    that row keeps its render object, as a scrolling list does, while this
+//    one re-creates all 25 every frame.
 
 import 'package:bench_press/bench_press.dart';
 import 'package:flutter/material.dart';
@@ -232,10 +255,10 @@ void main() {
       // It shares the parsed dictionary, so this isolates lookup cost from the
       // one-off cost of parsing the .dic file.
       //
-      // The time is almost entirely the hyphen package's own engine, at
-      // roughly 27 us per uncached word, so this row is a floor imposed by the
-      // dictionary rather than something this package can optimise away. Every
-      // later paragraph shares the cache and lands on the row above.
+      // The dictionary lookups are a small part of this (see the 'dictionary'
+      // group below for the per-word cost); most of it is breaking the lines
+      // from scratch, the same work as the 'new width' row plus the lookups.
+      // Every later paragraph shares the cache and lands on the rows above.
       var seed = 0;
 
       void pump(Widget child) {
@@ -257,6 +280,38 @@ void main() {
             style: kStyle,
             hyphenator: Hyphenator(hyphenator.hyphen),
           ),
+        ),
+      );
+    });
+
+    testWidgets('break from scratch, warm dictionary', (
+      WidgetTester tester,
+    ) async {
+      // The cost of the line breaking itself. Every word is already in the
+      // dictionary cache, but the render object is new and the width has
+      // never been seen, so no break cache can answer and the breaker has to
+      // measure candidate lines from nothing. This is the cost the other rows
+      // hide once their cycle of widths has been cached, and the row to watch
+      // when changing the breaker.
+      var width = 240.0;
+      var seed = 0;
+
+      void pump(Widget child) {
+        width += 0.01;
+        pumpSync(
+          tester,
+          buildHost(
+            KeyedSubtree(key: ValueKey<int>(seed++), child: child),
+            width,
+          ),
+        );
+      }
+
+      await compare(
+        'break from scratch, warm dict',
+        () => pump(const Text(kSampleText, style: kStyle)),
+        () => pump(
+          HyphenText(kSampleText, style: kStyle, hyphenator: hyphenator),
         ),
       );
     });

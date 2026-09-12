@@ -103,6 +103,56 @@ void main() {
       expect(small.split('программирование').join(), 'программирование');
     });
 
+    test('every cache stays within its bound', () {
+      final small = Hyphenator(
+        russian.hyphen,
+        maxCacheSize: 3,
+        maxParagraphCacheSize: 2,
+      );
+      for (var i = 0; i < 50; i++) {
+        small.breakOffsets('программирование$i');
+        small.hyphenate('конституция страны $i');
+        small.cacheBreak('key$i', 'broken $i');
+      }
+      final (words, marked, broken) = small.cacheCounts;
+      expect(words, lessThanOrEqualTo(3));
+      expect(marked, lessThanOrEqualTo(2));
+      expect(broken, lessThanOrEqualTo(2));
+    });
+
+    test('paragraph caches are bounded far below the word cache', () {
+      // Paragraph entries are ~1000x the size of a word entry, so the default
+      // must not be the same number for both.
+      final hyphenator = Hyphenator(russian.hyphen);
+      expect(hyphenator.maxCacheSize, 5000);
+      expect(
+        hyphenator.maxParagraphCacheSize,
+        Hyphenator.kDefaultParagraphCacheSize,
+      );
+      expect(
+        hyphenator.maxParagraphCacheSize,
+        lessThan(hyphenator.maxCacheSize),
+      );
+      // Disabling the cache still disables all of it.
+      expect(
+        Hyphenator(russian.hyphen, maxCacheSize: 0).maxParagraphCacheSize,
+        0,
+      );
+    });
+
+    test('eviction drops the least recently used entry, not the oldest', () {
+      final small = Hyphenator(russian.hyphen, maxParagraphCacheSize: 2);
+      small
+        ..cacheBreak('a', 'A')
+        ..cacheBreak('b', 'B');
+      // Touch 'a' so 'b' becomes the least recently used.
+      expect(small.cachedBreak('a'), 'A');
+      small.cacheBreak('c', 'C');
+      expect(small.cachedBreak('a'), 'A', reason: 'recently used, must stay');
+      expect(small.cachedBreak('b'), isNull, reason: 'least recently used');
+      expect(small.cachedBreak('c'), 'C');
+    });
+
     test('hyphenate() memoises whole strings', () {
       const text = 'привет мир программирование';
       final first = russian.hyphenate(text);

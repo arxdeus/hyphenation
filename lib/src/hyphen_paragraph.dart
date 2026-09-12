@@ -172,12 +172,30 @@ class RenderHyphenParagraph extends RenderParagraph
   @override
   set text(InlineSpan value) {
     final span = value as TextSpan;
-    if (_sourceSpan.text == span.text &&
-        _sourceSpan.style == span.style &&
-        _sourceSpan.locale == span.locale) {
+    final previous = _sourceSpan;
+    if (previous.text == span.text &&
+        previous.style == span.style &&
+        previous.locale == span.locale) {
       return;
     }
     _sourceSpan = span;
+    // A change that only affects painting (colour, decoration, shadows) moves
+    // no glyph, so every break computed so far is still right. Swapping the
+    // style under the painted text repaints without a layout, which is what
+    // a plain Text does for the same change. TextSpan.compareTo ignores the
+    // span's locale, so that is checked separately.
+    if (previous.text == span.text &&
+        previous.locale == span.locale &&
+        previous.compareTo(span).index < RenderComparison.layout.index) {
+      // The breaks survive, but the span carrying them has the old style.
+      _cachedSpan = null;
+      super.text = TextSpan(
+        text: renderedText,
+        style: span.style,
+        locale: span.locale,
+      );
+      return;
+    }
     _invalidateBreaks();
     // The painted text is recomputed in the layout callback; installing the
     // source text here keeps semantics, intrinsics and `toStringDeep` honest
@@ -212,6 +230,22 @@ class RenderHyphenParagraph extends RenderParagraph
   }
 
   @override
+  set softWrap(bool value) {
+    if (softWrap != value) {
+      _invalidateBreaks();
+    }
+    super.softWrap = value;
+  }
+
+  @override
+  set textDirection(TextDirection value) {
+    if (textDirection != value) {
+      _invalidateBreaks();
+    }
+    super.textDirection = value;
+  }
+
+  @override
   set textScaler(TextScaler value) {
     if (textScaler != value) {
       _invalidateBreaks();
@@ -239,16 +273,34 @@ class RenderHyphenParagraph extends RenderParagraph
   TextPainter? _measurePainter;
   TextPainter? _dryPainter;
 
-  /// Memoised result of the last break, keyed by the width it was made for.
+  /// The most recently used width and what it broke into.
   ///
   /// Re-laying out at an unchanged width is by far the most common case (any
   /// rebuild, and every frame of a scroll), and breaking the text again there
-  /// costs far more than the paragraph layout itself.
+  /// costs far more than the paragraph layout itself. This slot is plain
+  /// fields rather than a map entry because a paragraph that is laid out at
+  /// one width, which is the overwhelming majority, must not pay for a hash
+  /// map it never needs: a screenful of paragraphs allocates one render
+  /// object each, and that allocation showed up in the list benchmark.
   double? _cachedWidth;
   String? _cachedBroken;
 
-  /// The source text with soft hyphens inserted, cached across widths.
-  String? _marked;
+  /// The span handed to the engine at [_cachedWidth], so that a relayout at
+  /// the same width passes the identical object and `RenderParagraph.text`
+  /// short-circuits instead of comparing styles field by field.
+  TextSpan? _cachedSpan;
+
+  /// Results for widths other than [_cachedWidth], allocated only once a
+  /// second width is seen. A parent's dry layout probes at other widths, and
+  /// those must not evict the width the object is actually painted at.
+  Map<double, String>? _olderBroken;
+
+  /// How many superseded widths to keep in [_olderBroken].
+  static const int _kOlderCacheSize = 7;
+
+  /// Whether the dictionary can break anything in the text at all; null until
+  /// asked.
+  bool? _breakable;
 
   /// Minimum intrinsic width, which depends only on the text and the style.
   double? _minIntrinsicWidthCache;
@@ -258,7 +310,9 @@ class RenderHyphenParagraph extends RenderParagraph
     _breaker = null;
     _cachedWidth = null;
     _cachedBroken = null;
-    _marked = null;
+    _cachedSpan = null;
+    _olderBroken = null;
+    _breakable = null;
     _minIntrinsicWidthCache = null;
   }
 
@@ -276,6 +330,12 @@ class RenderHyphenParagraph extends RenderParagraph
         style: _sourceSpan.style,
         locale: _sourceSpan.locale,
       )
+      // Alignment does not change a line's width, but any alignment other
+      // than left makes TextPainter lay the paragraph out twice at an
+      // infinite width (once to learn the width, once for a finite paint
+      // offset). Left-aligning the scratch painter keeps RTL measurement to
+      // a single layout, like LTR.
+      ..textAlign = TextAlign.left
       ..textDirection = textDirection
       ..textScaler = textScaler
       ..strutStyle = strutStyle
@@ -287,69 +347,107 @@ class RenderHyphenParagraph extends RenderParagraph
     return painter.width;
   }
 
-  /// The source text with a soft hyphen at every break the dictionary allows.
-  ///
-  /// Computing this needs no measurement at all, so it only has to be redone
-  /// when the text or the dictionary changes, not when the width does.
-  String get _markedText => _marked ??= _hyphenator.hyphenate(sourceText);
-
   /// The text to paint when laid out into [maxWidth].
   ///
-  /// The expensive part of hyphenation is deciding where the lines end. Rather
-  /// than measuring candidate lines one by one, this hands the engine a string
-  /// marked with soft hyphens and lets it break the paragraph in a single
-  /// layout: the engine already treats U+00AD as a break opportunity, it just
-  /// will not paint a hyphen glyph there. Reading the resulting line starts
-  /// back out and re-emitting the text with real hyphens costs one layout
-  /// instead of O(lines x log candidates) of them.
+  /// The expensive part of hyphenation is deciding where the lines end, which
+  /// [HyphenLineBreaker] does by measuring candidate lines. Everything here is
+  /// memoisation around that: per width on this object, then across widgets on
+  /// the [Hyphenator].
+  ///
+  /// The body is deliberately tiny, and the part that can reach the line
+  /// breaker lives behind [_breakFor], which is marked never-inline. Almost
+  /// every call is a cache hit, and keeping the cold path out of this method
+  /// keeps it small enough for the compiler to inline into the layout
+  /// callback. Letting the breaker's call graph bleed in here measured ~15%
+  /// slower on a screen of already-broken paragraphs, even though the breaker
+  /// never ran.
   String _brokenTextFor(double maxWidth) {
+    if (_cachedWidth == maxWidth) {
+      return _cachedBroken!;
+    }
+    return _breakFor(maxWidth);
+  }
+
+  @pragma('vm:never-inline')
+  String _breakFor(double maxWidth) {
     final source = sourceText;
     if (source.isEmpty || !maxWidth.isFinite || !softWrap) {
       return source;
     }
-    if (_cachedWidth == maxWidth && _cachedBroken != null) {
-      return _cachedBroken!;
+    final older = _olderBroken?[maxWidth];
+    if (older != null) {
+      _promote(maxWidth, older);
+      return older;
     }
 
     // Shared across every widget using this dictionary, so two paragraphs
     // with the same text, style and width only break once.
     final sharedKey = _sharedBreakKey(maxWidth);
-    final shared = _hyphenator.cachedBreak(sharedKey);
-    if (shared != null) {
-      _cachedWidth = maxWidth;
-      _cachedBroken = shared;
-      return shared;
+    var broken = _hyphenator.cachedBreak(sharedKey);
+    if (broken == null) {
+      // Nothing to hyphenate: let the engine wrap the text as it would a
+      // plain Text.
+      broken = (_breakable ??= _hyphenator.hasBreakOpportunity(source))
+          ? _lineBreaker.breakIntoString(source, maxWidth)
+          : source;
+      _hyphenator.cacheBreak(sharedKey, broken);
     }
+    _promote(maxWidth, broken);
+    return broken;
+  }
 
-    // Nothing to hyphenate: let the engine wrap the text as it would a plain
-    // Text.
-    final broken = _markedText.contains(kSoftHyphen)
-        ? _lineBreaker.breakIntoString(source, maxWidth)
-        : source;
-
-    _hyphenator.cacheBreak(sharedKey, broken);
+  /// Makes [maxWidth] the current width, demoting the previous one.
+  void _promote(double maxWidth, String broken) {
+    final previousWidth = _cachedWidth;
+    if (previousWidth != null) {
+      final older = _olderBroken ??= <double, String>{};
+      if (older.length >= _kOlderCacheSize) {
+        older.remove(older.keys.first);
+      }
+      older[previousWidth] = _cachedBroken!;
+    }
+    _olderBroken?.remove(maxWidth);
     _cachedWidth = maxWidth;
     _cachedBroken = broken;
-    return broken;
+    _cachedSpan = null;
   }
 
   /// Key identifying a break result across widgets.
   ///
   /// Everything that can change where the lines fall has to appear here, or a
-  /// widget would pick up another's layout.
-  String _sharedBreakKey(double maxWidth) {
-    final style = _sourceSpan.style;
-    return '$maxWidth\u0000$_hyphenCharacter\u0000$textDirection\u0000'
-        '$textScaler\u0000${strutStyle?.hashCode}\u0000'
-        '${textHeightBehavior?.hashCode}\u0000${style?.hashCode}\u0000'
-        '${_sourceSpan.locale}\u0000$sourceText';
-  }
-
-  TextSpan _spanFor(double maxWidth) => TextSpan(
-    text: _brokenTextFor(maxWidth),
-    style: _sourceSpan.style,
-    locale: _sourceSpan.locale,
+  /// widget would pick up another's layout. A record compares its fields with
+  /// `==`, so unlike a string built from hash codes it cannot alias two
+  /// different styles or scalers.
+  Object _sharedBreakKey(double maxWidth) => (
+    maxWidth,
+    _hyphenCharacter,
+    textDirection,
+    textScaler,
+    strutStyle,
+    textHeightBehavior,
+    _sourceSpan.style,
+    _sourceSpan.locale,
+    sourceText,
   );
+
+  TextSpan _spanFor(double maxWidth) {
+    final broken = _brokenTextFor(maxWidth);
+    // `_brokenTextFor` clears the cached span whenever the current width
+    // changes, so a hit here always belongs to `maxWidth`.
+    final cached = _cachedSpan;
+    if (cached != null && _cachedWidth == maxWidth) {
+      return cached;
+    }
+    final span = TextSpan(
+      text: broken,
+      style: _sourceSpan.style,
+      locale: _sourceSpan.locale,
+    );
+    if (_cachedWidth == maxWidth) {
+      _cachedSpan = span;
+    }
+    return span;
+  }
 
   /// Lays out a scratch painter with the broken text, for dry layout,
   /// baselines and intrinsic heights.
@@ -432,9 +530,7 @@ class RenderHyphenParagraph extends RenderParagraph
   double computeDryBaseline(
     BoxConstraints constraints,
     TextBaseline baseline,
-  ) =>
-      _layoutDry(constraints)
-          .computeDistanceToActualBaseline(TextBaseline.alphabetic);
+  ) => _layoutDry(constraints).computeDistanceToActualBaseline(baseline);
 
   @override
   void dispose() {

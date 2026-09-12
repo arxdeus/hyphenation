@@ -177,11 +177,14 @@ class HyphenText extends Text {
 
     // The painted string carries hyphens and hard newlines that the author
     // never wrote, so screen readers must be given the original text instead.
+    // `excludeSemantics` folds Text's Semantics + ExcludeSemantics pair into
+    // one render object.
     return Semantics(
       textDirection: textDirection,
       label: semanticsLabel ?? text,
       identifier: semanticsIdentifier,
-      child: ExcludeSemantics(child: result),
+      excludeSemantics: true,
+      child: result,
     );
   }
 

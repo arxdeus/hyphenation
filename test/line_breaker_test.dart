@@ -175,6 +175,97 @@ void main() {
       }
     });
 
+    test('the aimed search matches a brute-force greedy at every width', () {
+      // Glyphs of uneven width make the running average a poor predictor,
+      // which is exactly when the gallop around the guess has to do work.
+      double uneven(String text) {
+        var width = 0.0;
+        for (final unit in text.codeUnits) {
+          width += switch (unit) {
+            0x20 => 4.0,
+            0x2D => 5.0,
+            0x61 || 0x65 || 0x69 || 0x6F || 0x75 => 6.0,
+            0x6D || 0x77 => 15.0,
+            _ => 11.0,
+          };
+        }
+        return width;
+      }
+
+      // Reference: scan every candidate linearly and keep the longest fit.
+      List<String> reference(String text, double maxWidth) {
+        final words = text.split(' ');
+        final ends = <(int, bool)>[];
+        var offset = 0;
+        for (final word in words) {
+          for (final cut in latin.breakOffsets(word)) {
+            ends.add((offset + cut, true));
+          }
+          offset += word.length;
+          ends.add((offset, false));
+          offset += 1;
+        }
+        final lines = <String>[];
+        var start = 0;
+        var first = 0;
+        while (first < ends.length) {
+          var chosen = first;
+          for (var i = first; i < ends.length; i++) {
+            final (end, hyphen) = ends[i];
+            final line = text.substring(start, end) + (hyphen ? '-' : '');
+            if (uneven(line) <= maxWidth) {
+              chosen = i;
+            } else {
+              break;
+            }
+          }
+          final (end, hyphen) = ends[chosen];
+          lines.add(text.substring(start, end) + (hyphen ? '-' : ''));
+          start = hyphen ? end : end + 1;
+          first = chosen + 1;
+        }
+        return lines;
+      }
+
+      const texts = <String>[
+        'always wonderful extraordinary computer hyphenation',
+        'hyphenation hyphenation hyphenation wonderful international',
+        'a bb ccc extraordinary d hyphenation ee computer f wonderful',
+      ];
+      for (final text in texts) {
+        // One breaker per text so its running estimate evolves across widths
+        // the way it does across a resize.
+        final breaker = HyphenLineBreaker(measure: uneven, hyphenator: latin);
+        for (var width = 20.0; width <= 320; width += 3) {
+          expect(
+            breaker.breakText(text, width),
+            reference(text, width),
+            reason: '"$text" at width $width',
+          );
+        }
+      }
+    });
+
+    test('the measurement cache is bounded across widths', () {
+      // A breaker outlives a width change, so an animating column must not
+      // grow it without limit.
+      final breaker = HyphenLineBreaker(
+        measure: measureByCharacter,
+        hyphenator: latin,
+        maxMeasurementCacheSize: 8,
+      );
+      const text = 'always wonderful extraordinary computer hyphenation';
+      for (var width = 30.0; width < 400; width += 1) {
+        breaker.breakText(text, width);
+      }
+      expect(breaker.measurementCacheSize, lessThanOrEqualTo(8));
+      // Still correct once entries are being evicted.
+      expect(
+        breaker.breakText(text, 200).join(' ').replaceAll('- ', ''),
+        text,
+      );
+    });
+
     test('measurements are cached but results stay correct', () {
       var calls = 0;
       final breaker = HyphenLineBreaker(

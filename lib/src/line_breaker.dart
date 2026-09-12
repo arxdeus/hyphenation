@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hyphen/src/hyphenator.dart';
+import 'package:flutter_hyphen/src/lru_cache.dart';
 
 /// One break opportunity inside a hard line.
 @immutable
@@ -37,7 +38,18 @@ class HyphenLineBreaker {
     required this.measure,
     required this.hyphenator,
     this.hyphenCharacter = '-',
-  });
+    int maxMeasurementCacheSize = kDefaultMeasurementCacheSize,
+  }) : _widths = LruCache<String, double>(maxMeasurementCacheSize);
+
+  /// Default bound for the measurement cache.
+  ///
+  /// Breaking a 400-character paragraph once measures about fifty distinct
+  /// strings, and a paragraph whose width is animating reuses most of them
+  /// from one width to the next, which is why the cache survives a width
+  /// change at all. It must still be bounded: a breaker lives as long as the
+  /// text and style are unchanged, so a window being dragged would otherwise
+  /// grow it without limit.
+  static const int kDefaultMeasurementCacheSize = 1024;
 
   /// Measures the painted width of a string.
   final double Function(String) measure;
@@ -49,9 +61,34 @@ class HyphenLineBreaker {
   /// The character painted at the end of a hyphenated line.
   final String hyphenCharacter;
 
-  final Map<String, double> _widths = <String, double>{};
+  final LruCache<String, double> _widths;
 
-  double _width(String text) => _widths[text] ??= measure(text);
+  /// Running total of every measured width and the code units it covered.
+  ///
+  /// Their ratio is a cheap guess at how many code units fill a line, which
+  /// is used to aim the search for the last fitting candidate: the guess is
+  /// usually right or off by one, so a line costs two or three measurements
+  /// instead of the log2(candidates) a blind binary search needs.
+  double _measuredWidth = 0;
+  int _measuredUnits = 0;
+
+  /// How many measurements are currently cached, for tests and diagnostics.
+  @visibleForTesting
+  int get measurementCacheSize => _widths.length;
+
+  double _width(String text) {
+    final cached = _widths[text];
+    if (cached != null) {
+      return cached;
+    }
+    final width = measure(text);
+    _widths[text] = width;
+    if (text.isNotEmpty) {
+      _measuredWidth += width;
+      _measuredUnits += text.length;
+    }
+    return width;
+  }
 
   /// Breaks [text] into the lines that fit into [maxWidth].
   ///
@@ -100,7 +137,7 @@ class HyphenLineBreaker {
     final chunks = <String>[];
     for (final line in text.split('\n')) {
       var start = 0;
-      for (final candidate in _candidatesFor(line, 0, line.length)) {
+      for (final candidate in _candidatesForLine(line)) {
         chunks.add(
           _clean(
             line.substring(start, candidate.end) +
@@ -142,7 +179,18 @@ class HyphenLineBreaker {
   }
 
   /// Clears cached measurements. Call this whenever the text style changes.
-  void clearCache() => _widths.clear();
+  void clearCache() {
+    _widths.clear();
+    _measuredWidth = 0;
+    _measuredUnits = 0;
+  }
+
+  // Deliberately not memoised. Rebuilding the candidates costs a tokenise and
+  // one cached dictionary lookup per word, a few tens of nanoseconds each,
+  // against the hundreds of microseconds a break spends measuring in the
+  // engine. Keeping them alive measured slower than recomputing them.
+  List<_Candidate> _candidatesForLine(String content) =>
+      _candidatesFor(content, 0, content.length);
 
   void _breakHardLine(
     String text,
@@ -156,7 +204,7 @@ class HyphenLineBreaker {
       out.add(content.trimRight());
       return;
     }
-    final candidates = _candidatesFor(content, 0, content.length);
+    final candidates = _candidatesForLine(content);
     if (candidates.isEmpty) {
       out.add(content.trimRight());
       return;
@@ -165,21 +213,7 @@ class HyphenLineBreaker {
     var start = 0;
     var first = 0;
     while (first < candidates.length) {
-      // Binary search for the last candidate that still fits. Widths grow
-      // monotonically with the end offset, so the fitting candidates form a
-      // prefix of the remaining list.
-      var low = first;
-      var high = candidates.length - 1;
-      var best = -1;
-      while (low <= high) {
-        final mid = (low + high) >> 1;
-        if (_fits(content, start, candidates[mid], maxWidth)) {
-          best = mid;
-          low = mid + 1;
-        } else {
-          high = mid - 1;
-        }
-      }
+      final best = _lastFitting(content, start, candidates, first, maxWidth);
       // Nothing fits: emit the smallest chunk anyway so that layout always
       // makes progress, and let the paragraph overflow as a plain Text would.
       final chosen = best < 0 ? first : best;
@@ -191,6 +225,122 @@ class HyphenLineBreaker {
         break;
       }
     }
+  }
+
+  /// Index of the last candidate in `candidates[first..]` whose line fits
+  /// into [maxWidth], or `-1` when even the first one does not.
+  ///
+  /// Widths grow monotonically with the end offset, so the fitting candidates
+  /// form a prefix of the remaining list. Rather than bisecting that list
+  /// blindly, the search starts at the candidate the average glyph width
+  /// predicts, then gallops outwards until the boundary is bracketed and
+  /// bisects the (usually empty) gap. Every measurement is a paragraph layout
+  /// of a string the engine has not seen, so probes are what this costs.
+  int _lastFitting(
+    String content,
+    int start,
+    List<_Candidate> candidates,
+    int first,
+    double maxWidth,
+  ) {
+    final last = candidates.length - 1;
+    final fit = _measuredUnits == 0
+        ? _bisect(content, start, candidates, first - 1, last + 1, maxWidth)
+        : _gallop(content, start, candidates, first, last, maxWidth);
+    return fit < first ? -1 : fit;
+  }
+
+  int _gallop(
+    String content,
+    int start,
+    List<_Candidate> candidates,
+    int first,
+    int last,
+    double maxWidth,
+  ) {
+    // Aim at the last candidate whose length the running average says fits.
+    final targetUnits = maxWidth * _measuredUnits / _measuredWidth;
+    var low = first;
+    var high = last;
+    var guess = first;
+    while (low <= high) {
+      final mid = (low + high) >> 1;
+      final candidate = candidates[mid];
+      final units = candidate.end - start + (candidate.hyphen ? 1 : 0);
+      if (units <= targetUnits) {
+        guess = mid;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    // `fit` always fits (or is `first - 1`), `fail` never does (or is
+    // `last + 1`); gallop until the pair brackets the boundary.
+    int fit;
+    int fail;
+    if (_fits(content, start, candidates[guess], maxWidth)) {
+      fit = guess;
+      fail = last + 1;
+      var step = 1;
+      while (true) {
+        final probe = fit + step;
+        if (probe > last) {
+          break;
+        }
+        if (_fits(content, start, candidates[probe], maxWidth)) {
+          fit = probe;
+          step <<= 1;
+        } else {
+          fail = probe;
+          break;
+        }
+      }
+    } else {
+      fail = guess;
+      fit = first - 1;
+      var step = 1;
+      while (true) {
+        final probe = fail - step;
+        if (probe < first) {
+          break;
+        }
+        if (_fits(content, start, candidates[probe], maxWidth)) {
+          fit = probe;
+          break;
+        } else {
+          fail = probe;
+          step <<= 1;
+        }
+      }
+    }
+    return _bisect(content, start, candidates, fit, fail, maxWidth);
+  }
+
+  /// Bisects the open interval `(fit, fail)`, where [fit] is known to fit (or
+  /// is one before the first index) and [fail] is known not to (or is one past
+  /// the last). Returns the last fitting index, or [fit] when none does.
+  int _bisect(
+    String content,
+    int start,
+    List<_Candidate> candidates,
+    int fit,
+    int fail,
+    double maxWidth,
+  ) {
+    var best = fit;
+    var low = fit + 1;
+    var high = fail - 1;
+    while (low <= high) {
+      final mid = (low + high) >> 1;
+      if (_fits(content, start, candidates[mid], maxWidth)) {
+        best = mid;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+    return best;
   }
 
   bool _fits(String content, int start, _Candidate candidate, double width) =>

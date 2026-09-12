@@ -1,6 +1,7 @@
 import 'package:characters/characters.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_hyphen/src/lru_cache.dart';
 import 'package:hyphen/hyphen.dart';
 
 /// The Unicode soft hyphen (`U+00AD`).
@@ -33,10 +34,26 @@ class Hyphenator {
     this.rightMin = 2,
     this.minWordLength = 5,
     this.maxCacheSize = 5000,
-  }) : assert(leftMin >= 1, 'leftMin must be at least 1'),
+    int? maxParagraphCacheSize,
+  }) : maxParagraphCacheSize =
+           maxParagraphCacheSize ??
+           (maxCacheSize == 0 ? 0 : kDefaultParagraphCacheSize),
+       assert(leftMin >= 1, 'leftMin must be at least 1'),
        assert(rightMin >= 1, 'rightMin must be at least 1'),
        assert(minWordLength >= 1, 'minWordLength must be at least 1'),
-       assert(maxCacheSize >= 0, 'maxCacheSize must not be negative');
+       assert(maxCacheSize >= 0, 'maxCacheSize must not be negative'),
+       assert(
+         maxParagraphCacheSize == null || maxParagraphCacheSize >= 0,
+         'maxParagraphCacheSize must not be negative',
+       );
+
+  /// Default for [maxParagraphCacheSize].
+  ///
+  /// Paragraph-sized entries are three orders of magnitude larger than word
+  /// entries, so they get their own, much smaller bound: a few hundred covers
+  /// a screenful of paragraphs at several widths, which is what the cache is
+  /// for, while keeping the whole thing well under a megabyte.
+  static const int kDefaultParagraphCacheSize = 200;
 
   /// Loads a dictionary from the asset bundle.
   ///
@@ -49,6 +66,7 @@ class Hyphenator {
     int rightMin = 2,
     int minWordLength = 5,
     int maxCacheSize = 5000,
+    int? maxParagraphCacheSize,
   }) async {
     final data = await (bundle ?? rootBundle).load(path);
     return Hyphenator.fromBytes(
@@ -60,6 +78,7 @@ class Hyphenator {
       rightMin: rightMin,
       minWordLength: minWordLength,
       maxCacheSize: maxCacheSize,
+      maxParagraphCacheSize: maxParagraphCacheSize,
     );
   }
 
@@ -70,12 +89,14 @@ class Hyphenator {
     int rightMin = 2,
     int minWordLength = 5,
     int maxCacheSize = 5000,
+    int? maxParagraphCacheSize,
   }) => Hyphenator(
     Hyphen.fromDictionaryBytes(bytes),
     leftMin: leftMin,
     rightMin: rightMin,
     minWordLength: minWordLength,
     maxCacheSize: maxCacheSize,
+    maxParagraphCacheSize: maxParagraphCacheSize,
   );
 
   /// The underlying hyphenation engine.
@@ -93,8 +114,30 @@ class Hyphenator {
 
   /// How many words to keep in the memoisation cache. Set to `0` to disable
   /// caching.
+  ///
+  /// Word entries are small (a short string and a handful of ints), so this
+  /// can be generous. Paragraph-sized results are bounded separately by
+  /// [maxParagraphCacheSize].
   final int maxCacheSize;
 
+  /// How many paragraph-sized results to keep, for both [hyphenate] and the
+  /// broken-line cache behind [cachedBreak].
+  ///
+  /// Each entry holds a whole paragraph, and its key holds the source text and
+  /// the style, so these are roughly a thousand times larger than a word
+  /// entry. Defaults to [kDefaultParagraphCacheSize], or to `0` when
+  /// [maxCacheSize] is `0`.
+  final int maxParagraphCacheSize;
+
+  /// Word offsets, kept in a plain map with oldest-first eviction rather than
+  /// in an [LruCache].
+  ///
+  /// This is the hottest and cheapest lookup in the package: a hit costs
+  /// around 16 ns, and moving the entry to the end of an LRU on every hit
+  /// measured over three times that. It is not worth it here. Recency matters
+  /// much less for words than for paragraphs, because the bound is large
+  /// enough to hold a realistic vocabulary and a miss only costs a few
+  /// microseconds, against the hundreds a paragraph miss costs.
   final Map<String, List<int>> _cache = <String, List<int>>{};
 
   /// Memoised results of [hyphenate], keyed by the input text.
@@ -103,7 +146,9 @@ class Hyphenator {
   /// screen often shows the same string more than once (a rebuilt list, a
   /// repeated label). Keeping the marked form here means the work is done once
   /// per distinct string per app, not once per widget.
-  final Map<String, String> _markedCache = <String, String>{};
+  late final LruCache<String, String> _markedCache = LruCache<String, String>(
+    maxParagraphCacheSize,
+  );
 
   /// Memoised broken paragraphs, shared by every widget using this
   /// dictionary.
@@ -112,22 +157,22 @@ class Hyphenator {
   /// once: a rebuilt list, a repeated label, two widgets in equal columns.
   /// Each of those otherwise repeats the whole break from scratch, because the
   /// per-render-object cache cannot see across widgets. The key has to cover
-  /// everything that changes the answer, which the caller supplies.
-  final Map<String, String> _brokenCache = <String, String>{};
+  /// everything that changes the answer, which the caller supplies; it is
+  /// compared with `==`, so a record of the inputs is a good key.
+  late final LruCache<Object, String> _brokenCache = LruCache<Object, String>(
+    maxParagraphCacheSize,
+  );
 
   /// Returns the cached broken form for [key], or null.
-  String? cachedBreak(String key) => _brokenCache[key];
+  String? cachedBreak(Object key) => _brokenCache[key];
 
   /// Records [value] as the broken form for [key].
-  void cacheBreak(String key, String value) {
-    if (maxCacheSize <= 0) {
-      return;
-    }
-    if (_brokenCache.length >= maxCacheSize) {
-      _brokenCache.remove(_brokenCache.keys.first);
-    }
-    _brokenCache[key] = value;
-  }
+  void cacheBreak(Object key, String value) => _brokenCache[key] = value;
+
+  /// How many entries each cache currently holds, for tests and diagnostics.
+  @visibleForTesting
+  (int words, int marked, int broken) get cacheCounts =>
+      (_cache.length, _markedCache.length, _brokenCache.length);
 
   /// Returns the offsets inside [word] at which a hyphen may be inserted.
   ///
@@ -216,13 +261,32 @@ class Hyphenator {
       buffer.write(token.substring(previous));
     });
     final result = buffer.toString();
-    if (isDefaultSeparator && maxCacheSize > 0) {
-      if (_markedCache.length >= maxCacheSize) {
-        _markedCache.remove(_markedCache.keys.first);
-      }
+    if (isDefaultSeparator) {
       _markedCache[text] = result;
     }
     return result;
+  }
+
+  /// Whether [text] contains at least one word the dictionary can break.
+  ///
+  /// This is what a paragraph needs to know before it commits to breaking
+  /// lines itself, and it is far cheaper than [hyphenate]: it stops at the
+  /// first hit and allocates nothing.
+  bool hasBreakOpportunity(String text) {
+    var start = 0;
+    while (start < text.length) {
+      final whitespace = _isWhitespace(text.codeUnitAt(start));
+      var end = start + 1;
+      while (end < text.length &&
+          _isWhitespace(text.codeUnitAt(end)) == whitespace) {
+        end++;
+      }
+      if (!whitespace && breakOffsets(text.substring(start, end)).isNotEmpty) {
+        return true;
+      }
+      start = end;
+    }
+    return false;
   }
 
   /// Clears the memoisation caches.
