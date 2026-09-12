@@ -297,3 +297,5 @@ __pycache__/
 *.pyc
 .superpowers/
 plumb*
+# bench_press CLI telemetry output
+benchmark_results.json
