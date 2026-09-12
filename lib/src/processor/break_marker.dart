@@ -7,16 +7,13 @@
 import 'dart:typed_data';
 
 import 'package:flutter_hyphen/src/buffer/match_scratch.dart';
+import 'package:flutter_hyphen/src/constant/dictionary_syntax.dart';
 import 'package:flutter_hyphen/src/buffer/rewrite_track.dart';
 import 'package:flutter_hyphen/src/model/edge_limits.dart';
 import 'package:flutter_hyphen/src/model/pattern_automaton.dart';
 import 'package:flutter_hyphen/src/model/pattern_set.dart';
+import 'package:flutter_hyphen/src/processor/break_mark_processor.dart';
 import 'package:flutter_hyphen/src/util/byte_reader.dart';
-
-const int _digitZero = 0x30;
-const int _digitNine = 0x39;
-const int _dot = 0x2E;
-const int _equals = 0x3D;
 
 /// Marks the break opportunities in a word.
 ///
@@ -74,7 +71,7 @@ class BreakMarker {
       compoundLeft: limits.compoundLeft,
       compoundRight: limits.compoundRight,
     );
-    trimLeftEdge(
+    BreakMarkProcessor.trimLeftEdge(
       level,
       word,
       offset,
@@ -83,7 +80,7 @@ class BreakMarker {
       track,
       limits.left > 0 ? limits.left : 2,
     );
-    trimRightEdge(
+    BreakMarkProcessor.trimRightEdge(
       level,
       word,
       offset,
@@ -100,17 +97,24 @@ class BreakMarker {
     // marks are observable through the dictionary's own API, and the
     // reference implementation really does differ here, so the difference is
     // kept rather than tidied away.
-    _suppress(
+    BreakMarkProcessor.suppress(
       level,
       word,
       offset,
       length,
       marks,
-      raise == null ? _digitZero : 0,
+      raise == null ? kDigitZero : 0,
     );
 
     if (level.charsetIsUtf8) {
-      return compactToCharacters(word, offset, length, length, marks, track);
+      return BreakMarkProcessor.compactToCharacters(
+        word,
+        offset,
+        length,
+        length,
+        marks,
+        track,
+      );
     }
     return true;
   }
@@ -188,14 +192,14 @@ class BreakMarker {
     // Patterns are written against a word with a dot glued to each end, and
     // any digit inside the word counts as one of those dots.
     var end = 0;
-    padded[end++] = _dot;
+    padded[end++] = kDot;
     for (var i = 0; i < length; i++) {
       final byte = word[offset + i];
-      padded[end++] = (byte <= _digitNine && byte >= _digitZero) ? _dot : byte;
+      padded[end++] = (byte <= kDigitNine && byte >= kDigitZero) ? kDot : byte;
     }
-    padded[end++] = _dot;
+    padded[end++] = kDot;
 
-    marks.fillRange(0, end, _digitZero);
+    marks.fillRange(0, end, kDigitZero);
 
     final edgeStart = automaton.edgeStart;
     final edgeByte = automaton.edgeByte;
@@ -302,7 +306,7 @@ class BreakMarker {
       marks[shifted] = marks[shifted + 1];
     }
     if (shifted < length) {
-      marks.fillRange(shifted, length, _digitZero);
+      marks.fillRange(shifted, length, kDigitZero);
     }
     if (length < marks.length) {
       marks[length] = 0;
@@ -359,7 +363,7 @@ class BreakMarker {
           final reference = track.reference[i];
           final start = PatternAutomaton.replacementStart(reference);
           final textLength = PatternAutomaton.replacementLength(reference);
-          final split = indexOfByteIn(pool, _equals, start, start + textLength);
+          final split = indexOfByteIn(pool, kEquals, start, start + textLength);
           final into = 2 + i - track.shift[i];
           for (var k = 0; k < textLength && into + k < paddedLength - 1; k++) {
             padded[into + k] = pool[start + k];
@@ -439,10 +443,18 @@ class BreakMarker {
         depth: depth + 1,
       );
       if (!atWordStart) {
-        _trimLeft(level, word, offset, limit, marks, track, compoundLeft);
+        BreakMarkProcessor.trimLeft(
+          level,
+          word,
+          offset,
+          limit,
+          marks,
+          track,
+          compoundLeft,
+        );
       }
       if (!atWordEnd) {
-        _trimRight(
+        BreakMarkProcessor.trimRight(
           level,
           word,
           offset,
@@ -454,284 +466,6 @@ class BreakMarker {
         );
       }
     }
-  }
-
-  /// Blanks every mark within [minimum] characters of the start of the word.
-  void trimLeftEdge(
-    PatternSet level,
-    Uint8List word,
-    int offset,
-    int length,
-    Uint8List marks,
-    RewriteTrack? track,
-    int minimum,
-  ) => _trimLeft(level, word, offset, length, marks, track, minimum);
-
-  void _trimLeft(
-    PatternSet level,
-    Uint8List word,
-    int offset,
-    int limit,
-    Uint8List marks,
-    RewriteTrack? track,
-    int minimum,
-  ) {
-    final utf8 = level.charsetIsUtf8;
-    final pool = level.automaton.replacements.bytes;
-    var counted = 1;
-
-    if (utf8 &&
-        byteAt(word, offset, limit, 0) == 0xEF &&
-        byteAt(word, offset, limit, 1) == 0xAC) {
-      counted += ligatureExtraCharacters(byteAt(word, offset, limit, 2));
-    }
-
-    // Leading digits are not characters of the word for this purpose.
-    for (
-      var k = 0;
-      byteAt(word, offset, limit, k) <= _digitNine &&
-          byteAt(word, offset, limit, k) >= _digitZero;
-      k++
-    ) {
-      counted--;
-    }
-
-    final reference = track?.reference;
-    var i = 0;
-    while (counted < minimum && byteAt(word, offset, limit, i) != 0) {
-      do {
-        if (reference != null && i < reference.length && reference[i] >= 0) {
-          // A rewritten break keeps its mark if the text it introduces is
-          // itself long enough to satisfy the minimum.
-          final start = PatternAutomaton.replacementStart(reference[i]);
-          final textLength = PatternAutomaton.replacementLength(reference[i]);
-          final split = indexOfByteIn(pool, _equals, start, start + textLength);
-          if (split >= 0 &&
-              (countCharacters(
-                        word,
-                        offset,
-                        limit,
-                        i - track!.shift[i] + 1,
-                        utf8: utf8,
-                      ) +
-                      countCharacters(
-                        pool,
-                        start,
-                        textLength,
-                        split - start,
-                        utf8: utf8,
-                      )) <
-                  minimum) {
-            reference[i] = -1;
-            marks[i] = _digitZero;
-          }
-        } else {
-          marks[i] = _digitZero;
-        }
-        i++;
-
-        if (utf8 &&
-            byteAt(word, offset, limit, i) == 0xEF &&
-            byteAt(word, offset, limit, i + 1) == 0xAC) {
-          counted += ligatureExtraCharacters(
-            byteAt(word, offset, limit, i + 2),
-          );
-        }
-      } while (utf8 && (byteAt(word, offset, limit, i) & 0xC0) == 0x80);
-      counted++;
-    }
-  }
-
-  /// Blanks every mark within [minimum] characters of the end of the word.
-  void trimRightEdge(
-    PatternSet level,
-    Uint8List word,
-    int offset,
-    int limit,
-    int length,
-    Uint8List marks,
-    RewriteTrack? track,
-    int minimum,
-  ) => _trimRight(level, word, offset, limit, length, marks, track, minimum);
-
-  void _trimRight(
-    PatternSet level,
-    Uint8List word,
-    int offset,
-    int limit,
-    int length,
-    Uint8List marks,
-    RewriteTrack? track,
-    int minimum,
-  ) {
-    final utf8 = level.charsetIsUtf8;
-    final pool = level.automaton.replacements.bytes;
-    var counted = 0;
-
-    // Trailing digits are not characters of the word for this purpose.
-    for (
-      var k = length - 1;
-      k > 0 &&
-          byteAt(word, offset, limit, k) <= _digitNine &&
-          byteAt(word, offset, limit, k) >= _digitZero;
-      k--
-    ) {
-      counted--;
-    }
-
-    final reference = track?.reference;
-    for (var i = length - 1; counted < minimum && i > 0; i--) {
-      if (reference != null && i < reference.length && reference[i] >= 0) {
-        final start = PatternAutomaton.replacementStart(reference[i]);
-        final textLength = PatternAutomaton.replacementLength(reference[i]);
-        final split = indexOfByteIn(pool, _equals, start, start + textLength);
-        if (split >= 0) {
-          final from = i - track!.shift[i] + track.cut[i] + 1;
-          final clamped = from < 0 ? 0 : (from > limit ? limit : from);
-          if ((countCharacters(
-                    word,
-                    offset + clamped,
-                    limit - clamped,
-                    100,
-                    utf8: utf8,
-                  ) +
-                  countCharacters(
-                    pool,
-                    split + 1,
-                    start + textLength - split - 1,
-                    start + textLength - split - 1,
-                    utf8: utf8,
-                  )) <
-              minimum) {
-            reference[i] = -1;
-            marks[i] = _digitZero;
-          }
-        }
-      } else {
-        marks[i] = _digitZero;
-      }
-      final byte = byteAt(word, offset, limit, i);
-      if (!utf8 || (byte & 0xC0) == 0xC0 || (byte & 0x80) != 0x80) {
-        counted++;
-      }
-    }
-  }
-
-  /// Blanks the marks on both sides of every suppressed substring.
-  ///
-  /// The scan stops at [length] rather than at the end of the buffer, which
-  /// matters whenever the buffer is longer than the word: a suppressed
-  /// substring must not be allowed to match across the word and whatever
-  /// happens to follow it in a reused buffer.
-  void _suppress(
-    PatternSet level,
-    Uint8List word,
-    int offset,
-    int length,
-    Uint8List marks,
-    int blank,
-  ) {
-    final suppressions = level.suppressions;
-    for (var n = 0; n < suppressions.length; n++) {
-      final needle = suppressions[n];
-      final needleLength = needle.length;
-      // An empty entry — which `NOHYPHEN a,,b` produces — would match at
-      // every position and walk off the front of the marks. Skipped.
-      if (needleLength == 0) {
-        continue;
-      }
-      final first = needle[0];
-      final last = length - needleLength;
-      for (var at = 0; at <= last; at++) {
-        if (word[offset + at] != first) {
-          continue;
-        }
-        var k = 1;
-        while (k < needleLength && word[offset + at + k] == needle[k]) {
-          k++;
-        }
-        if (k != needleLength) {
-          continue;
-        }
-        final tail = at + needleLength - 1;
-        if (tail < marks.length) {
-          marks[tail] = blank;
-        }
-        if (at > 0) {
-          marks[at - 1] = blank;
-        }
-      }
-    }
-  }
-
-  /// Squeezes [marks] from one entry per byte down to one entry per
-  /// character, in place.
-  ///
-  /// Returns false when the word starts inside a character, which is the
-  /// only malformed input this can detect and the one failure the algorithm
-  /// reports.
-  bool compactToCharacters(
-    Uint8List word,
-    int offset,
-    int limit,
-    int length,
-    Uint8List marks,
-    RewriteTrack? track,
-  ) {
-    if (limit > 0 && (word[offset] >> 6) == 2) {
-      return false;
-    }
-
-    var out = -1;
-    if (track == null) {
-      // The shape almost every word has.
-      for (var i = 0; i < length; i++) {
-        if ((word[offset + i] >> 6) != 2) {
-          out++;
-        }
-        marks[out] = marks[i];
-      }
-    } else {
-      final reference = track.reference;
-      final shift = track.shift;
-      final cut = track.cut;
-      for (var i = 0; i < length; i++) {
-        if ((word[offset + i] >> 6) != 2) {
-          out++;
-        }
-        marks[out] = marks[i];
-
-        if (i < shift.length) {
-          var span = shift[i];
-          var characters = 0;
-          for (var k = 0; k < span; k++) {
-            if ((byteAt(word, offset, limit, i - k) >> 6) != 2) {
-              characters++;
-            }
-          }
-          shift[out] = characters;
-          var k = i - span + 1;
-          span = k + cut[i];
-          characters = 0;
-          for (; k < span; k++) {
-            if ((byteAt(word, offset, limit, k) >> 6) != 2) {
-              characters++;
-            }
-          }
-          cut[out] = characters;
-          reference[out] = reference[i];
-          if (out < i) {
-            reference[i] = -1;
-            shift[i] = 0;
-            cut[i] = 0;
-          }
-        }
-      }
-    }
-    if (out + 1 < marks.length) {
-      marks[out + 1] = 0;
-    }
-    return true;
   }
 
   MatchScratch _scratchFor(int depth, int length, {required bool rewrites}) {
