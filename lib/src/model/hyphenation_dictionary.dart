@@ -68,6 +68,7 @@ class HyphenationDictionary {
   Uint8List _marks = Uint8List(72);
 
   int _markedBytes = 0;
+  EdgeLimits? _lastRaise;
 
   /// The levels this dictionary was parsed into. Interesting for inspecting
   /// a dictionary — how many patterns it holds, what minimums it states —
@@ -123,18 +124,27 @@ class HyphenationDictionary {
     }
     final marks = _marks..fillRange(0, length + 8, 0);
 
+    // A paragraph normally uses the same overrides for every word. Retain
+    // just the last tuple, including explicit zero as distinct from null.
+    final previousRaise = _lastRaise;
     final raise =
         (leftMin == null &&
             rightMin == null &&
             compoundLeftMin == null &&
             compoundRightMin == null)
         ? null
-        : EdgeLimits(
+        : previousRaise != null &&
+              previousRaise.left == (leftMin ?? 0) &&
+              previousRaise.right == (rightMin ?? 0) &&
+              previousRaise.compoundLeft == (compoundLeftMin ?? 0) &&
+              previousRaise.compoundRight == (compoundRightMin ?? 0)
+        ? previousRaise
+        : (_lastRaise = EdgeLimits(
             left: leftMin ?? 0,
             right: rightMin ?? 0,
             compoundLeft: compoundLeftMin ?? 0,
             compoundRight: compoundRightMin ?? 0,
-          );
+          ));
 
     final ok = _marker.markWord(
       _patterns,
@@ -143,6 +153,7 @@ class HyphenationDictionary {
       length,
       marks,
       raise: raise,
+      singleByteCharacters: length == _encoder.characterCount,
     );
     if (!ok) {
       throw DictionaryFormatException(

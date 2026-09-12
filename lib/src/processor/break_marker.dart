@@ -32,6 +32,10 @@ import 'package:flutter_hyphen/src/util/byte_reader.dart';
 /// scratch is indexed by depth.
 class BreakMarker {
   final List<MatchScratch> _scratch = <MatchScratch>[];
+  RewriteTrack? _wordTrack;
+  EdgeLimits? _limitedBase;
+  EdgeLimits? _raisedBy;
+  late EdgeLimits _raisedLimits;
 
   /// Marks every break opportunity of `word[offset..offset + length)` into
   /// [marks], which must have room for `length + 3` bytes and must arrive
@@ -39,6 +43,10 @@ class BreakMarker {
   ///
   /// [raise] lifts the dictionary's own minimum distances; passing null
   /// leaves them as the dictionary states them.
+  ///
+  /// [singleByteCharacters] may be set when an encoder has already verified
+  /// that every character occupies exactly one byte. This avoids an identity
+  /// compaction pass, but rewrite spans still receive their conversion pass.
   ///
   /// Returns false when the word is not valid text in the dictionary's
   /// charset, which is the one failure the algorithm can report.
@@ -49,11 +57,29 @@ class BreakMarker {
     int length,
     Uint8List marks, {
     EdgeLimits? raise,
+    bool singleByteCharacters = false,
   }) {
-    final limits = raise == null ? level.limits : level.limits.raisedTo(raise);
-    final track = level.rewritesWords
-        ? RewriteTrack(length == 0 ? 1 : length)
-        : null;
+    final EdgeLimits limits;
+    if (raise == null) {
+      limits = level.limits;
+    } else if (identical(level.limits, _limitedBase) &&
+        identical(raise, _raisedBy)) {
+      limits = _raisedLimits;
+    } else {
+      _limitedBase = level.limits;
+      _raisedBy = raise;
+      limits = _raisedLimits = level.limits.raisedTo(raise);
+    }
+    RewriteTrack? track;
+    if (level.rewritesWords) {
+      final size = length == 0 ? 1 : length;
+      track = _wordTrack;
+      if (track == null || track.reference.length < size) {
+        track = _wordTrack = RewriteTrack(size < 64 ? 64 : size * 2);
+      } else {
+        track.clear();
+      }
+    }
 
     markPatterns(
       level,
@@ -100,7 +126,7 @@ class BreakMarker {
       raise == null ? kDigitZero : 0,
     );
 
-    if (level.charsetIsUtf8) {
+    if (level.charsetIsUtf8 && !(singleByteCharacters && track == null)) {
       return BreakMarkProcessor.compactToCharacters(
         word,
         offset,
@@ -300,9 +326,12 @@ class BreakMarker {
     // the real one and clear whatever the shift left behind. The mark that
     // belonged to the closing dot is dropped rather than folded onto the
     // last character: a pattern cannot ask for a break after the end.
+    var hasBoundary = false;
     var shifted = 0;
     for (; shifted < end - 3; shifted++) {
-      marks[shifted] = marks[shifted + 1];
+      final value = marks[shifted + 1];
+      marks[shifted] = value;
+      hasBoundary = hasBoundary || (value & 1) != 0;
     }
     if (shifted < length) {
       marks.fillRange(shifted, length, kDigitZero);
@@ -341,12 +370,14 @@ class BreakMarker {
     // write to it. `rewritesWords` on the level, not on the automaton: this
     // carrier is handed down, and the level below may rewrite where this one
     // does not.
-    final innerTrack = level.rewritesWords ? scratch.trackFor(length) : null;
-    final innerMarks = scratch.innerMarks;
+    final innerTrack = hasBoundary && level.rewritesWords
+        ? scratch.trackFor(length)
+        : null;
+    final innerMarks = hasBoundary ? scratch.innerMarksFor(length) : null;
     final pool = automaton.replacements.bytes;
     var segmentStart = 0;
 
-    for (var i = 0; i < length; i++) {
+    for (var i = 0; hasBoundary && i < length; i++) {
       if ((marks[i] & 1) == 0 && !(segmentStart > 0 && i + 1 == length)) {
         continue;
       }
@@ -381,7 +412,7 @@ class BreakMarker {
           segmentStart + 1,
           paddedLength - segmentStart - 1,
           i - segmentStart + 1 + grown,
-          innerMarks,
+          innerMarks!,
           innerTrack,
           compoundLeft,
           compoundRight,
