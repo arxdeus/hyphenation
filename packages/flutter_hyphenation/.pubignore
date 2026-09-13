@@ -1,0 +1,12 @@
+# Development-only files, excluded from published package.
+benchmark/
+test/
+example/
+
+# Tooling / build artifacts
+.dart_tool/
+build/
+.idea/
+*.iml
+analysis_options.yaml
+benchmark_results.json
