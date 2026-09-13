@@ -101,10 +101,86 @@ class TexPatternTable {
     final builder = _TrieBuilder();
     for (final pattern in source.patterns) {
       final parsed = parsePattern(pattern);
-      builder.insert(parsed.letters, parsed.priorities);
+      builder.insert(
+        parsed.letters,
+        parsed.letters.length,
+        parsed.priorities,
+      );
     }
     return builder.finish(
       exceptions: source.exceptions,
+      leftMin: leftMin,
+      rightMin: rightMin,
+    );
+  }
+
+  /// Compiles the text of a pattern file straight into a matcher.
+  ///
+  /// The same result as reading it with [parseTexPatterns] and then
+  /// compiling, without materialising a `String` per pattern on the way:
+  /// each one goes from the file's code units into the trie and is never
+  /// assembled at all.
+  factory TexPatternTable.compileSource(
+    String source, {
+    int leftMin = 2,
+    int rightMin = 3,
+  }) {
+    final builder = _TrieBuilder();
+    final exceptions = <String, List<int>>{};
+    // Materialised, not `source.codeUnits`: indexing a lazy view in the
+    // scanner's innermost loop is markedly slower than indexing a real
+    // typed list, and the exception path builds strings out of it too.
+    final units = Uint16List.fromList(source.codeUnits);
+    final afterName = <int>[0];
+    var letters = Uint16List(64);
+    var priorities = Uint8List(65);
+
+    var at = 0;
+    while (at < units.length) {
+      final kind = nextTexGroup(units, at, afterName);
+      at = afterName[0];
+      if (kind == TexGroupKind.none) {
+        break;
+      }
+      final isPatterns = kind == TexGroupKind.patterns;
+      final scanner = openTexGroup(units, at);
+      if (scanner == null) {
+        break;
+      }
+      while (scanner.next()) {
+        if (isPatterns) {
+          final span = scanner.to - scanner.from;
+          if (span > letters.length) {
+            letters = Uint16List(span * 2);
+            priorities = Uint8List(span * 2 + 1);
+          }
+          // Straight from the file's code units into the trie: no string is
+          // built for a pattern, which is the whole point of this path.
+          builder.insert(
+            letters,
+            splitTexPattern(
+              units,
+              scanner.from,
+              scanner.to,
+              letters,
+              priorities,
+            ),
+            priorities,
+          );
+        } else {
+          final entry = readTexException(
+            String.fromCharCodes(units, scanner.from, scanner.to),
+          );
+          if (entry != null) {
+            exceptions[entry.key] = entry.value;
+          }
+        }
+      }
+      at = scanner.end;
+    }
+
+    return builder.finish(
+      exceptions: exceptions,
       leftMin: leftMin,
       rightMin: rightMin,
     );
@@ -183,12 +259,25 @@ class _TrieBuilder {
   /// many there are.
   Int32List _priorityAt = Int32List(1024)..[0] = -1;
   Uint8List _priorityLength = Uint8List(1024);
-  final BytesBuilder _priorityBlob = BytesBuilder(copy: false);
+
+  /// Every node's priorities, end to end.
+  ///
+  /// A plain growable array rather than a `BytesBuilder`: the builder in
+  /// `copy: false` mode retains each run as its own list and concatenates
+  /// them at the end, which for tens of thousands of four-byte runs costs
+  /// more than doubling one array ever does.
+  Uint8List _priorityBlob = Uint8List(4096);
   int _priorityBlobLength = 0;
 
-  void insert(Uint16List letters, Uint8List priorities) {
+  /// Adds one pattern: [length] letters from [letters], and the priority
+  /// claimed at each of the `length + 1` positions of [priorities].
+  ///
+  /// Both arrays may be longer than the pattern and may be scratch the
+  /// caller reuses; nothing here retains either.
+  void insert(Uint16List letters, int length, Uint8List priorities) {
     var node = 0;
-    for (final unit in letters) {
+    for (var index = 0; index < length; index++) {
+      final unit = letters[index];
       var next = -1;
       for (var e = _nodeFirstEdge[node]; e >= 0; e = _edgeNext[e]) {
         if (_edgeUnit[e] == unit) {
@@ -205,11 +294,11 @@ class _TrieBuilder {
 
     // Trailing zeroes carry no information and every pattern has some, so
     // dropping them shrinks the priority blob substantially.
-    var length = priorities.length;
-    while (length > 0 && priorities[length - 1] == 0) {
-      length--;
+    var kept = length + 1;
+    while (kept > 0 && priorities[kept - 1] == 0) {
+      kept--;
     }
-    if (length == 0) {
+    if (kept == 0) {
       _priorityAt[node] = -1;
       _priorityLength[node] = 0;
       return;
@@ -217,10 +306,15 @@ class _TrieBuilder {
     // A later pattern landing on a node an earlier one already reached
     // simply appends again; the older run is left orphaned in the blob,
     // which costs a few bytes and saves tracking every node's extent.
+    while (_priorityBlobLength + kept > _priorityBlob.length) {
+      _priorityBlob = _grownUint8(_priorityBlob);
+    }
     _priorityAt[node] = _priorityBlobLength;
-    _priorityLength[node] = length;
-    _priorityBlob.add(Uint8List.sublistView(priorities, 0, length));
-    _priorityBlobLength += length;
+    _priorityLength[node] = kept;
+    for (var i = 0; i < kept; i++) {
+      _priorityBlob[_priorityBlobLength + i] = priorities[i];
+    }
+    _priorityBlobLength += kept;
   }
 
   int _addNode() {
@@ -373,7 +467,8 @@ class _TrieBuilder {
       priorityAt: Int32List(nodeCount)..setRange(0, nodeCount, _priorityAt),
       priorityLength: Uint8List(nodeCount)
         ..setRange(0, nodeCount, _priorityLength),
-      priorityBytes: _priorityBlob.takeBytes(),
+      priorityBytes: Uint8List(_priorityBlobLength)
+        ..setRange(0, _priorityBlobLength, _priorityBlob),
       exceptions: exceptions,
       leftMin: leftMin,
       rightMin: rightMin,

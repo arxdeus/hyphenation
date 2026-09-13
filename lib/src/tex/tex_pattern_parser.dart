@@ -44,50 +44,75 @@ const int _kSpace = 0x20;
 TexPatternSource parseTexPatterns(String source) {
   final patterns = <String>[];
   final exceptions = <String, List<int>>{};
+  // Materialised, not `source.codeUnits`: that is a lazy view, and
+  // `String.fromCharCodes` over one cannot take its fast path. Building a
+  // token from a view measured three orders of magnitude worse than from a
+  // real list.
+  final units = Uint16List.fromList(source.codeUnits);
+  final afterName = <int>[0];
 
-  final units = source.codeUnits;
-  var i = 0;
-  while (i < units.length) {
-    final unit = units[i];
-
-    if (unit == _kPercent) {
-      i = _skipToLineEnd(units, i);
-      continue;
+  var at = 0;
+  while (at < units.length) {
+    final kind = nextTexGroup(units, at, afterName);
+    at = afterName[0];
+    if (kind == TexGroupKind.none) {
+      break;
     }
-    if (unit != _kBackslash) {
-      i++;
-      continue;
+    final isPatterns = kind == TexGroupKind.patterns;
+    final scanner = openTexGroup(units, at);
+    if (scanner == null) {
+      break;
     }
-
-    final name = _readControlName(units, i + 1);
-    if (name == 'patterns') {
-      final open = _skipToBrace(units, i + 1 + name.length);
-      if (open < 0) {
-        break;
-      }
-      i = _readGroup(units, open + 1, patterns.add);
-      continue;
-    }
-    if (name == 'hyphenation') {
-      final open = _skipToBrace(units, i + 1 + name.length);
-      if (open < 0) {
-        break;
-      }
-      i = _readGroup(units, open + 1, (token) {
-        final entry = _readException(token);
+    while (scanner.next()) {
+      if (isPatterns) {
+        // The token is already exactly the pattern as written, so take it
+        // verbatim. Splitting it here and reassembling it would cost five
+        // times the whole scan, for a form this entry point does not want.
+        patterns.add(String.fromCharCodes(units, scanner.from, scanner.to));
+      } else {
+        final entry = readTexException(
+          String.fromCharCodes(units, scanner.from, scanner.to),
+        );
         if (entry != null) {
           exceptions[entry.key] = entry.value;
         }
-      });
-      continue;
+      }
     }
-
-    // Some other control sequence. Step over its name so that a `\p` inside
-    // it cannot be mistaken for the start of `\patterns`.
-    i += 1 + (name.isEmpty ? 1 : name.length);
+    at = scanner.end;
   }
 
   return TexPatternSource(patterns: patterns, exceptions: exceptions);
+}
+
+/// Called with each exception: the word with its hyphens removed and folded
+/// to lower case, and the offsets a hyphen sat after.
+typedef TexExceptionHandler = void Function(String word, List<int> breaks);
+
+/// Splits the token `units[from..to)` into letters and priorities.
+///
+/// Writes the letters into [letters] and the priority claimed at each of the
+/// `length + 1` positions into [priorities], and returns the letter count.
+/// Both buffers must have room for `to - from` letters and one more
+/// priority; [reserveForPattern] sizes them.
+int splitTexPattern(
+  List<int> units,
+  int from,
+  int to,
+  Uint16List letters,
+  Uint8List priorities,
+) {
+  var length = 0;
+  priorities[0] = 0;
+  for (var i = from; i < to; i++) {
+    final unit = units[i];
+    if (unit >= 0x30 && unit <= 0x39) {
+      priorities[length] = unit - 0x30;
+    } else {
+      letters[length++] = unit;
+      priorities[length] = 0;
+    }
+  }
+  return length;
 }
 
 int _skipToLineEnd(List<int> units, int from) {
@@ -96,14 +121,6 @@ int _skipToLineEnd(List<int> units, int from) {
     i++;
   }
   return i < units.length ? i + 1 : i;
-}
-
-String _readControlName(List<int> units, int from) {
-  var i = from;
-  while (i < units.length && _isLetter(units[i])) {
-    i++;
-  }
-  return String.fromCharCodes(units, from, i);
 }
 
 bool _isLetter(int unit) =>
@@ -131,46 +148,192 @@ int _skipToBrace(List<int> units, int from) {
   return -1;
 }
 
-/// Reads whitespace-separated tokens until the group closes, and returns the
-/// offset just past the closing brace.
-int _readGroup(List<int> units, int from, void Function(String) onToken) {
-  final buffer = StringBuffer();
-  var i = from;
+/// Walks the whitespace-separated tokens of a `{...}` group.
+///
+/// A class rather than a callback because the callback version cost two
+/// indirect calls per token — one for the token handler, one for the handler
+/// it wrapped — and AOT could not inline either. A pattern file has tens of
+/// thousands of tokens, and that doubled the compile time.
+///
+/// Tokens are reported as `[from, to)` spans of the source's code units, so
+/// a caller that only wants to look at the bytes never allocates a string.
+class TexGroupScanner {
+  TexGroupScanner(this.units, this._cursor);
+
+  final List<int> units;
+  int _cursor;
+
+  /// Start of the token [next] found.
+  int from = -1;
+
+  /// Offset just past it.
+  int to = -1;
+
+  /// Offset just past the group's closing brace, valid once [next] has
+  /// returned false.
+  int end = -1;
+
+  /// Advances to the next token, or returns false at the end of the group.
+  bool next() {
+    var i = _cursor;
+    var start = -1;
+    while (i < units.length) {
+      final unit = units[i];
+      if (unit == _kCloseBrace) {
+        if (start >= 0) {
+          from = start;
+          to = i;
+          _cursor = i;
+          return true;
+        }
+        end = i + 1;
+        _cursor = end;
+        return false;
+      }
+      if (unit == _kPercent) {
+        if (start >= 0) {
+          from = start;
+          to = i;
+          _cursor = i;
+          return true;
+        }
+        i = _skipToLineEnd(units, i);
+        continue;
+      }
+      if (unit <= _kSpace) {
+        if (start >= 0) {
+          from = start;
+          to = i;
+          _cursor = i;
+          return true;
+        }
+        i++;
+        continue;
+      }
+      if (start < 0) {
+        start = i;
+      }
+      i++;
+    }
+    if (start >= 0) {
+      from = start;
+      to = i;
+      _cursor = i;
+      return true;
+    }
+    end = i;
+    _cursor = i;
+    return false;
+  }
+}
+
+/// Opens the group that [name] introduces, or returns null when what follows
+/// is not a group after all.
+TexGroupScanner? openTexGroup(List<int> units, int afterName) {
+  final open = _skipToBrace(units, afterName);
+  return open < 0 ? null : TexGroupScanner(units, open + 1);
+}
+
+/// What [nextTexGroup] found.
+enum TexGroupKind {
+  /// A `\patterns{...}` group.
+  patterns,
+
+  /// A `\hyphenation{...}` group.
+  hyphenation,
+
+  /// Nothing left to read.
+  none,
+}
+
+/// Finds the next `\patterns` or `\hyphenation` group at or after [at].
+///
+/// Everything else is skipped: comments, `\message{...}`, `\endinput` and
+/// the rest of the TeX plumbing a pattern file carries. On a hit,
+/// `outAfterName[0]` holds the offset just past the control sequence's name,
+/// ready for [openTexGroup].
+///
+/// The name is compared unit by unit rather than read into a `String`.
+/// Building a string for every control sequence in the file, almost all of
+/// which are neither of the two that matter, measured five times the cost of
+/// the whole scan.
+TexGroupKind nextTexGroup(List<int> units, int at, List<int> outAfterName) {
+  var i = at;
   while (i < units.length) {
     final unit = units[i];
-    if (unit == _kCloseBrace) {
-      if (buffer.isNotEmpty) {
-        onToken(buffer.toString());
-      }
-      return i + 1;
-    }
     if (unit == _kPercent) {
-      if (buffer.isNotEmpty) {
-        onToken(buffer.toString());
-        buffer.clear();
-      }
       i = _skipToLineEnd(units, i);
       continue;
     }
-    if (unit <= _kSpace) {
-      if (buffer.isNotEmpty) {
-        onToken(buffer.toString());
-        buffer.clear();
-      }
+    if (unit != _kBackslash) {
       i++;
       continue;
     }
-    buffer.writeCharCode(unit);
-    i++;
+
+    final nameStart = i + 1;
+    var nameEnd = nameStart;
+    while (nameEnd < units.length && _isLetter(units[nameEnd])) {
+      nameEnd++;
+    }
+
+    if (_matchesName(units, nameStart, nameEnd, _kPatternsName)) {
+      outAfterName[0] = nameEnd;
+      return TexGroupKind.patterns;
+    }
+    if (_matchesName(units, nameStart, nameEnd, _kHyphenationName)) {
+      outAfterName[0] = nameEnd;
+      return TexGroupKind.hyphenation;
+    }
+
+    // Step over the whole name, so a `\p` inside it cannot be mistaken for
+    // the start of `\patterns`.
+    i = nameEnd > nameStart ? nameEnd : nameStart + 1;
   }
-  if (buffer.isNotEmpty) {
-    onToken(buffer.toString());
+  outAfterName[0] = i;
+  return TexGroupKind.none;
+}
+
+/// `patterns`, as code units.
+const List<int> _kPatternsName = <int>[
+  0x70,
+  0x61,
+  0x74,
+  0x74,
+  0x65,
+  0x72,
+  0x6E,
+  0x73,
+];
+
+/// `hyphenation`, as code units.
+const List<int> _kHyphenationName = <int>[
+  0x68,
+  0x79,
+  0x70,
+  0x68,
+  0x65,
+  0x6E,
+  0x61,
+  0x74,
+  0x69,
+  0x6F,
+  0x6E,
+];
+
+bool _matchesName(List<int> units, int from, int to, List<int> name) {
+  if (to - from != name.length) {
+    return false;
   }
-  return i;
+  for (var i = 0; i < name.length; i++) {
+    if (units[from + i] != name[i]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /// `as-so-ciate` becomes `associate` and the offsets `[2, 4]`.
-MapEntry<String, List<int>>? _readException(String token) {
+MapEntry<String, List<int>>? readTexException(String token) {
   final letters = StringBuffer();
   final breaks = <int>[];
   for (final unit in token.codeUnits) {

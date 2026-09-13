@@ -2,7 +2,6 @@
 
 import 'dart:typed_data';
 
-import 'package:flutter_hyphen/src/tex/tex_pattern_parser.dart';
 import 'package:flutter_hyphen/src/tex/tex_pattern_table.dart';
 import 'package:flutter_hyphen/src/tex/tex_word_marker.dart';
 
@@ -31,8 +30,8 @@ class TexHyphenationPatterns {
     int leftMin = 2,
     int rightMin = 3,
   }) => TexHyphenationPatterns._(
-    TexPatternTable.compile(
-      parseTexPatterns(source),
+    TexPatternTable.compileSource(
+      source,
       leftMin: leftMin,
       rightMin: rightMin,
     ),
