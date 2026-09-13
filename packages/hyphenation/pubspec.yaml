@@ -1,9 +1,9 @@
 name: hyphenation
 description: "Correct, fast TeX-pattern hyphenation for Dart: pattern compilation, word breaking and greedy line breaking, with no Flutter dependency."
 version: 1.0.0
-# TODO: point these at the repository before publishing.
-# homepage:
-# repository:
+repository: https://github.com/arxdeus/hyphenation/tree/main/packages/hyphenation
+issue_tracker: https://github.com/arxdeus/hyphenation/issues
+homepage: https://github.com/arxdeus/hyphenation
 topics:
   - text
   - typography
