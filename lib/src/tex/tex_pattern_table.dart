@@ -68,10 +68,16 @@ class TexPatternTable {
   /// are large — and a fixed window would silently miss every unit above it,
   /// which is every accented letter in Latin scripts and every letter in
   /// Cyrillic and Greek.
-  final Int32List tableFirst;
+  /// Sixteen bits because it holds a code unit, which is what a `Uint16List`
+  /// is for. Halves the two largest per-node arrays after [edgeStart].
+  final Uint16List tableFirst;
 
   /// How many code units each node's table covers.
-  final Int32List tableSpan;
+  ///
+  /// A table is only built when its span is within a small multiple of the
+  /// node's degree, and degree is bounded by the alphabet, so this never
+  /// approaches 65535.
+  final Uint16List tableSpan;
 
   final Int32List tableEntries;
 
@@ -395,8 +401,8 @@ class _TrieBuilder {
     final edgeUnit = Uint16List(edgeCount);
     final edgeTarget = Int32List(edgeCount);
     final tableBase = Int32List(nodeCount)..fillRange(0, nodeCount, -1);
-    final tableFirst = Int32List(nodeCount);
-    final tableSpan = Int32List(nodeCount);
+    final tableFirst = Uint16List(nodeCount);
+    final tableSpan = Uint16List(nodeCount);
 
     // Lay each node's edges into its row, then sort the row by code unit so
     // the matcher can binary search it. The lists are threaded newest first,
@@ -434,6 +440,12 @@ class _TrieBuilder {
       if (span > degree * kMaxTableSparsity) {
         continue;
       }
+      // Both fields are sixteen bits. A code unit always fits; the span is
+      // bounded by the sparsity rule above, and the widest node in any real
+      // pattern file spans well under a hundred. Assert rather than widen
+      // the arrays for a case no pattern file produces.
+      assert(lowest <= 0xFFFF, 'table start does not fit in 16 bits');
+      assert(span <= 0xFFFF, 'table span does not fit in 16 bits');
       tableBase[node] = tableLength;
       tableFirst[node] = lowest;
       tableSpan[node] = span;
