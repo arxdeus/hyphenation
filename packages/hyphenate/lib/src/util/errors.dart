@@ -4,7 +4,7 @@
 /// caller, so the word is simply left unbroken and the failure is reported
 /// here. The default prints to the console.
 ///
-/// `package:flutter_hyphenate` replaces this with `FlutterError.reportError`,
+/// `package:flutter_hyphenation` replaces this with `FlutterError.reportError`,
 /// so in a Flutter app the failure shows up the way every other framework
 /// error does.
 library;

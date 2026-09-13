@@ -1,5 +1,5 @@
 name: hyphenate_workspace
-description: "Workspace root for the hyphenate and flutter_hyphenate packages. Not published."
+description: "Workspace root for the hyphenate and flutter_hyphenation packages. Not published."
 publish_to: 'none'
 version: 1.0.0
 
@@ -8,5 +8,5 @@ environment:
 
 workspace:
   - packages/hyphenate
-  - packages/flutter_hyphenate
+  - packages/flutter_hyphenation
   - example

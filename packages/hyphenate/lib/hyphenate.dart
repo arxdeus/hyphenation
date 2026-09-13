@@ -5,7 +5,7 @@
 /// into lines for a given width, given a way to measure text.
 ///
 /// This package has no Flutter dependency. For widgets, an asset loader and a
-/// locale registry, use `package:flutter_hyphenate`.
+/// locale registry, use `package:flutter_hyphenation`.
 ///
 /// ```dart
 /// final hyphenator = Hyphenator.fromSource(

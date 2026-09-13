@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hyphenate/flutter_hyphenate.dart';
+import 'package:flutter_hyphenation/flutter_hyphenation.dart';
 
 /// Shows how individual words are split by the dictionary.
 class WordList extends StatelessWidget {

@@ -32,7 +32,7 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  flutter_hyphenate: ^1.0.0
+  flutter_hyphenation: ^1.0.0
   marionette_flutter: ^0.6.0
 
 dev_dependencies:
@@ -45,9 +45,9 @@ flutter:
     # asset transformer, which cuts the bundled file by about a third.
     - path: assets/patterns/ushyph1.tex
       transformers:
-        - package: flutter_hyphenate
+        - package: flutter_hyphenation
           args: ['--keep-header', '--verbose']
     - path: assets/patterns/ushyphmax.tex
       transformers:
-        - package: flutter_hyphenate
+        - package: flutter_hyphenation
           args: ['--keep-header', '--verbose']

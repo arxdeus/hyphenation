@@ -196,7 +196,7 @@ class Hyphenator {
   /// Returns the cached broken form for [key], or null.
   ///
   /// Public so a renderer (`RenderHyphenParagraph` in
-  /// `package:flutter_hyphenate`) can reach the cache that has to live on the
+  /// `package:flutter_hyphenation`) can reach the cache that has to live on the
   /// shared hyphenator rather than on a render object; two identical
   /// paragraphs must be able to see each other's work. Not part of the
   /// hyphenation API: the key is opaque and entirely the caller's business.

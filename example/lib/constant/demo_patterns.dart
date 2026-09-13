@@ -1,4 +1,4 @@
-import 'package:flutter_hyphenate/flutter_hyphenate.dart';
+import 'package:flutter_hyphenation/flutter_hyphenation.dart';
 
 /// The English pattern file bundled with this example.
 ///
