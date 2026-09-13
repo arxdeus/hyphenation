@@ -1,6 +1,6 @@
 // A runnable tour of `package:hyphenation`.
 //
-// Run it with `dart run example/hyphenation_example.dart` from the package root.
+// Run it with `dart run example/example.dart` from the package root.
 // A real program would load a `hyph-*.tex` file from CTAN; a handful of
 // patterns are inlined here so the example needs no download.
 

@@ -25,6 +25,7 @@ enum TexMinifyLayout {
 
 /// Knobs for [minifyTexPatterns].
 class TexMinifyOptions {
+  /// Creates a set of minifier options.
   const TexMinifyOptions({
     this.layout = TexMinifyLayout.lines,
     this.width = 80,
@@ -45,6 +46,7 @@ class TexMinifyOptions {
 
 /// What [minifyTexPatterns] produced.
 class TexMinifyResult {
+  /// Creates a minifier result.
   const TexMinifyResult({
     required this.source,
     required this.patternCount,

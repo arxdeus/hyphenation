@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- The LICENSE file is now the plain MIT text so pub.dev recognizes it; the
+  pattern-file notices moved to `NOTICE.md`.
+- The package ships a runnable `example/` Flutter app.
+
 ## 1.0.0
 
 Initial release.

@@ -10,3 +10,4 @@ workspace:
   - packages/hyphenation
   - packages/flutter_hyphenation
   - example
+  - packages/flutter_hyphenation/example

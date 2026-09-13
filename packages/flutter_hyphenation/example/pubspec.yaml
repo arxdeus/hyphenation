@@ -1,0 +1,22 @@
+name: flutter_hyphenation_example
+description: "Minimal example app for package:flutter_hyphenation."
+publish_to: 'none'
+version: 1.0.0
+
+environment:
+  sdk: ^3.13.2
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_hyphenation: ^1.0.0
+
+flutter:
+  assets:
+    # The package's asset transformer strips comments and TeX plumbing at build
+    # time, cutting the bundled pattern file by about a third.
+    - path: assets/patterns/ushyph1.tex
+      transformers:
+        - package: flutter_hyphenation

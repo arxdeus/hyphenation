@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The LICENSE file is now the plain MIT text so pub.dev recognizes it; the
+  pattern-file notices moved to `NOTICE.md`.
+- The package ships `example/example.dart`.
+
 - `Hyphenator.cacheSplitParts`, an opt-in bound-sharing cache of the parts
   `split` returns. Off by default: it retains each word's text a second time,
   cut up, in exchange for turning a repeated `split` into a map lookup.

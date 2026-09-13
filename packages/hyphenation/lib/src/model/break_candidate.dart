@@ -3,6 +3,7 @@ import 'package:meta/meta.dart';
 /// One break opportunity inside a hard line.
 @immutable
 class BreakCandidate {
+  /// Creates a break opportunity at [end], resuming at [next].
   const BreakCandidate({
     required this.end,
     required this.next,

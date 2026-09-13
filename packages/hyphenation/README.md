@@ -121,7 +121,7 @@ void main() async {
 }
 ```
 
-Run the full tour with `dart run example/hyphenation_example.dart` from `packages/hyphenation`.
+Run the full tour with `dart run example/example.dart` from `packages/hyphenation`.
 
 ## Pattern files
 
@@ -147,7 +147,7 @@ Get them from CTAN:
 | 80+ others | `hyph-<lang>.tex` | [hyph-utf8](https://ctan.org/pkg/hyph-utf8) |
 
 > [!IMPORTANT]
-> No pattern file is bundled with either package, and each one carries its own license. Check the notice in the file you ship. `ushyph1.tex` permits unlimited unmodified redistribution; `ushyphmax.tex` permits modification provided its notice is preserved. See [LICENSE](LICENSE) for details.
+> No pattern file is bundled with either package, and each one carries its own license. Check the notice in the file you ship. `ushyph1.tex` permits unlimited unmodified redistribution; `ushyphmax.tex` permits modification provided its notice is preserved. See [NOTICE.md](NOTICE.md) for details.
 
 ## HyphenText
 

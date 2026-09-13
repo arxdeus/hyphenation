@@ -1,9 +1,10 @@
 # Development-only files, excluded from published package.
 benchmark/
 test/
-example/
 
 # Tooling / build artifacts
+example/**/.dart_tool/
+example/**/build/
 .dart_tool/
 build/
 .idea/
