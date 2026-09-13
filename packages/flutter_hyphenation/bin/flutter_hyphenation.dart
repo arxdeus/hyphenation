@@ -27,7 +27,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:hyphenate/hyphenate.dart';
+import 'package:hyphenation/hyphenation.dart';
 
 Future<void> main(List<String> arguments) async {
   final Map<String, String> options;

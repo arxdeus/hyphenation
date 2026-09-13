@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hyphenation/src/service/hyphenation_registry.dart';
-import 'package:hyphenate/hyphenate.dart';
+import 'package:hyphenation/hyphenation.dart';
 
 /// Provides a [Hyphenator] to the [HyphenText] widgets below it.
 ///

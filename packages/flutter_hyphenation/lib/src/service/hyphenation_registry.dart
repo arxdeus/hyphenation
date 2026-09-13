@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hyphenation/src/service/error_reporting.dart';
 import 'package:flutter_hyphenation/src/service/hyphenator_asset.dart';
-import 'package:hyphenate/hyphenate.dart';
+import 'package:hyphenation/hyphenation.dart';
 
 /// Holds the [Hyphenator] instances an application has loaded, keyed by
 /// [Locale].

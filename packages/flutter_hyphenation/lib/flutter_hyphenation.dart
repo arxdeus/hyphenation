@@ -2,7 +2,7 @@
 ///
 /// The entry point is [HyphenText], a drop-in replacement for [Text] that
 /// breaks long words across lines and paints a hyphen at the break. The
-/// hyphenation engine itself lives in `package:hyphenate`, which this library
+/// hyphenation engine itself lives in `package:hyphenation`, which this library
 /// re-exports, so importing this one is enough.
 ///
 /// ```dart
@@ -27,4 +27,4 @@ export 'package:flutter_hyphenation/src/tex/tex_asset_loading.dart';
 export 'package:flutter_hyphenation/src/widget/hyphen_paragraph.dart';
 export 'package:flutter_hyphenation/src/widget/hyphen_scope.dart';
 export 'package:flutter_hyphenation/src/widget/hyphen_text.dart';
-export 'package:hyphenate/hyphenate.dart';
+export 'package:hyphenation/hyphenation.dart';

@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_hyphenation/src/service/error_reporting.dart';
 import 'package:flutter_hyphenation/src/widget/hyphen_paragraph.dart';
 import 'package:flutter_hyphenation/src/widget/hyphen_scope.dart';
-import 'package:hyphenate/hyphenate.dart';
+import 'package:hyphenation/hyphenation.dart';
 
 /// A drop-in replacement for [Text] that hyphenates words at the end of a
 /// line.

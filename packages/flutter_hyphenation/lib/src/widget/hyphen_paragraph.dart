@@ -1,6 +1,6 @@
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-import 'package:hyphenate/hyphenate.dart';
+import 'package:hyphenation/hyphenation.dart';
 
 /// The paragraph widget behind [HyphenText].
 ///

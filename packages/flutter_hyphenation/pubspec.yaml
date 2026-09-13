@@ -18,7 +18,7 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  hyphenate: ^1.0.0
+  hyphenation: ^1.0.0
 
 dev_dependencies:
   bench_press: ^0.3.0

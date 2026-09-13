@@ -6,7 +6,7 @@
 // `dart:ui` to link against.
 
 import 'package:flutter/services.dart';
-import 'package:hyphenate/hyphenate.dart';
+import 'package:hyphenation/hyphenation.dart';
 
 /// Loads [TexHyphenationPatterns] from the asset bundle.
 extension TexHyphenationPatternsAsset on TexHyphenationPatterns {

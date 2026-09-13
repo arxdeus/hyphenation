@@ -1,12 +1,12 @@
 // Loading hyphenators through Flutter's asset bundle.
 //
-// Kept out of `package:hyphenate` so that the engine stays pure Dart: it is
+// Kept out of `package:hyphenation` so that the engine stays pure Dart: it is
 // then usable from a plain `dart run`, from a build script that precompiles
 // patterns, and from the benchmarks, none of which have a `dart:ui` to link
 // against.
 
 import 'package:flutter/services.dart';
-import 'package:hyphenate/hyphenate.dart';
+import 'package:hyphenation/hyphenation.dart';
 
 /// Loads [Hyphenator]s from the asset bundle.
 ///
