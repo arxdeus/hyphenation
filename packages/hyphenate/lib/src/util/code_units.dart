@@ -7,7 +7,7 @@
 // live here rather than being duplicated per file.
 //
 // This file is internal; nothing here is exported from
-// `package:flutter_hyphen/flutter_hyphen.dart`.
+// `package:hyphenate/hyphenate.dart`.
 
 /// Whether [unit] is a hyphen a line may be broken after.
 bool isHardHyphen(int unit) =>

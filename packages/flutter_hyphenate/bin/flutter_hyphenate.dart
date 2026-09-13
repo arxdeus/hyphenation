@@ -153,7 +153,7 @@ Map<String, String> _parseArguments(List<String> arguments) {
 }
 
 const String _usage = r'''
-Usage: dart run flutter_hyphen --input=<file> --output=<file>
+Usage: dart run flutter_hyphenate --input=<file> --output=<file>
 
   --layout=lines|wrapped  Token layout in the output. Default: lines.
   --width=<n>             Line width for --layout=wrapped. Default: 80.

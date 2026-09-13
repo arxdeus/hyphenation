@@ -3,7 +3,11 @@
 
 python3 benchmark/support/memory_benchmark.py --root . --output /path/result.json
 Copy identical harness files into a baseline snapshot before comparing.
-Its package_config.json MUST resolve flutter_hyphen to that snapshot.
+Its package_config.json MUST resolve flutter_hyphenate to that snapshot.
+
+Stale: it drives benchmark/memory_benchmark.dart and an example .dic file,
+neither of which is in the repository. Kept for the measurement protocol it
+records; restore those two inputs before expecting it to run.
 Direct Dart invocation avoids dependency resolution. Each phase gets two full
 GCs via getAllocationProfile, then getMemoryUsage. This is isolate live heap,
 not dominator retained size or RSS. JIT/service overhead can affect phase deltas.
@@ -30,7 +34,7 @@ def main():
     root = pathlib.Path(args.root).resolve()
     config = root / '.dart_tool/package_config.json'
     packages = json.loads(config.read_text())['packages']
-    own = next(p for p in packages if p['name'] == 'flutter_hyphen')
+    own = next(p for p in packages if p['name'] == 'flutter_hyphenate')
     resolved = urllib.parse.urljoin(config.as_uri(), own['rootUri'])
     if pathlib.Path(urllib.parse.unquote(urllib.parse.urlparse(resolved).path)).resolve() != root:
         raise SystemExit('Package configuration points outside snapshot: ' + resolved)
