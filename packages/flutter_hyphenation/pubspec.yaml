@@ -1,6 +1,6 @@
 name: flutter_hyphenation
 description: "HyphenText, a drop-in replacement for Flutter's Text that hyphenates long words correctly using TeX hyphenation patterns."
-version: 1.0.0
+version: 1.0.1
 repository: https://github.com/arxdeus/hyphenation/tree/main/packages/flutter_hyphenation
 issue_tracker: https://github.com/arxdeus/hyphenation/issues
 homepage: https://github.com/arxdeus/hyphenation
@@ -18,7 +18,7 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  hyphenation: ^1.0.0
+  hyphenation: ^1.0.1
 
 dev_dependencies:
   bench_press: ^0.3.0

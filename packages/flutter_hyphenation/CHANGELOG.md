@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.1
 
 - The LICENSE file is now the plain MIT text so pub.dev recognizes it; the
   pattern-file notices moved to `NOTICE.md`.
