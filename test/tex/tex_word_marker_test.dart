@@ -262,6 +262,44 @@ void main() {
       expect(patterns.markWord('at', leftMin: 2, rightMin: 3), 0);
     });
 
+    test('is stable when read twice for the same word', () {
+      final patterns = _english();
+      final count = patterns.markWord('hyphenation', leftMin: 2, rightMin: 3);
+      final first = List<int>.from(patterns.marks.take(count));
+      final second = List<int>.from(patterns.marks.take(count));
+      expect(second, first);
+    });
+
+    test('is rebuilt for the next word, not carried over', () {
+      final patterns = _english();
+      patterns.markWord('hyphenation', leftMin: 2, rightMin: 3);
+      final long = List<int>.from(patterns.marks.take(11));
+      expect(long.where((mark) => mark == 1), isNotEmpty);
+
+      // A word with no break at all must not inherit the previous marks.
+      final count = patterns.markWord('strength', leftMin: 2, rightMin: 3);
+      final marks = patterns.marks;
+      for (var i = 0; i < count; i++) {
+        expect(marks[i], 0, reason: 'index $i');
+      }
+    });
+
+    test('reading offsets without marks leaves the offsets intact', () {
+      // The per-character form is derived from the offsets on demand, so
+      // asking for it must not disturb them.
+      final patterns = _english();
+      final before = patterns
+          .breakOffsets('hyphenation', leftMin: 2, rightMin: 3)
+          .toList();
+      patterns.markWord('hyphenation', leftMin: 2, rightMin: 3);
+      final marks = patterns.marks;
+      expect(marks, isNotEmpty);
+      final after = patterns
+          .breakOffsets('hyphenation', leftMin: 2, rightMin: 3)
+          .toList();
+      expect(after, before);
+    });
+
     test('an exception fills the buffer too', () {
       final patterns = TexHyphenationPatterns.parse(
         r'''
