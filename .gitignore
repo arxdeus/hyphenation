@@ -13,8 +13,9 @@
 # Java class files
 *.class
 
-# Generated files
-bin/
+# Generated files (Android build output; /bin at the repo root is the
+# package's executables, and is tracked).
+android/**/bin/
 gen/
 flavors/**/out/
 
@@ -299,3 +300,4 @@ __pycache__/
 plumb*
 # bench_press CLI telemetry output
 benchmark_results.json
+benchmark/results/

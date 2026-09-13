@@ -40,4 +40,13 @@ dev_dependencies:
 
 flutter:
   assets:
-    - assets/patterns/
+    # Stripped of comments and TeX plumbing at build time by the package's
+    # asset transformer, which cuts the bundled file by about a third.
+    - path: assets/patterns/ushyph1.tex
+      transformers:
+        - package: flutter_hyphen
+          args: ['--keep-header', '--verbose']
+    - path: assets/patterns/ushyphmax.tex
+      transformers:
+        - package: flutter_hyphen
+          args: ['--keep-header', '--verbose']

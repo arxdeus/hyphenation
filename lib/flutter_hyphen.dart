@@ -24,6 +24,7 @@ export 'package:flutter_hyphen/src/service/hyphenation_registry.dart';
 export 'package:flutter_hyphen/src/service/hyphenator.dart';
 export 'package:flutter_hyphen/src/tex/tex_asset_loading.dart';
 export 'package:flutter_hyphen/src/tex/tex_hyphenation_patterns.dart';
+export 'package:flutter_hyphen/src/tex/tex_pattern_minifier.dart';
 export 'package:flutter_hyphen/src/widget/hyphen_paragraph.dart';
 export 'package:flutter_hyphen/src/widget/hyphen_scope.dart';
 export 'package:flutter_hyphen/src/widget/hyphen_text.dart';
