@@ -149,6 +149,43 @@ void main() {
         <String>['Ab', 'cdefghij'],
       );
     });
+    test('a non-ASCII exception is matched regardless of case', () {
+      // The lookup only folds case when the word is not already lower-case
+      // ASCII. A word outside ASCII must still reach its exception, whatever
+      // case it arrives in.
+      final patterns = TexHyphenationPatterns.parse(
+        r'''
+\patterns{ ф1ы1в1а1п1р1о1л1д1ж }
+\hyphenation{ фы-вапролдж }
+''',
+        leftMin: 1,
+        rightMin: 1,
+      );
+      for (final word in <String>['фывапролдж', 'Фывапролдж', 'ФЫВАПРОЛДЖ']) {
+        expect(
+          patterns.split(word, leftMin: 1, rightMin: 1),
+          <String>[word.substring(0, 2), word.substring(2)],
+          reason: word,
+        );
+      }
+    });
+
+    test('splitting returns an independent fixed-length list', () {
+      final patterns = TexHyphenationPatterns.parse(
+        r'\patterns{ a1b1c1d1e1f1g1h1i1j }',
+        leftMin: 1,
+        rightMin: 1,
+      );
+      final first = patterns.split('abcdefghij', leftMin: 1, rightMin: 1);
+      final unbroken = patterns.split('xy', leftMin: 1, rightMin: 1);
+      // Marking the next word must not disturb an earlier result, and the
+      // fixed-length lists must reject growth rather than silently accepting
+      // it from a caller.
+      expect(first, hasLength(10));
+      expect(unbroken, <String>['xy']);
+      expect(() => first.add('k'), throwsUnsupportedError);
+      expect(() => unbroken.add('z'), throwsUnsupportedError);
+    });
   });
 
   group('the algorithm itself', () {

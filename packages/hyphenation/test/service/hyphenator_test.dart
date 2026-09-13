@@ -21,6 +21,20 @@ void main() {
       );
     });
 
+    test('each split returns a fresh fixed-length list', () {
+      // Parts are cut into an exactly sized list. Callers must still get an
+      // independent result per call, and one they cannot grow by accident.
+      final first = english.split('hyphenation');
+      final second = english.split('hyphenation');
+      expect(second, first);
+      expect(second, isNot(same(first)));
+      expect(() => first.add('!'), throwsUnsupportedError);
+      final unbroken = english.split('cat');
+      expect(unbroken, <String>['cat']);
+      expect(() => unbroken.add('!'), throwsUnsupportedError);
+      expect(english.split(''), <String>['']);
+    });
+
     test('break offsets index into the original word', () {
       const word = 'internationalization';
       final offsets = english.breakOffsets(word);

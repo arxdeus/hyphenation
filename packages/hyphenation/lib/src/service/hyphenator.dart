@@ -271,16 +271,22 @@ class Hyphenator {
   /// ```
   List<String> split(String word) {
     final offsets = breakOffsets(word);
-    if (offsets.isEmpty) {
-      return <String>[word];
+    final count = offsets.length;
+    if (count == 0) {
+      // Fixed-length: a split result is a value, and a growable list carries a
+      // second backing array plus spare capacity for no benefit here.
+      return List<String>.filled(1, word);
     }
-    final parts = <String>[];
+    // The part count is known from the offsets, so the list is allocated once
+    // at its final size instead of growing while the parts are cut.
+    final parts = List<String>.filled(count + 1, word);
     var previous = 0;
-    for (final offset in offsets) {
-      parts.add(word.substring(previous, offset));
+    for (var i = 0; i < count; i++) {
+      final offset = offsets[i];
+      parts[i] = word.substring(previous, offset);
       previous = offset;
     }
-    parts.add(word.substring(previous));
+    parts[count] = word.substring(previous);
     return parts;
   }
 

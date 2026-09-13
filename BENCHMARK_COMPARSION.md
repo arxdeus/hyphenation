@@ -19,32 +19,32 @@ Only our engine was timed here. Import compilation does not test standalone depe
 
 | Workload | hyphenation |
 | --- | ---: |
-| load en-US dictionary | 556.616 |
-| split 32 prose words, warm | 1.787 |
-| split 32 prose words, cold | 16.413 |
-| split 2000 distinct words | 127.253 |
-| hyphenate a paragraph, common adapter (396 chars) | 24.044 |
+| load en-US dictionary | 561.351 |
+| split 32 prose words, warm | 1.491 |
+| split 32 prose words, cold | 15.284 |
+| split 2000 distinct words | 109.380 |
+| hyphenate a paragraph, common adapter (396 chars) | 23.957 |
 
 ## Engines (Flutter debug test runtime)
 
 | Workload | hyphenation | hyphenatorx | hyphenator_impure | hyphen |
 | --- | ---: | ---: | ---: | ---: |
-| load en-US dictionary | 546.578 | 3,786.562 | 4,084.925 | 4,494.585 |
-| split 32 prose words, warm | 1.834 | 0.76143 | 6,523.151 | 58.256 |
-| split 10 long words, warm | 0.99560 | 0.19427 | 3,923.736 | 31.054 |
-| split 32 prose words, cold | 17.465 | 6,560.932 | 6,489.194 | 57.975 |
-| split 2000 distinct words | 134.326 | 70.958 ⚠ | 463,905.291 | 4,092.725 |
-| hyphenate a paragraph, common adapter (396 chars) | 25.541 | 23.853 | 5,351.431 | 88.689 |
+| load en-US dictionary | 577.006 ⚠ | 3,874.140 | 4,295.363 | 4,697.346 ⚠ |
+| split 32 prose words, warm | 1.615 | 0.75492 | 6,673.964 | 58.931 |
+| split 10 long words, warm | 0.82649 | 0.19808 | 4,050.243 | 31.460 |
+| split 32 prose words, cold | 16.425 | 6,381.872 | 6,519.410 | 57.151 |
+| split 2000 distinct words | 116.424 | 67.167 ⚠ | 467,680.375 | 4,046.190 |
+| hyphenate a paragraph, common adapter (396 chars) | 25.505 | 23.984 | 5,396.940 | 87.724 |
 
 ## Flutter layout (µs per test pump, not device FPS)
 
 | Workload | flutter_hyphenation (local) | auto_hyphenating_text | hyphenatorx wrap | Text control | hyphen + precomputed SHY |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| warm same width | 33.111 ⚠ | 3,588.396 | 3,148.166 | 28.179 ⚠ | 28.436 |
-| warm remount | 98.874 ⚠ | 3,667.701 | 3,166.685 | 82.379 ⚠ | 96.417 ⚠ |
-| warm cycling 120 widths | 68.975 ⚠ | 3,845.481 | 3,142.129 | 63.913 ⚠ | 65.267 ⚠ |
-| cold result caches remount | 684.361 | 3,696.297 | 6,588.745 | 86.409 ⚠ | — |
-| uncached layout, warm words | 663.729 | 3,688.410 | 3,183.787 | 99.772 ⚠ | 87.071 ⚠ |
+| warm same width | 42.825 ⚠ | 3,809.745 | 3,199.861 | 29.046 ⚠ | 28.984 ⚠ |
+| warm remount | 98.589 ⚠ | 3,884.157 | 3,180.032 | 98.870 ⚠ | 90.966 ⚠ |
+| warm cycling 120 widths | 51.070 ⚠ | 4,048.692 | 3,114.684 | 76.728 ⚠ | 79.597 ⚠ |
+| cold result caches remount | 685.657 | 3,795.498 | 7,043.370 | 87.612 ⚠ | — |
+| uncached layout, warm words | 667.196 ⚠ | 3,838.380 | 3,181.171 | 83.460 ⚠ | 104.640 ⚠ |
 
 Text does not hyphenate. SHY uses precomputed text and a different rendering contract. The x wrap adapter excludes async widget startup.
 
@@ -54,21 +54,18 @@ All lower-median alternatives are included. Ratios use **our mean / their mean**
 
 | Workload | Faster median alternative | Our mean / theirs (95% interval) | Evidence |
 | --- | --- | ---: | --- |
-| engine: split 32 prose words, warm | hyphenatorx | 2.390× (2.361–2.419) | Local loss |
-| engine: split 10 long words, warm | hyphenatorx | 5.118× (5.085–5.151) | Local loss |
-| engine: split 2000 distinct words | hyphenatorx | 1.816× (1.566–2.161) | Local loss ⚠ |
-| engine: hyphenate a paragraph, common adapter | hyphenatorx | 1.069× (1.055–1.084) | Local loss |
-| flutter: warm same width | Text (no hyphens) | 1.091× (0.855–1.409) | Inconclusive, different-feature control ⚠ |
-| flutter: warm same width | hyphen (precomputed SHY adapter) | 1.261× (1.061–1.464) | Local loss, different-feature control ⚠ |
-| flutter: warm remount | Text (no hyphens) | 1.096× (0.980–1.227) | Inconclusive, different-feature control ⚠ |
-| flutter: warm remount | hyphen (precomputed SHY adapter) | 1.019× (0.917–1.132) | Inconclusive, different-feature control ⚠ |
-| flutter: warm cycling 120 widths | Text (no hyphens) | 0.903× (0.767–1.060) | Inconclusive, different-feature control ⚠ |
-| flutter: warm cycling 120 widths | hyphen (precomputed SHY adapter) | 0.878× (0.745–1.033) | Inconclusive, different-feature control ⚠ |
-| flutter: cold result caches remount | Text (no hyphens) | 7.604× (7.016–8.284) | Local loss, different-feature control ⚠ |
-| flutter: uncached layout, warm words | Text (no hyphens) | 6.853× (6.358–7.426) | Local loss, different-feature control ⚠ |
-| flutter: uncached layout, warm words | hyphen (precomputed SHY adapter) | 7.395× (6.861–8.015) | Local loss, different-feature control ⚠ |
+| engine: split 32 prose words, warm | hyphenatorx | 2.128× (2.101–2.155) | Local loss |
+| engine: split 10 long words, warm | hyphenatorx | 4.187× (4.113–4.263) | Local loss |
+| engine: split 2000 distinct words | hyphenatorx | 1.607× (1.385–1.914) | Local loss ⚠ |
+| engine: hyphenate a paragraph, common adapter | hyphenatorx | 1.057× (1.036–1.079) | Local loss |
+| flutter: warm same width | Text (no hyphens) | 1.189× (0.909–1.581) | Inconclusive, different-feature control ⚠ |
+| flutter: warm same width | hyphen (precomputed SHY adapter) | 1.317× (1.012–1.734) | Local loss, different-feature control ⚠ |
+| flutter: warm remount | hyphen (precomputed SHY adapter) | 1.055× (0.962–1.157) | Inconclusive, different-feature control ⚠ |
+| flutter: cold result caches remount | Text (no hyphens) | 7.727× (7.129–8.416) | Local loss, different-feature control ⚠ |
+| flutter: uncached layout, warm words | Text (no hyphens) | 7.671× (6.823–8.670) | Local loss, different-feature control ⚠ |
+| flutter: uncached layout, warm words | hyphen (precomputed SHY adapter) | 6.728× (6.022–7.543) | Local loss, different-feature control ⚠ |
 
-Setup disadvantage: we require externally sourced dictionaries, while x and impure bundle them. No production optimizations were made.
+Setup disadvantage: we require externally sourced dictionaries, while x and impure bundle them. Remaining warm-word deficits are allocation in `split`, which returns fresh parts instead of retaining finished lists per word as hyphenatorx does.
 
 ## Output agreement (not accuracy)
 

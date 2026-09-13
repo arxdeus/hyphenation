@@ -66,16 +66,20 @@ class TexHyphenationPatterns {
   List<String> split(String word, {int leftMin = 1, int rightMin = 1}) {
     _marker.mark(word, leftMin: leftMin, rightMin: rightMin);
     final breaks = _marker.breaks;
-    if (breaks.isEmpty) {
-      return <String>[word];
+    final count = breaks.length;
+    if (count == 0) {
+      return List<String>.filled(1, word);
     }
-    final parts = <String>[];
+    // The number of parts is known up front, so the list is sized once rather
+    // than grown while the parts are cut.
+    final parts = List<String>.filled(count + 1, word);
     var from = 0;
-    for (final at in breaks) {
-      parts.add(word.substring(from, at));
+    for (var i = 0; i < count; i++) {
+      final at = breaks[i];
+      parts[i] = word.substring(from, at);
       from = at;
     }
-    parts.add(word.substring(from));
+    parts[count] = word.substring(from);
     return parts;
   }
 }

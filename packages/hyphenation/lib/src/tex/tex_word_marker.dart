@@ -87,7 +87,13 @@ class TexWordMarker {
       return;
     }
 
-    final exception = table.exceptions[word.toLowerCase()];
+    final exceptions = table.exceptions;
+    // `toLowerCase` allocates a copy of every word it is handed. Pattern files
+    // usually declare no exceptions at all, and an empty map cannot match, so
+    // the copy is only worth making when there is something to look up.
+    final exception = exceptions.isEmpty
+        ? null
+        : exceptions[_foldedForLookup(word)];
     if (exception != null) {
       _markCount = length;
       for (final at in exception) {
@@ -199,5 +205,20 @@ class TexWordMarker {
     _padded = Uint16List(size * 2);
     _marks = Uint8List(size * 2);
     return _padded;
+  }
+
+  /// [word] lower-cased for the exception map, without allocating when it is
+  /// already lower-case ASCII, which running text almost always is.
+  static String _foldedForLookup(String word) {
+    for (var i = 0; i < word.length; i++) {
+      final unit = word.codeUnitAt(i);
+      if (unit >= 0x41 && unit <= 0x5A) {
+        return word.toLowerCase();
+      }
+      if (unit >= 0x80) {
+        return word.toLowerCase();
+      }
+    }
+    return word;
   }
 }
