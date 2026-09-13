@@ -304,3 +304,6 @@ benchmark/results/
 .metadata
 pubspec.lock
 .idea
+
+# Local benchmark measurement artifacts
+benchmark/comparison/results/

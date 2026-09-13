@@ -1,0 +1,38 @@
+name: hyphenation_comparison
+description: "Benchmarks comparing this repository's packages against the hyphenation packages published on pub.dev. Not published."
+publish_to: 'none'
+version: 1.0.0
+
+environment:
+  sdk: ^3.13.2
+  flutter: ">=3.10.0"
+
+# Isolated from the production workspace. Exact direct versions and the
+# committed lockfile make benchmark dependency resolution reproducible.
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Under test.
+  hyphenation:
+    path: ../../packages/hyphenation
+  flutter_hyphenation:
+    path: ../../packages/flutter_hyphenation
+  # Compared against, from pub.dev.
+  hyphenatorx: 1.5.11
+  hyphenator_impure: 0.1.4
+  auto_hyphenating_text: 0.3.2
+  hyphen: 0.4.0
+
+dependency_overrides:
+  hyphenation:
+    path: ../../packages/hyphenation
+
+dev_dependencies:
+  bench_press: 0.3.1
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  assets:
+    - assets/

@@ -51,7 +51,7 @@ Two packages ship from this repository:
 - **A drop-in `Text`** - `HyphenText` extends `Text` and accepts every one of its properties, so adopting it is a rename.
 - **Real hyphens** - Flutter paints nothing at a soft hyphen, so the line breaking is done here and a visible hyphen is emitted at the break.
 - **Correct by construction** - Liang's algorithm over the same `hyph-*.tex` pattern files TeX, LibreOffice and browsers use. Over 80 languages are available from CTAN.
-- **Fast enough to be invisible** - a warm paragraph lays out at or below the cost of a plain `Text`, because break results are memoised on the shared hyphenator.
+- **Shared caching** - bounded caches reuse word and paragraph break results across widgets. See the [comparison](BENCHMARK_COMPARSION.md) for measured cache-hit and uncached costs.
 - **Dangling word control** - keep articles, prepositions and conjunctions from being stranded at the end of a line.
 - **Pure Dart engine** - use it in a CLI, a server, or a build step, with no `dart:ui` anywhere.
 - **Smaller bundles** - an asset transformer strips a pattern file down to its patterns at build time, cutting up to 70% of its size.
@@ -340,6 +340,12 @@ Benchmarks live in each package's `benchmark/` directory and run on [`bench_pres
 cd packages/hyphenation && dart run benchmark/tex_engine_benchmark.dart
 cd packages/flutter_hyphenation && flutter test benchmark/text_layout_benchmark.dart
 ```
+
+### Against other packages
+
+[Benchmark tables and measured losses](BENCHMARK_COMPARSION.md).
+
+Reproduce: `./benchmark/comparison/run.sh`.
 
 ## Running the example
 

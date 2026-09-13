@@ -1,0 +1,5 @@
+.dart_tool/
+# Keep the lockfile: results must identify exact transitive dependencies.
+!pubspec.lock
+
+__pycache__/
