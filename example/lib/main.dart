@@ -1,20 +1,11 @@
 import 'package:example/app.dart';
 import 'package:example/constant/dangling_words.dart';
 import 'package:example/constant/demo_patterns.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphenation/flutter_hyphenation.dart';
-import 'package:marionette_flutter/marionette_flutter.dart';
 
 Future<void> main() async {
-  // Marionette lets an agent drive this demo (tap, screenshot, hot reload)
-  // over the VM service. It is debug-only and changes nothing about how the
-  // widgets below behave.
-  if (kDebugMode) {
-    MarionetteBinding.ensureInitialized();
-  } else {
-    WidgetsFlutterBinding.ensureInitialized();
-  }
+  WidgetsFlutterBinding.ensureInitialized();
   // Registering here makes every HyphenText in the app hyphenate without any
   // further plumbing.
   // `danglingWords` is the whole of the "no hanging prepositions" feature:
