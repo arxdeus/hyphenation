@@ -1,5 +1,5 @@
 name: flutter_hyphen
-description: "HyphenText, a drop-in replacement for Flutter's Text that hyphenates long words correctly using a the legacy engine dictionary."
+description: "HyphenText, a drop-in replacement for Flutter's Text that hyphenates long words correctly using TeX hyphenation patterns."
 version: 1.0.0
 # TODO: point these at the repository before publishing.
 # homepage:

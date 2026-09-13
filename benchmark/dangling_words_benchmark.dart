@@ -415,7 +415,7 @@ void main() {
       // One shared engine, and no paragraph break cache: otherwise the first
       // iteration breaks the paragraph and every later one is answered from
       // the cache, which would measure the engine rather than the feature.
-      final engine = loadEnglishHyphenator().dictionary;
+      final engine = loadEnglishHyphenator().patterns;
       final plain = Hyphenator(engine, maxParagraphCacheSize: 0);
       final glued = Hyphenator(
         engine,

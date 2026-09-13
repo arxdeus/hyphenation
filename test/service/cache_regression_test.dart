@@ -58,7 +58,7 @@ void main() {
   );
 
   test('word admission preserves offsets and FIFO identity on cheap hits', () {
-    final dictionary = loadEnglishHyphenator().dictionary;
+    final dictionary = loadEnglishHyphenator().patterns;
     final h = Hyphenator(dictionary, maxCacheSize: 2, maxCachedWordLength: 12);
     final first = h.breakOffsets('hyphenation');
     final second = h.breakOffsets('programming');
@@ -77,7 +77,7 @@ void main() {
 
   test('paragraph byte limits protect hot entries against giant inputs', () {
     final h = Hyphenator(
-      loadTestHyphenator().dictionary,
+      loadTestHyphenator().patterns,
       maxParagraphCacheBytes: 512,
     );
     final small = h.hyphenate('abc');
@@ -97,7 +97,7 @@ void main() {
 
   test('no-cache and no-change preserve source and whitespace behavior', () {
     final h = Hyphenator(
-      loadEnglishHyphenator().dictionary,
+      loadEnglishHyphenator().patterns,
       maxCacheSize: 0,
       maxParagraphCacheBytes: 0,
     );

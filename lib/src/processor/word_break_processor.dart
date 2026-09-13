@@ -1,25 +1,25 @@
 import 'package:characters/characters.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_hyphen/src/model/hyphenation_dictionary.dart';
+import 'package:flutter_hyphen/src/tex/tex_hyphenation_patterns.dart';
 import 'package:flutter_hyphen/src/util/code_units.dart';
 
 /// Finds the break opportunities inside a single word.
 ///
-/// This is the part of [Hyphenator] that talks to the dictionary: it splits a
-/// word into letter runs, folds their case, asks the dictionary to mark the
+/// This is the part of [Hyphenator] that talks to the pattern set: it splits
+/// a word into letter runs, folds their case, asks the patterns to mark the
 /// runs and walks the marks back into code unit offsets. [Hyphenator] keeps
 /// the caches and the public API around it.
 class WordBreakProcessor {
-  /// Creates a processor that looks runs up in [dictionary].
+  /// Creates a processor that looks runs up in [patterns].
   const WordBreakProcessor({
-    required this.dictionary,
+    required this.patterns,
     required this.leftMin,
     required this.rightMin,
     required this.minWordLength,
   });
 
-  /// The dictionary consulted per letter run.
-  final HyphenationDictionary dictionary;
+  /// The pattern set consulted per letter run.
+  final TexHyphenationPatterns patterns;
 
   /// Characters that must stay before a break.
   final int leftMin;
@@ -84,8 +84,8 @@ class WordBreakProcessor {
     if (characterCount < minWordLength) {
       return;
     }
-    // Dictionaries only carry lowercase patterns, so an all-caps or
-    // capitalised word finds nothing unless it is folded first. The fold is
+    // Patterns are written lower case, so an all-caps or capitalised word
+    // finds nothing unless it is folded first. The fold is
     // only usable when it preserves the character count, otherwise the offsets
     // would not map back (for example 'İ'.toLowerCase() is two characters).
     //
@@ -111,14 +111,14 @@ class WordBreakProcessor {
     // is the only thing that invalidates them.
     final int markCount;
     try {
-      markCount = dictionary.markWord(
+      markCount = patterns.markWord(
         lookup,
         leftMin: leftMin,
         rightMin: rightMin,
       );
     } catch (error, stackTrace) {
-      // A dictionary that cannot hyphenate one word must never take down the
-      // whole widget tree; the word simply stays unbroken.
+      // A pattern set that cannot hyphenate one word must never take down
+      // the whole widget tree; the word simply stays unbroken.
       FlutterError.reportError(
         FlutterErrorDetails(
           exception: error,
@@ -129,7 +129,7 @@ class WordBreakProcessor {
       );
       return;
     }
-    final marks = dictionary.marks;
+    final marks = patterns.marks;
 
     if (simple) {
       // One code unit is one character is one mark, so the mark index is

@@ -209,7 +209,7 @@ void main() {
       // Hyphenator per iteration means no word has ever been looked up, which
       // in a real app happens only for the very first paragraph after startup.
       // It shares the parsed dictionary, so this isolates lookup cost from the
-      // one-off cost of parsing the .dic file.
+      // one-off cost of compiling the pattern file.
       //
       // The dictionary lookups are a small part of this (see the 'dictionary'
       // group below for the per-word cost); most of it is breaking the lines
@@ -234,7 +234,7 @@ void main() {
           HyphenText(
             kSampleText,
             style: kStyle,
-            hyphenator: Hyphenator(hyphenator.dictionary),
+            hyphenator: Hyphenator(hyphenator.patterns),
           ),
         ),
       );
@@ -453,9 +453,9 @@ void main() {
           .toList();
 
       // Cache disabled: every word is a fresh dictionary walk.
-      final cold = Hyphenator(hyphenator.dictionary, maxCacheSize: 0);
+      final cold = Hyphenator(hyphenator.patterns, maxCacheSize: 0);
       // Cache enabled and pre-warmed.
-      final warm = Hyphenator(hyphenator.dictionary);
+      final warm = Hyphenator(hyphenator.patterns);
       for (final word in words) {
         warm.breakOffsets(word);
       }

@@ -40,4 +40,4 @@ dev_dependencies:
 
 flutter:
   assets:
-    - assets/dictionary/
+    - assets/patterns/

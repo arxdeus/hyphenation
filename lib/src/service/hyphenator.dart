@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hyphen/src/cache/lru_cache.dart';
-import 'package:flutter_hyphen/src/model/hyphenation_dictionary.dart';
 import 'package:flutter_hyphen/src/processor/dangling_words.dart';
 import 'package:flutter_hyphen/src/processor/word_break_processor.dart';
+import 'package:flutter_hyphen/src/tex/tex_hyphenation_patterns.dart';
 
 /// The Unicode soft hyphen (`U+00AD`).
 ///
@@ -13,24 +13,23 @@ import 'package:flutter_hyphen/src/processor/word_break_processor.dart';
 /// line breaking.
 const String kSoftHyphen = '\u00AD';
 
-/// Splits words into their hyphenation parts using a the legacy engine
-/// dictionary.
+/// Splits words into their hyphenation parts using a TeX pattern set.
 ///
 /// A [Hyphenator] is cheap to keep around and caches recently seen words, so
 /// the same instance should be shared by the whole application. Use
-/// [Hyphenator.fromAsset] to build one from a bundled `hyph_*.dic` file.
+/// [Hyphenator.fromAsset] to build one from a bundled `hyph-*.tex` file.
 ///
 /// ### Example
 /// ```dart
 /// final hyphenator = await Hyphenator.fromAsset(
-///   'assets/dictionary/hyph_en_US.dic',
+///   'assets/patterns/ushyph1.tex',
 /// );
 /// hyphenator.split('hyphenation'); // [hy, phen, ation]
 /// ```
 class Hyphenator with Diagnosticable {
-  /// Creates a hyphenator around an already parsed dictionary.
+  /// Creates a hyphenator around an already compiled pattern set.
   Hyphenator(
-    this.dictionary, {
+    this.patterns, {
     this.leftMin = 2,
     this.rightMin = 2,
     this.minWordLength = 5,
@@ -68,10 +67,10 @@ class Hyphenator with Diagnosticable {
   /// Long tokens are processed normally but not retained in the word cache.
   static const int kDefaultMaxCachedWordLength = 256;
 
-  /// Loads a dictionary from the asset bundle.
+  /// Loads a pattern set from the asset bundle.
   ///
-  /// [path] is the asset key of a the legacy engine `.dic` file, for example
-  /// `assets/dictionary/hyph_en_US.dic`.
+  /// [path] is the asset key of a TeX pattern file, for example
+  /// `assets/patterns/ushyph1.tex`.
   static Future<Hyphenator> fromAsset(
     String path, {
     AssetBundle? bundle,
@@ -84,12 +83,8 @@ class Hyphenator with Diagnosticable {
     int maxCachedWordLength = kDefaultMaxCachedWordLength,
     Iterable<String> danglingWords = const <String>[],
   }) async {
-    final data = await (bundle ?? rootBundle).load(path);
-    return Hyphenator.fromBytes(
-      data.buffer.asUint8List(
-        data.offsetInBytes,
-        data.lengthInBytes,
-      ),
+    return Hyphenator.fromSource(
+      await (bundle ?? rootBundle).loadString(path),
       leftMin: leftMin,
       rightMin: rightMin,
       minWordLength: minWordLength,
@@ -101,9 +96,9 @@ class Hyphenator with Diagnosticable {
     );
   }
 
-  /// Loads a dictionary from the raw bytes of a `.dic` file.
-  factory Hyphenator.fromBytes(
-    List<int> bytes, {
+  /// Compiles a hyphenator from the text of a TeX pattern file.
+  factory Hyphenator.fromSource(
+    String source, {
     int leftMin = 2,
     int rightMin = 2,
     int minWordLength = 5,
@@ -113,7 +108,7 @@ class Hyphenator with Diagnosticable {
     int maxCachedWordLength = kDefaultMaxCachedWordLength,
     Iterable<String> danglingWords = const <String>[],
   }) => Hyphenator(
-    HyphenationDictionary.parse(bytes),
+    TexHyphenationPatterns.parse(source),
     leftMin: leftMin,
     rightMin: rightMin,
     minWordLength: minWordLength,
@@ -124,12 +119,12 @@ class Hyphenator with Diagnosticable {
     danglingWords: danglingWords,
   );
 
-  /// The dictionary this hyphenator looks words up in.
+  /// The pattern set this hyphenator looks words up in.
   ///
   /// Shareable: several [Hyphenator]s with different settings may sit on one
-  /// dictionary, which is what keeps a second configuration from costing a
-  /// second parse.
-  final HyphenationDictionary dictionary;
+  /// pattern set, which is what keeps a second configuration from costing a
+  /// second compile.
+  final TexHyphenationPatterns patterns;
 
   /// Words that must never be left hanging at the end of a line, or `null`
   /// when the feature is off.
@@ -186,7 +181,7 @@ class Hyphenator with Diagnosticable {
 
   /// Where word offsets come from before the caches see them.
   late final WordBreakProcessor _breaks = WordBreakProcessor(
-    dictionary: dictionary,
+    patterns: patterns,
     leftMin: leftMin,
     rightMin: rightMin,
     minWordLength: minWordLength,
@@ -215,7 +210,7 @@ class Hyphenator with Diagnosticable {
   );
 
   /// Memoised broken paragraphs, shared by every widget using this
-  /// dictionary.
+  /// pattern set.
   ///
   /// A screen frequently lays the same string out at the same width more than
   /// once: a rebuilt list, a repeated label, two widgets in equal columns.
@@ -270,7 +265,7 @@ class Hyphenator with Diagnosticable {
   /// `word.substring(i)`.
   ///
   /// [word] may contain punctuation; only its letter runs are looked up in the
-  /// dictionary. Existing hard hyphens and [kSoftHyphen] characters always
+  /// pattern set. Existing hard hyphens and [kSoftHyphen] characters always
   /// yield a break opportunity.
   List<int> breakOffsets(String word) {
     if (word.isEmpty) {
@@ -283,7 +278,7 @@ class Hyphenator with Diagnosticable {
     }
     final computed = _breaks.computeOffsets(word);
     // Most words in running text have no break at all (too short, or the
-    // dictionary finds nothing). Handing back the shared empty list saves two
+    // pattern set finds nothing). Handing back the shared empty list saves two
     // allocations per word: the growable list and the unmodifiable copy.
     final result = computed.isEmpty
         ? const <int>[]
@@ -373,7 +368,7 @@ class Hyphenator with Diagnosticable {
 
   /// Whether this hyphenator would change how [text] is broken into lines.
   ///
-  /// True when the dictionary can break at least one word, or when [text]
+  /// True when the pattern set can break at least one word, or when [text]
   /// contains a word from [danglingWords] that would be glued to its
   /// neighbour.
   ///
@@ -416,12 +411,12 @@ class Hyphenator with Diagnosticable {
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
     // A [Hyphenator] shows up in [HyphenText]'s own diagnostics, where
-    // "Instance of 'Hyphenator'" says nothing about which dictionary is in
+    // "Instance of 'Hyphenator'" says nothing about which pattern set is in
     // play or whether the caches are doing anything.
     properties.add(
-      DiagnosticsProperty<HyphenationDictionary>(
-        'dictionary',
-        dictionary,
+      DiagnosticsProperty<TexHyphenationPatterns>(
+        'patterns',
+        patterns,
       ),
     );
     properties.add(IntProperty('leftMin', leftMin));

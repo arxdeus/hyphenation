@@ -5,7 +5,7 @@ import 'package:flutter_hyphen/src/service/hyphenator.dart';
 /// [Locale].
 ///
 /// [HyphenText] resolves its hyphenator from the nearest [HyphenScope], and
-/// falls back to this registry when there is none. Registering dictionaries
+/// falls back to this registry when there is none. Registering pattern sets
 /// here during startup is the least intrusive way to make every `HyphenText`
 /// in an app hyphenate:
 ///
@@ -14,7 +14,7 @@ import 'package:flutter_hyphen/src/service/hyphenator.dart';
 ///   WidgetsFlutterBinding.ensureInitialized();
 ///   await HyphenationRegistry.instance.registerAsset(
 ///     const Locale('en', 'US'),
-///     'assets/dictionary/hyph_en_US.dic',
+///     'assets/patterns/ushyph1.tex',
 ///   );
 ///   runApp(const MyApp());
 /// }
@@ -29,7 +29,7 @@ class HyphenationRegistry extends ChangeNotifier {
   Hyphenator? _fallback;
   String? _fallbackOwner;
 
-  /// The hyphenator used when no dictionary matches the requested locale.
+  /// The hyphenator used when no pattern set matches the requested locale.
   Hyphenator? get fallback => _fallback;
 
   /// All registered locales.
@@ -39,7 +39,7 @@ class HyphenationRegistry extends ChangeNotifier {
   /// Registers [hyphenator] for [locale].
   ///
   /// Passing a `null` locale sets the [fallback] used for unmatched locales.
-  /// The first dictionary registered also becomes the fallback, so a
+  /// The first pattern set registered also becomes the fallback, so a
   /// single-language app needs no locale plumbing at all. Replacing that locale
   /// also updates its automatic fallback. An explicitly registered fallback
   /// is independent of locale registrations and removals.
@@ -58,10 +58,10 @@ class HyphenationRegistry extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Loads a dictionary asset and registers it for [locale].
+  /// Loads a pattern asset and registers it for [locale].
   ///
   /// Returns the loaded [Hyphenator]. Calling this twice for the same locale
-  /// replaces the previous dictionary.
+  /// replaces the previous pattern set.
   ///
   /// [danglingWords] lists words that must not be left hanging at the end of
   /// a line, such as English prepositions and conjunctions. No list is
@@ -113,7 +113,7 @@ class HyphenationRegistry extends ChangeNotifier {
     return _fallback;
   }
 
-  /// Removes the dictionary registered for [locale].
+  /// Removes the pattern set registered for [locale].
   void unregister(Locale? locale) {
     if (locale == null) {
       _fallback = null;
@@ -129,7 +129,7 @@ class HyphenationRegistry extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Removes every registered dictionary.
+  /// Removes every registered pattern set.
   void clear() {
     _byLanguageTag.clear();
     _fallback = null;

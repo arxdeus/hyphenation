@@ -1,3 +1,8 @@
+// The minimums are written out at every call site on purpose: what a test
+// asks for is half of what it asserts, and reading it should not require
+// knowing the default.
+// ignore_for_file: avoid_redundant_argument_values
+
 // The marker: does it find the breaks Liang's algorithm says it should?
 import 'dart:io';
 

@@ -17,7 +17,7 @@ void main() {
   setUp(() {
     testDict = loadTestHyphenator();
     english = loadEnglishHyphenator();
-    empty = Hyphenator.fromBytes(const <int>[]);
+    empty = Hyphenator.fromSource('');
     HyphenationRegistry.instance.clear();
   });
 

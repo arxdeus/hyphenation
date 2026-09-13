@@ -98,7 +98,7 @@ void main() {
     });
 
     test('honours the cache size limit', () {
-      final small = Hyphenator(english.dictionary, maxCacheSize: 2);
+      final small = Hyphenator(english.patterns, maxCacheSize: 2);
       expect(small.split('programming'), isNotEmpty);
       expect(small.split('constitution'), isNotEmpty);
       expect(small.split('information'), isNotEmpty);
@@ -114,7 +114,7 @@ void main() {
       int breaksFor(int repeats) {
         final word = 'internationalization' * repeats;
         final offsets = Hyphenator(
-          english.dictionary,
+          english.patterns,
           maxCacheSize: 0,
         ).breakOffsets(word);
         expect(offsets, isNotEmpty);
@@ -133,7 +133,7 @@ void main() {
     });
     test('every cache stays within its bound', () {
       final small = Hyphenator(
-        english.dictionary,
+        english.patterns,
         maxCacheSize: 3,
         maxParagraphCacheSize: 2,
       );
@@ -151,7 +151,7 @@ void main() {
     test('paragraph caches are bounded far below the word cache', () {
       // Paragraph entries are ~1000x the size of a word entry, so the default
       // must not be the same number for both.
-      final hyphenator = Hyphenator(english.dictionary);
+      final hyphenator = Hyphenator(english.patterns);
       expect(hyphenator.maxCacheSize, 5000);
       expect(
         hyphenator.maxParagraphCacheSize,
@@ -163,13 +163,13 @@ void main() {
       );
       // Disabling the cache still disables all of it.
       expect(
-        Hyphenator(english.dictionary, maxCacheSize: 0).maxParagraphCacheSize,
+        Hyphenator(english.patterns, maxCacheSize: 0).maxParagraphCacheSize,
         0,
       );
     });
 
     test('eviction drops the least recently used entry, not the oldest', () {
-      final small = Hyphenator(english.dictionary, maxParagraphCacheSize: 2);
+      final small = Hyphenator(english.patterns, maxParagraphCacheSize: 2);
       small
         ..cacheBreak('a', 'A')
         ..cacheBreak('b', 'B');
@@ -202,7 +202,7 @@ void main() {
     });
 
     test('the marked cache respects the size limit', () {
-      final small = Hyphenator(english.dictionary, maxCacheSize: 2);
+      final small = Hyphenator(english.patterns, maxCacheSize: 2);
       for (final text in <String>[
         'hello world',
         'constitution of the country',
@@ -236,7 +236,7 @@ void main() {
     });
 
     test('a broken dictionary does not break the hyphenator', () {
-      final empty = Hyphenator.fromBytes(const <int>[]);
+      final empty = Hyphenator.fromSource('');
       expect(empty.split('anything'), <String>['anything']);
     });
 
@@ -248,7 +248,7 @@ void main() {
       expect(described, contains('Hyphenator'));
       expect(described, contains('leftMin: 2'));
       expect(described, contains('minWordLength: 5'));
-      expect(described, contains('HyphenationDictionary'));
+      expect(described, contains('TexHyphenationPatterns'));
       expect(described, isNot(contains("Instance of 'Hyphenator'")));
     });
   });

@@ -1,23 +1,19 @@
-// The TeX engine's hot paths, measured against the same workloads the `.dic`
-// engine was measured with.
+// The engine's hot paths: compiling a pattern file, and marking and
+// splitting words against it.
 //
 //   dart run bench_press run -t jit -t aot benchmark/tex_engine_benchmark.dart
 //
-// The scenario names match `engine_hot_path_benchmark.dart` so the two saved
-// result files can be diffed benchmark by benchmark.
-import 'dart:io';
-
+// Pure Dart, no Flutter binding, so this runs under every bench_press target.
+// One `run` covers a whole word list rather than a single word, which keeps a
+// batch long enough to measure and averages over the length profile of prose.
 import 'package:bench_press/bench_press.dart';
 import 'package:flutter_hyphen/src/tex/tex_hyphenation_patterns.dart';
 
 import 'support/engine_workloads.dart';
 
-String _patternSource() =>
-    File(assetPath('example/assets/patterns/ushyph1.tex')).readAsStringSync();
-
 TexHyphenationPatterns? _shared;
 TexHyphenationPatterns _sharedPatterns() =>
-    _shared ??= TexHyphenationPatterns.parse(_patternSource());
+    _shared ??= TexHyphenationPatterns.parse(englishPatternSource());
 
 /// Marks every word of [words] once per [run].
 final class TexMarkBenchmark extends Benchmark {
@@ -73,7 +69,7 @@ final class TexParseBenchmark extends Benchmark {
   late String _source;
 
   @override
-  void setup() => _source = _patternSource();
+  void setup() => _source = englishPatternSource();
 
   @override
   void run() => Blackhole.consume(TexHyphenationPatterns.parse(_source));

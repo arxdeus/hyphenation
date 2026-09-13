@@ -1,6 +1,6 @@
 import 'package:example/app.dart';
 import 'package:example/constant/dangling_words.dart';
-import 'package:example/constant/demo_dictionary.dart';
+import 'package:example/constant/demo_patterns.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hyphen/flutter_hyphen.dart';
@@ -23,9 +23,9 @@ Future<void> main() async {
   // inserted into the text. Leave it out to turn the feature off.
   final hyphenator = await HyphenationRegistry.instance.registerAsset(
     const Locale('en', 'US'),
-    kEnglishDictionary,
+    kEnglishPatterns,
     danglingWords: kEnglishDanglingWords,
   );
-  kPlainHyphenator = Hyphenator(hyphenator.dictionary);
+  kPlainHyphenator = Hyphenator(hyphenator.patterns);
   runApp(const HyphenDemoApp());
 }

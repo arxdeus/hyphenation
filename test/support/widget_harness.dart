@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// Counts fresh breaks; the shared cache is disabled so every miss on the
 /// render object's own cache shows up.
 class CountingHyphenator extends Hyphenator {
-  CountingHyphenator(super.dictionary) : super(maxCacheSize: 0);
+  CountingHyphenator(super.patterns) : super(maxCacheSize: 0);
 
   int breaks = 0;
 

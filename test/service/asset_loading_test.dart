@@ -13,7 +13,7 @@ class _DiskBundle extends CachingAssetBundle {
   @override
   Future<ByteData> load(String key) async {
     final file = File(
-      key == 'assets/dictionary/hyph_en_US.dic' ? kEnglishDictionaryPath : key,
+      key == 'assets/patterns/ushyph1.tex' ? kEnglishPatternPath : key,
     );
     if (!file.existsSync()) {
       throw FlutterError('Asset not found: $key');
@@ -26,12 +26,12 @@ void main() {
   setUp(HyphenationRegistry.instance.clear);
   tearDown(HyphenationRegistry.instance.clear);
 
-  testWidgets('registerAsset loads a dictionary through the bundle', (
+  testWidgets('registerAsset loads a pattern set through the bundle', (
     WidgetTester tester,
   ) async {
     final hyphenator = await HyphenationRegistry.instance.registerAsset(
       const Locale('en', 'US'),
-      'assets/dictionary/hyph_en_US.dic',
+      'assets/patterns/ushyph1.tex',
       bundle: _DiskBundle(),
     );
     expect(hyphenator.split('internationalization').length, greaterThan(1));
@@ -46,7 +46,7 @@ void main() {
     () async {
       final h = await HyphenationRegistry.instance.registerAsset(
         const Locale('en'),
-        'assets/dictionary/hyph_en_US.dic',
+        'assets/patterns/ushyph1.tex',
         bundle: _DiskBundle(),
         maxCacheSize: 7,
         maxParagraphCacheSize: 3,
@@ -62,21 +62,21 @@ void main() {
     },
   );
 
-  testWidgets('Hyphenator.fromAsset reports a missing dictionary', (
+  testWidgets('Hyphenator.fromAsset reports a missing pattern file', (
     WidgetTester tester,
   ) async {
     await expectLater(
-      Hyphenator.fromAsset('assets/missing.dic', bundle: _DiskBundle()),
+      Hyphenator.fromAsset('assets/missing.tex', bundle: _DiskBundle()),
       throwsA(isA<FlutterError>()),
     );
   });
 
-  testWidgets('a registered dictionary hyphenates without any scope', (
+  testWidgets('a registered pattern set hyphenates without any scope', (
     WidgetTester tester,
   ) async {
     await HyphenationRegistry.instance.registerAsset(
       const Locale('en', 'US'),
-      'assets/dictionary/hyph_en_US.dic',
+      'assets/patterns/ushyph1.tex',
       bundle: _DiskBundle(),
     );
 

@@ -52,7 +52,7 @@ void main() {
 
     testWidgets('a paint-only style change keeps the breaks without '
         're-breaking', (WidgetTester tester) async {
-      final counting = CountingHyphenator(testDict.dictionary);
+      final counting = CountingHyphenator(testDict.patterns);
       Widget build(Color color) => host(
         HyphenText(
           'wonderful hyphenation',
@@ -90,7 +90,7 @@ void main() {
 
     testWidgets('a dry layout at another width does not evict the painted '
         'width', (WidgetTester tester) async {
-      final counting = CountingHyphenator(testDict.dictionary);
+      final counting = CountingHyphenator(testDict.patterns);
       await tester.pumpWidget(
         host(
           HyphenText(

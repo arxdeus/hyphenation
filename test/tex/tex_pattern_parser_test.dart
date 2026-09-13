@@ -10,10 +10,10 @@ void main() {
     });
 
     test('skips the comment header a real file opens with', () {
-      final source = parseTexPatterns('''
+      final source = parseTexPatterns(r'''
 % title: Hyphenation patterns
 % copyright: someone
-\\patterns{
+\patterns{
 a1b
 }
 ''');
@@ -21,8 +21,8 @@ a1b
     });
 
     test('a comment inside a group ends the token, not the group', () {
-      final source = parseTexPatterns('''
-\\patterns{ % just type <return> if you are not using INITEX
+      final source = parseTexPatterns(r'''
+\patterns{ % just type <return> if you are not using INITEX
 a1b
 c1d
 }

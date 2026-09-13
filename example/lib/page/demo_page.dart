@@ -1,4 +1,4 @@
-import 'package:example/constant/demo_dictionary.dart';
+import 'package:example/constant/demo_patterns.dart';
 import 'package:example/widget/demo_column.dart';
 import 'package:example/widget/demo_controls.dart';
 import 'package:example/widget/rendered_lines.dart';

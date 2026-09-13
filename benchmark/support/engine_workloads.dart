@@ -1,7 +1,4 @@
-import 'dart:convert';
 import 'dart:io';
-
-import 'package:flutter_hyphen/src/model/hyphenation_dictionary.dart';
 
 /// Locates a repository asset from whatever directory a benchmark was started
 /// in. The CLI runs from the package root, a compiled AOT binary need not.
@@ -20,16 +17,9 @@ String assetPath(String relative) {
   }
 }
 
-/// The bundled English dictionary, as raw bytes.
-List<int> englishDictionaryBytes() =>
-    File(assetPath('example/assets/dictionary/hyph_en_US.dic'))
-        .readAsBytesSync();
-
-/// A dictionary whose patterns rewrite the words they break, which is the
-/// expensive path through the matcher.
-HyphenationDictionary rewriteDictionary() => HyphenationDictionary.parse(
-  utf8.encode('UTF-8\nd3d1ze/dz=,1,1\na1b/x=y,1,2\nä1ö\n'),
-);
+/// The bundled English pattern file, as text.
+String englishPatternSource() =>
+    File(assetPath('example/assets/patterns/ushyph1.tex')).readAsStringSync();
 
 /// Words with the length profile of running prose.
 const List<String> kProse = <String>[
