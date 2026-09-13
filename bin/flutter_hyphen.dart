@@ -16,7 +16,9 @@
 // write the transformed asset to the output path. Here that means rewriting
 // the pattern file as nothing but its `\patterns` and `\hyphenation`
 // groups, so the licence header, the changelog and the rest of the TeX
-// plumbing never reach the app bundle.
+// plumbing never reach the app bundle. `--verbose` reports what that saved,
+// which is worth checking: the figure ranges from 1% to 70% depending on
+// how much prose the language's file happens to carry.
 //
 // The licence of a pattern file usually asks that its notice be preserved,
 // so `--keep-header` is offered and the header of the source file is copied
@@ -102,8 +104,10 @@ Future<void> main(List<String> arguments) async {
   await output.writeAsString(header + result.source);
 
   if (options.containsKey('verbose')) {
-    final before = source.length;
-    final after = header.length + result.source.length;
+    // Sizes on disk, not string lengths: a pattern file is UTF-8, and for
+    // anything but English the two differ.
+    final before = input.lengthSync();
+    final after = output.lengthSync();
     final saved = before == 0 ? 0 : (100 * (before - after) / before).round();
     stdout.writeln(
       'flutter_hyphen: $inputPath ${before}B -> ${after}B (-$saved%), '

@@ -94,6 +94,35 @@ a1b
   });
 
   group('the rewrite means the same thing', () {
+    test('non-ASCII patterns and exceptions survive', () {
+      final original = TexHyphenationPatterns.parse(_utf8Source);
+      for (final layout in TexMinifyLayout.values) {
+        final minified = minifyTexPatterns(
+          _utf8Source,
+          options: TexMinifyOptions(layout: layout),
+        );
+        expect(minified.source, contains('сло1во'));
+        // Lower case: the parser folds exception keys, and the marker
+        // folds the word before looking one up, so the pair still meets.
+        expect(minified.source, contains('stra-ße'));
+        expect(minified.source, isNot(contains('Trennmuster')));
+        final rebuilt = TexHyphenationPatterns.parse(minified.source);
+        for (final word in <String>[
+          'слово',
+          'пример',
+          'grossen',
+          'übergroße',
+          'Straße',
+        ]) {
+          expect(
+            rebuilt.split(word).join('-'),
+            original.split(word).join('-'),
+            reason: '$word under $layout',
+          );
+        }
+      }
+    });
+
     test('reparsing yields the same patterns and exceptions', () {
       const source = r'''
 % a header
@@ -137,6 +166,24 @@ a1b
     });
   });
 }
+
+/// Non-ASCII survives: real pattern files are UTF-8, and Cyrillic or
+/// accented letters are ordinary letters to the reader. This mirrors what
+/// `hyph-ru.tex` and `hyph-de-1996.tex` look like in miniature, because the
+/// real files are too large and too licence-encumbered to vendor.
+const String _utf8Source = r'''
+% title: a UTF-8 pattern file
+% notice: Trennmuster
+\patterns{
+сло1во
+1гро
+о1бра
+gro1ss
+1ße
+ü1ber
+}
+\hyphenation{ Stra-ße при-мер }
+''';
 
 const List<String> _words = <String>[
   'hyphenation',

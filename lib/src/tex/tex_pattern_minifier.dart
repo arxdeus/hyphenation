@@ -1,12 +1,16 @@
 // Strips a TeX pattern file down to what the engine actually reads.
 //
-// A `hyph-*.tex` file from CTAN is mostly prose: a licence header, a
-// changelog, `\message{...}`, `\endinput`, and blank lines between the
-// pattern groups. None of it survives compilation, but all of it ships in
-// the app bundle and has to be scanned at startup. Rewriting the file to
-// the bare tokens of its two groups typically removes a third of the bytes
-// and every comment, and the result is still a valid pattern file that
+// A `hyph-*.tex` file from CTAN carries a licence header, a changelog,
+// `\message{...}`, `\endinput` and, in several languages, a long commented
+// appendix. None of it survives compilation, but all of it ships in the app
+// bundle. Rewriting the file to the bare tokens of its two groups removes
+// every comment, and the result is still a valid pattern file that
 // [parseTexPatterns] reads back identically.
+//
+// What that is worth varies enormously: measured against hyph-utf8,
+// `hyph-fr.tex` loses 70% of its bytes and `hyph-de-1996.tex` only 1%,
+// because the German file is already one pattern per line. Parse time is
+// not measurably affected, so this is a bundle-size tool and nothing more.
 
 import 'package:flutter_hyphen/src/tex/tex_pattern_parser.dart';
 
