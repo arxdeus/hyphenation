@@ -4,7 +4,7 @@ import 'package:example/widget/demo_controls.dart';
 import 'package:example/widget/rendered_lines.dart';
 import 'package:example/widget/word_list.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hyphen/flutter_hyphen.dart';
+import 'package:flutter_hyphenate/flutter_hyphenate.dart';
 
 class DemoPage extends StatefulWidget {
   const DemoPage({super.key});
@@ -34,7 +34,7 @@ class _DemoPageState extends State<DemoPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('flutter_hyphen'),
+        title: const Text('flutter_hyphenate'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: ListView(

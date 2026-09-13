@@ -3,7 +3,7 @@ import 'package:example/constant/dangling_words.dart';
 import 'package:example/constant/demo_patterns.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hyphen/flutter_hyphen.dart';
+import 'package:flutter_hyphenate/flutter_hyphenate.dart';
 import 'package:marionette_flutter/marionette_flutter.dart';
 
 Future<void> main() async {

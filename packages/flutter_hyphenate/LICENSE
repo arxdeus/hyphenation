@@ -1,0 +1,45 @@
+MIT License
+
+Copyright (c) 2026 Artemis Kushner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Hyphenation patterns
+
+The engine implements Liang's hyphenation algorithm, published in Franklin
+Mark Liang's 1983 Stanford dissertation *Word Hy-phen-a-tion by Com-put-er*,
+and reads the TeX pattern format. Both are public; no third-party source is
+incorporated, and the MIT license above covers the whole package.
+
+Pattern files are data, not code, and each carries its own license. None are
+bundled with the package. The two copied verbatim into
+`example/assets/patterns/` for the example app and the tests are:
+
+- `ushyph1.tex` — Knuth's Plain TeX hyphenation tables. "Unlimited copying
+  and redistribution of this file are permitted as long as this file is not
+  modified." The copy here is unmodified.
+- `ushyphmax.tex` — Copyright (C) 1990, 2004, 2005 Gerard D.C. Kuiken.
+  "Copying and distribution of this file, with or without modification, are
+  permitted in any medium without royalty provided the copyright notice and
+  this notice are preserved." The copy here preserves it.
+
+Patterns for other languages come from the hyph-utf8 collection on CTAN and
+carry their own, per-language licenses. Check the one you ship.

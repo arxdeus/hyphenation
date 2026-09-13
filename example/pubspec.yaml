@@ -21,6 +21,8 @@ version: 1.0.0+1
 environment:
   sdk: ^3.13.2
 
+resolution: workspace
+
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
@@ -30,8 +32,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_hyphen:
-    path: ../
+  flutter_hyphenate: ^1.0.0
   marionette_flutter: ^0.6.0
 
 dev_dependencies:
@@ -44,9 +45,9 @@ flutter:
     # asset transformer, which cuts the bundled file by about a third.
     - path: assets/patterns/ushyph1.tex
       transformers:
-        - package: flutter_hyphen
+        - package: flutter_hyphenate
           args: ['--keep-header', '--verbose']
     - path: assets/patterns/ushyphmax.tex
       transformers:
-        - package: flutter_hyphen
+        - package: flutter_hyphenate
           args: ['--keep-header', '--verbose']

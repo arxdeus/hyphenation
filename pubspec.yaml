@@ -1,25 +1,12 @@
-name: flutter_hyphen
-description: "HyphenText, a drop-in replacement for Flutter's Text that hyphenates long words correctly using TeX hyphenation patterns."
+name: hyphenate_workspace
+description: "Workspace root for the hyphenate and flutter_hyphenate packages. Not published."
+publish_to: 'none'
 version: 1.0.0
-# TODO: point these at the repository before publishing.
-# homepage:
-# repository:
-topics:
-  - text
-  - typography
-  - hyphenation
 
 environment:
   sdk: ^3.13.2
-  flutter: ">=1.17.0"
 
-dependencies:
-  characters: ^1.4.1
-  flutter:
-    sdk: flutter
-
-dev_dependencies:
-  bench_press: ^0.3.0
-  flutter_test:
-    sdk: flutter
-
+workspace:
+  - packages/hyphenate
+  - packages/flutter_hyphenate
+  - example

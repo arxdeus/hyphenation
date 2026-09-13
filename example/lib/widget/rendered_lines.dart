@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hyphen/flutter_hyphen.dart';
+import 'package:flutter_hyphenate/flutter_hyphenate.dart';
 
 /// Shows the lines a [HyphenText] actually paints for the sample text.
 ///
