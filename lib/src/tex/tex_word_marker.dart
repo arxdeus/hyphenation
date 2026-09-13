@@ -104,6 +104,8 @@ class TexWordMarker {
     final edgeUnit = table.edgeUnit;
     final edgeTarget = table.edgeTarget;
     final tableBase = table.tableBase;
+    final tableFirst = table.tableFirst;
+    final tableSpan = table.tableSpan;
     final tableEntries = table.tableEntries;
     final priorityAt = table.priorityAt;
     final priorityLength = table.priorityLength;
@@ -120,7 +122,13 @@ class TexWordMarker {
         int next;
         final base = tableBase[node];
         if (base >= 0) {
-          next = unit < kTableSpan ? tableEntries[base + unit] : -1;
+          // Unsigned compare: one branch rejects a unit below the node's
+          // range as well as one above it, because a negative offset
+          // reinterprets as huge.
+          final offset = unit - tableFirst[node];
+          next = offset.toUnsigned(32) < tableSpan[node]
+              ? tableEntries[base + offset]
+              : -1;
         } else {
           next = -1;
           var low = edgeStart[node];

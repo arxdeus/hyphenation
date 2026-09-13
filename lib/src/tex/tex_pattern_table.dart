@@ -32,6 +32,8 @@ class TexPatternTable {
     required this.edgeUnit,
     required this.edgeTarget,
     required this.tableBase,
+    required this.tableFirst,
+    required this.tableSpan,
     required this.tableEntries,
     required this.priorityAt,
     required this.priorityLength,
@@ -51,11 +53,26 @@ class TexPatternTable {
   /// Offset of a node's direct table in [tableEntries], or -1 when the node
   /// has few enough edges to be worth searching instead.
   ///
-  /// A direct table turns the lookup into a single indexed load. It costs
-  /// [kTableSpan] entries, so only nodes wide enough to pay for it get one:
-  /// in a real pattern set that is the root and its busiest children, which
-  /// between them absorb most of the lookups.
+  /// A direct table turns the lookup into a single indexed load. Only nodes
+  /// wide enough to pay for the storage get one: in a real pattern set that
+  /// is the root and its busiest children, which between them absorb most of
+  /// the lookups.
   final Int32List tableBase;
+
+  /// The lowest code unit a node's table covers; its entry sits at
+  /// `tableBase[node]`. [tableSpan] says how many units follow it.
+  ///
+  /// Tables are keyed on the node's own range rather than a fixed window
+  /// starting at zero. A node's children are letters of one script and sit
+  /// close together, so the range is short even when the units themselves
+  /// are large — and a fixed window would silently miss every unit above it,
+  /// which is every accented letter in Latin scripts and every letter in
+  /// Cyrillic and Greek.
+  final Int32List tableFirst;
+
+  /// How many code units each node's table covers.
+  final Int32List tableSpan;
+
   final Int32List tableEntries;
 
   /// Where this node's priority vector starts in [priorityBytes], or -1 when
@@ -102,10 +119,11 @@ class TexPatternTable {
   int edgeFrom(int node, int unit) {
     final base = tableBase[node];
     if (base >= 0) {
-      if (unit >= kTableSpan) {
-        return -1;
-      }
-      return tableEntries[base + unit];
+      // Unsigned compare: one branch rejects both a unit below the range and
+      // one above it, because a negative offset reinterprets as huge.
+      final offset = unit - tableFirst[node];
+      final span = tableSpan[node];
+      return offset.toUnsigned(32) < span ? tableEntries[base + offset] : -1;
     }
     var low = edgeStart[node];
     var high = edgeStart[node + 1] - 1;
@@ -125,19 +143,18 @@ class TexPatternTable {
   }
 }
 
-/// How many code units a direct table covers.
-///
-/// Patterns are letters and the boundary dot, which in every Latin-script
-/// pattern file live below 128. A wider table would cover the occasional
-/// accented letter too, but those sit in nodes far too narrow to be given a
-/// table at all.
-const int kTableSpan = 128;
-
 /// How many edges a node needs before a direct table is worth its memory.
 ///
 /// Below this a binary search is two or three steps, which is cheaper than
 /// the cache miss a sparse table would cost.
 const int kTableThreshold = 12;
+
+/// How sparse a node's table may be before it is not worth building.
+///
+/// A node whose edges are `a`, `z` and one accented letter spans a hundred
+/// entries to hold three. Past this ratio the search is cheaper than the
+/// cache footprint.
+const int kMaxTableSparsity = 4;
 
 /// Grows a trie one pattern at a time, then freezes it into typed arrays.
 ///
@@ -191,30 +208,58 @@ class _TrieBuilder {
     final priorityLength = Uint8List(nodeCount);
     final priorityBlob = <int>[];
     final tableBase = Int32List(nodeCount)..fillRange(0, nodeCount, -1);
+    final tableFirst = Int32List(nodeCount);
+    final tableSpan = Int32List(nodeCount);
 
-    // Lay the direct tables out before filling anything, so their storage is
-    // one allocation rather than one per node.
-    var tableCount = 0;
+    // Decide which nodes get a table, and how wide each one has to be, before
+    // filling anything: the storage is then one allocation rather than one
+    // per node.
+    //
+    // A table covers exactly the node's own span of code units. That is what
+    // makes it correct for scripts above ASCII, and it is usually *smaller*
+    // than a fixed window would be, because a node's children are letters of
+    // one alphabet and sit close together.
+    var tableLength = 0;
     for (var node = 0; node < nodeCount; node++) {
-      if (_edges[node].length >= kTableThreshold) {
-        tableBase[node] = tableCount * kTableSpan;
-        tableCount++;
+      final edges = _edges[node];
+      if (edges.length < kTableThreshold) {
+        continue;
       }
+      var lowest = 0x10FFFF;
+      var highest = 0;
+      for (final unit in edges.keys) {
+        if (unit < lowest) {
+          lowest = unit;
+        }
+        if (unit > highest) {
+          highest = unit;
+        }
+      }
+      final span = highest - lowest + 1;
+      // A node spread thinly across a wide range would spend more on holes
+      // than the search costs.
+      if (span > edges.length * kMaxTableSparsity) {
+        continue;
+      }
+      tableBase[node] = tableLength;
+      tableFirst[node] = lowest;
+      tableSpan[node] = span;
+      tableLength += span;
     }
-    final tableEntries = Int32List(tableCount * kTableSpan)
-      ..fillRange(0, tableCount * kTableSpan, -1);
+    final tableEntries = Int32List(tableLength)..fillRange(0, tableLength, -1);
 
     for (var node = 0; node < nodeCount; node++) {
       // Sorted so the matcher can binary search.
       final units = _edges[node].keys.toList(growable: false)..sort();
       var at = edgeStart[node];
       final base = tableBase[node];
+      final first = tableFirst[node];
       for (final unit in units) {
         final target = _edges[node][unit]!;
         edgeUnit[at] = unit;
         edgeTarget[at] = target;
-        if (base >= 0 && unit < kTableSpan) {
-          tableEntries[base + unit] = target;
+        if (base >= 0) {
+          tableEntries[base + unit - first] = target;
         }
         at++;
       }
@@ -232,6 +277,8 @@ class _TrieBuilder {
       edgeUnit: edgeUnit,
       edgeTarget: edgeTarget,
       tableBase: tableBase,
+      tableFirst: tableFirst,
+      tableSpan: tableSpan,
       tableEntries: tableEntries,
       priorityAt: priorityAt,
       priorityLength: priorityLength,
