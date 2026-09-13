@@ -116,7 +116,8 @@ def main():
     doc += ['', 'Only our engine was timed here. Import compilation does not test standalone dependency resolution or runtime behavior.', '']
     doc += matrix(suites['pure_dart'], {'hyphenation': 'hyphenation'})
     doc += ['## Engines (Flutter debug test runtime)', '']
-    doc += matrix(suites['engine'], {n: n for n in ('hyphenation', 'hyphenatorx', 'hyphenator_impure', 'hyphen')})
+    doc += matrix(suites['engine'], {n: n for n in ('hyphenation', 'hyphenation (cacheSplitParts)', 'hyphenatorx', 'hyphenator_impure', 'hyphen')})
+    doc += ['`cacheSplitParts` is an opt-in variant of our engine, not the default: it retains finished part lists per word, as hyphenatorx does, and costs roughly 3.5x the word-cache bytes. A dash means the variant does not apply to that workload.', '']
     doc += ['## Flutter layout (µs per test pump, not device FPS)', '']
     doc += matrix(suites['flutter'], {'flutter_hyphenation': 'flutter_hyphenation (local)',
         'auto_hyphenating_text': 'auto_hyphenating_text', 'hyphenatorx (wrap adapter)': 'hyphenatorx wrap',
@@ -131,7 +132,7 @@ def main():
         for row in suites[suite_name]['rows']:
             ours = row['packages'][own]
             for name, other in row['packages'].items():
-                if name == own or other['median_us'] >= ours['median_us']:
+                if name == own or name.startswith(own) or other['median_us'] >= ours['median_us']:
                     continue
                 ratio, low, high = ratio_interval(ours, other)
                 ci = f'{low:.3f}–{high:.3f}' if low is not None else 'unbounded'

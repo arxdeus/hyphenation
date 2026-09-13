@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:hyphenation/src/cache/lru_cache.dart';
 import 'package:hyphenation/src/processor/dangling_words.dart';
 import 'package:hyphenation/src/processor/word_break_processor.dart';
@@ -36,6 +38,7 @@ class Hyphenator {
     int? maxParagraphCacheSize,
     this.maxParagraphCacheBytes = kDefaultParagraphCacheBytes,
     this.maxCachedWordLength = kDefaultMaxCachedWordLength,
+    this.cacheSplitParts = false,
     Iterable<String> danglingWords = const <String>[],
   }) : danglingWords = DanglingWords.compile(danglingWords),
        maxParagraphCacheSize =
@@ -76,6 +79,7 @@ class Hyphenator {
     int? maxParagraphCacheSize,
     int maxParagraphCacheBytes = kDefaultParagraphCacheBytes,
     int maxCachedWordLength = kDefaultMaxCachedWordLength,
+    bool cacheSplitParts = false,
     Iterable<String> danglingWords = const <String>[],
   }) => Hyphenator(
     TexHyphenationPatterns.parse(source),
@@ -86,6 +90,7 @@ class Hyphenator {
     maxParagraphCacheSize: maxParagraphCacheSize,
     maxParagraphCacheBytes: maxParagraphCacheBytes,
     maxCachedWordLength: maxCachedWordLength,
+    cacheSplitParts: cacheSplitParts,
     danglingWords: danglingWords,
   );
 
@@ -141,10 +146,26 @@ class Hyphenator {
   /// Longer tokens still produce the same offsets, without retaining them.
   final int maxCachedWordLength;
 
+  /// Whether the word cache keeps the split parts as well as the offsets.
+  ///
+  /// [split] cuts a fresh substring per part on every call, which is most of
+  /// what splitting a known word costs: the lookup itself is a map hit.
+  /// Retaining the parts makes a repeated [split] a map hit too, at the price
+  /// of holding the word's text a second time, cut up.
+  ///
+  /// Off by default, because the caches exist to keep layout cheap and layout
+  /// goes through [breakOffsets] and [hyphenate], neither of which needs the
+  /// parts. Turn it on when the application itself calls [split] repeatedly on
+  /// a bounded vocabulary and would rather spend the memory. [maxCacheSize]
+  /// and [maxCachedWordLength] bound it exactly as they bound the offsets.
+  final bool cacheSplitParts;
+
   int _wordEstimatedBytes = 0;
 
   static int _wordWeight(String word, List<int> offsets) =>
-      64 + 2 * word.length + 8 * offsets.length;
+      // Offsets are retained in the narrowest width that holds them, one or
+      // two bytes per entry, not one tagged word each. See [_freeze].
+      64 + 2 * word.length + (word.length <= 0xFF ? 1 : 2) * offsets.length;
 
   static int _paragraphWeight(int sourceLength, String value) =>
       128 + 2 * (sourceLength + value.length);
@@ -167,6 +188,26 @@ class Hyphenator {
   /// enough to hold a realistic vocabulary and a miss only costs a few
   /// microseconds, against the hundreds a paragraph miss costs.
   final Map<String, List<int>> _cache = <String, List<int>>{};
+
+  /// Split parts, when [cacheSplitParts] is on, keyed and evicted exactly like
+  /// [_cache]. Null when the feature is off, so the check is a null test on a
+  /// final-ish field rather than a flag plus an empty map.
+  late final Map<String, List<String>>? _partsCache =
+      cacheSplitParts && maxCacheSize > 0 && maxCachedWordLength > 0
+      ? <String, List<String>>{}
+      : null;
+
+  int _partsEstimatedBytes = 0;
+
+  static int _partsWeight(String word, List<String> parts) {
+    // The parts together hold the word's code units once more, plus a header
+    // per part and the list itself.
+    var bytes = 64 + 2 * word.length + 8 * parts.length;
+    for (var i = 0; i < parts.length; i++) {
+      bytes += 32 + 2 * parts[i].length;
+    }
+    return bytes;
+  }
 
   /// Memoised results of [hyphenate], keyed by the input text.
   ///
@@ -217,7 +258,7 @@ class Hyphenator {
   /// Estimated retained bytes, not exact VM heap measurements. Broken-cache
   /// callers should supply sourceLength to [cacheBreak] for accurate estimates.
   ({int words, int marked, int broken}) get cacheEstimatedBytes => (
-    words: _wordEstimatedBytes,
+    words: _wordEstimatedBytes + _partsEstimatedBytes,
     marked: _markedCache.estimatedWeight,
     broken: _brokenCache.estimatedWeight,
   );
@@ -250,9 +291,7 @@ class Hyphenator {
     // Most words in running text have no break at all (too short, or the
     // pattern set finds nothing). Handing back the shared empty list saves two
     // allocations per word: the growable list and the unmodifiable copy.
-    final result = computed.isEmpty
-        ? const <int>[]
-        : List<int>.unmodifiable(computed);
+    final result = computed.isEmpty ? const <int>[] : _freeze(computed, word);
     if (cacheable) {
       if (_cache.length >= maxCacheSize) {
         final oldest = _cache.keys.first;
@@ -264,21 +303,66 @@ class Hyphenator {
     return result;
   }
 
+  /// The offsets of [word], in the narrowest integer width that can hold them.
+  ///
+  /// An offset is strictly smaller than the word it indexes, so a word of up
+  /// to 255 code units fits in bytes. That is every word of running text and
+  /// most of what a cache ever holds. A `List<int>` stores each of these as a
+  /// full tagged word instead, so the byte form retains an eighth as much for
+  /// exactly the same values, and reading it back out is a narrower load.
+  ///
+  /// The view is unmodifiable, so the cached entry keeps the same contract the
+  /// unmodifiable list gave callers before.
+  static List<int> _freeze(List<int> offsets, String word) {
+    if (word.length <= 0xFF) {
+      return Uint8List.fromList(offsets).asUnmodifiableView();
+    }
+    if (word.length <= 0xFFFF) {
+      return Uint16List.fromList(offsets).asUnmodifiableView();
+    }
+    return List<int>.unmodifiable(offsets);
+  }
+
   /// Splits [word] into the chunks between its hyphenation points.
   ///
   /// ```dart
   /// hyphenator.split('hyphenation'); // [hy, phen, ation]
   /// ```
   List<String> split(String word) {
+    final parts = _partsCache?[word];
+    if (parts != null) {
+      return parts;
+    }
     final offsets = breakOffsets(word);
     final count = offsets.length;
-    if (count == 0) {
-      // Fixed-length: a split result is a value, and a growable list carries a
-      // second backing array plus spare capacity for no benefit here.
-      return List<String>.filled(1, word);
+    final result = count == 0
+        // Fixed-length: a split result is a value, and a growable list carries
+        // a second backing array plus spare capacity for no benefit here.
+        ? List<String>.filled(1, word)
+        // The part count is known from the offsets, so the list is allocated
+        // once at its final size instead of growing while the parts are cut.
+        : _cut(word, offsets, count);
+    final cache = _partsCache;
+    if (cache != null && word.length <= maxCachedWordLength) {
+      // A retained list is handed to every later caller, so it is frozen
+      // first: one caller writing through an index must not be able to
+      // corrupt what the next one reads.
+      final shared = List<String>.unmodifiable(result);
+      // Offsets and parts are evicted together: the offsets entry is written
+      // first by breakOffsets, so following it keeps one eviction policy
+      // rather than two that can disagree about which words are live.
+      if (cache.length >= maxCacheSize) {
+        final oldest = cache.keys.first;
+        _partsEstimatedBytes -= _partsWeight(oldest, cache.remove(oldest)!);
+      }
+      cache[word] = shared;
+      _partsEstimatedBytes += _partsWeight(word, shared);
+      return shared;
     }
-    // The part count is known from the offsets, so the list is allocated once
-    // at its final size instead of growing while the parts are cut.
+    return result;
+  }
+
+  static List<String> _cut(String word, List<int> offsets, int count) {
     final parts = List<String>.filled(count + 1, word);
     var previous = 0;
     for (var i = 0; i < count; i++) {
@@ -400,6 +484,7 @@ class Hyphenator {
         '${dangling == null ? '' : ', danglingWords: $dangling'}, '
         'maxParagraphCacheBytes: $maxParagraphCacheBytes, '
         'maxCachedWordLength: $maxCachedWordLength, '
+        '${cacheSplitParts ? 'cacheSplitParts: true, ' : ''}'
         'cacheEstimatedBytes: $cacheEstimatedBytes, '
         'cached: $words words, $marked paragraphs, $broken broken)';
   }
@@ -408,6 +493,8 @@ class Hyphenator {
   void clearCache() {
     _cache.clear();
     _wordEstimatedBytes = 0;
+    _partsCache?.clear();
+    _partsEstimatedBytes = 0;
     _markedCache.clear();
     _brokenCache.clear();
   }

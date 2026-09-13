@@ -35,6 +35,81 @@ void main() {
       expect(english.split(''), <String>['']);
     });
 
+    group('cacheSplitParts', () {
+      test('retains identical parts and costs the extra bytes', () {
+        final plain = loadEnglishHyphenator();
+        final caching = Hyphenator(plain.patterns, cacheSplitParts: true);
+        const words = <String>[
+          'hyphenation',
+          'programming',
+          'cat',
+          'internationalization',
+        ];
+        for (final word in words) {
+          // Same answer as the default, and the retained list is shared and
+          // unmodifiable rather than rebuilt per call.
+          expect(caching.split(word), plain.split(word));
+          final first = caching.split(word);
+          expect(caching.split(word), same(first));
+          expect(() => first.add('!'), throwsUnsupportedError);
+          expect(first.join(), word);
+        }
+        // The parts hold the words' text a second time, so the estimate has
+        // to be larger than offsets alone.
+        for (final word in words) {
+          plain.split(word);
+        }
+        expect(
+          caching.cacheEstimatedBytes.words,
+          greaterThan(plain.cacheEstimatedBytes.words),
+        );
+        expect(caching.toString(), contains('cacheSplitParts: true'));
+        expect(plain.toString(), isNot(contains('cacheSplitParts')));
+        caching.clearCache();
+        expect(caching.cacheEstimatedBytes.words, 0);
+        // Still correct, and freshly retained, after the cache was dropped.
+        expect(caching.split('hyphenation'), <String>['hy', 'phen', 'ation']);
+      });
+
+      test('honours the word cache bounds it shares', () {
+        final dictionary = loadEnglishHyphenator().patterns;
+        final bounded = Hyphenator(
+          dictionary,
+          cacheSplitParts: true,
+          maxCacheSize: 2,
+          maxCachedWordLength: 12,
+        );
+        final first = bounded.split('hyphenation');
+        expect(bounded.split('hyphenation'), same(first));
+        bounded.split('programming');
+        bounded.split('dictionary');
+        // Evicted with its offsets, so a later call recomputes rather than
+        // returning a stale retained list.
+        expect(bounded.split('hyphenation'), isNot(same(first)));
+        expect(bounded.split('hyphenation'), first);
+
+        // Too long for the cache: correct, and never retained.
+        const long = 'internationalization';
+        final beforeBytes = bounded.cacheEstimatedBytes.words;
+        expect(bounded.split(long).join(), long);
+        expect(bounded.split(long), isNot(same(bounded.split(long))));
+        expect(bounded.cacheEstimatedBytes.words, beforeBytes);
+
+        // Disabled caching leaves the flag inert rather than half-applied.
+        final uncached = Hyphenator(
+          dictionary,
+          cacheSplitParts: true,
+          maxCacheSize: 0,
+        );
+        expect(uncached.split('hyphenation'), <String>['hy', 'phen', 'ation']);
+        expect(
+          uncached.split('hyphenation'),
+          isNot(same(uncached.split('hyphenation'))),
+        );
+        expect(uncached.cacheEstimatedBytes.words, 0);
+      });
+    });
+
     test('break offsets index into the original word', () {
       const word = 'internationalization';
       final offsets = english.breakOffsets(word);

@@ -25,6 +25,7 @@ void main() {
 
   late ours.TexHyphenationPatterns ourPatterns;
   late ours.Hyphenator ourHyphenator;
+  late ours.Hyphenator ourPartsCaching;
   late impure.Hyphenator impureHyphenator;
   late hyphenatorx.Hyphenator xHyphenator;
   late hyphen_pkg.Hyphen hunspell;
@@ -41,6 +42,15 @@ void main() {
       rightMin: 3,
     );
     ourHyphenator = ours.Hyphenator(ourPatterns, leftMin: 3, rightMin: 3);
+    // hyphenatorx caches finished part lists per word by default. This variant
+    // opts into the same trade so one row compares like with like; the default
+    // above keeps our shipped configuration in the table too.
+    ourPartsCaching = ours.Hyphenator(
+      ourPatterns,
+      leftMin: 3,
+      rightMin: 3,
+      cacheSplitParts: true,
+    );
     impureHyphenator = impure.Hyphenator(
       resource: ImpureFileLoader(impureSource),
       minLetterCount: 3,
@@ -248,6 +258,11 @@ void main() {
           }
         },
         <String, void Function()>{
+          'hyphenation (cacheSplitParts)': () {
+            for (final word in words) {
+              Blackhole.consume(ourPartsCaching.split(word));
+            }
+          },
           'hyphenatorx': () {
             for (final word in words) {
               Blackhole.consume(xHyphenator.syllablesWord(word));
@@ -264,7 +279,7 @@ void main() {
             }
           },
         },
-        note: 'Frozen synthetic 2000-word corpus; repeated passes, package cache policies differ.',
+        note: 'Frozen synthetic 2000-word corpus; repeated passes, package cache policies differ. Our default rebuilds parts per call; the cacheSplitParts variant retains them as hyphenatorx does, for more memory.',
         batch: const Duration(milliseconds: 300),
         trials: 5,
       );

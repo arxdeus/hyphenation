@@ -51,7 +51,7 @@ Two packages ship from this repository:
 - **A drop-in `Text`** - `HyphenText` extends `Text` and accepts every one of its properties, so adopting it is a rename.
 - **Real hyphens** - Flutter paints nothing at a soft hyphen, so the line breaking is done here and a visible hyphen is emitted at the break.
 - **Correct by construction** - Liang's algorithm over the same `hyph-*.tex` pattern files TeX, LibreOffice and browsers use. Over 80 languages are available from CTAN.
-- **Shared caching** - bounded caches reuse word and paragraph break results across widgets. See the [comparison](BENCHMARK_COMPARSION.md) for measured cache-hit and uncached costs.
+- **Shared caching** - bounded caches reuse word and paragraph break results across widgets. Repeated `split` calls can retain their parts too, with `cacheSplitParts: true`, trading memory for speed. See the [comparison](BENCHMARK_COMPARSION.md) for measured cache-hit and uncached costs.
 - **Dangling word control** - keep articles, prepositions and conjunctions from being stranded at the end of a line.
 - **Pure Dart engine** - use it in a CLI, a server, or a build step, with no `dart:ui` anywhere.
 - **Smaller bundles** - an asset transformer strips a pattern file down to its patterns at build time, cutting up to 70% of its size.

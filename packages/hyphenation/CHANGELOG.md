@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- `Hyphenator.cacheSplitParts`, an opt-in bound-sharing cache of the parts
+  `split` returns. Off by default: it retains each word's text a second time,
+  cut up, in exchange for turning a repeated `split` into a map lookup.
+- `split` allocates its result once at its final size, and marking a word no
+  longer allocates a lower-cased copy of it to probe an empty exception map.
+- Cached break offsets are retained in the narrowest integer width that holds
+  them, rather than one tagged word each. They are still unmodifiable.
+
 ## 1.0.0
 
 Initial release.
