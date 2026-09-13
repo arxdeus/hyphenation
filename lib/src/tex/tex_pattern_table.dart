@@ -1,23 +1,22 @@
-/// The compiled form of a TeX pattern set, and the matcher that runs it.
-///
-/// Patterns are stored as a trie flattened into typed arrays, the same shape
-/// the rest of this package uses for its hot data: a node is an index, not an
-/// object, so walking the trie costs an array load rather than a pointer
-/// chase through the heap.
-///
-/// ### Why a trie rather than a hash of every substring
-/// Matching a word means asking, for every position, which patterns start
-/// there. A trie answers that by walking forward from each position and
-/// stopping the moment no pattern continues, which on real text is after two
-/// or three characters. Hashing every substring instead would compute a hash
-/// per candidate whether or not any pattern could match it.
-///
-/// ### Characters, not bytes
-/// Patterns are matched over UTF-16 code units taken straight from the Dart
-/// string. There is no encode step and no byte/character conversion pass,
-/// because the priorities are claimed at character positions and that is
-/// where the caller wants them.
-library;
+// The compiled form of a TeX pattern set, and the matcher that runs it.
+//
+// Patterns are stored as a trie flattened into typed arrays, the same shape
+// the rest of this package uses for its hot data: a node is an index, not an
+// object, so walking the trie costs an array load rather than a pointer
+// chase through the heap.
+//
+// ### Why a trie rather than a hash of every substring
+// Matching a word means asking, for every position, which patterns start
+// there. A trie answers that by walking forward from each position and
+// stopping the moment no pattern continues, which on real text is after two
+// or three characters. Hashing every substring instead would compute a hash
+// per candidate whether or not any pattern could match it.
+//
+// ### Characters, not bytes
+// Patterns are matched over UTF-16 code units taken straight from the Dart
+// string. There is no encode step and no byte/character conversion pass,
+// because the priorities are claimed at character positions and that is
+// where the caller wants them.
 
 import 'dart:typed_data';
 

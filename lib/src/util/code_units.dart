@@ -1,14 +1,13 @@
-/// Character classification shared by the hyphenator, the line breaker and the
-/// dangling-word matcher.
-///
-/// All three have to agree on what counts as a letter: if they did not, a word
-/// the breaker treats as one token could be tokenised differently by the
-/// matcher, and a word would be glued to the wrong neighbour. The predicates
-/// live here rather than being duplicated per file.
-///
-/// This library is internal; nothing here is exported from
-/// `package:flutter_hyphen/flutter_hyphen.dart`.
-library;
+// Character classification shared by the hyphenator, the line breaker and the
+// dangling-word matcher.
+//
+// All three have to agree on what counts as a letter: if they did not, a word
+// the breaker treats as one token could be tokenised differently by the
+// matcher, and a word would be glued to the wrong neighbour. The predicates
+// live here rather than being duplicated per file.
+//
+// This file is internal; nothing here is exported from
+// `package:flutter_hyphen/flutter_hyphen.dart`.
 
 /// Whether [unit] is a hyphen a line may be broken after.
 bool isHardHyphen(int unit) =>

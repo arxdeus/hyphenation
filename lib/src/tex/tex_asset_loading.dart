@@ -1,10 +1,9 @@
-/// Loading pattern files through Flutter's asset bundle.
-///
-/// Kept apart from [TexHyphenationPatterns] itself so that the engine stays
-/// pure Dart: it is then usable from a plain `dart run`, from a build script
-/// that precompiles patterns, and from the benchmarks, none of which have a
-/// `dart:ui` to link against.
-library;
+// Loading pattern files through Flutter's asset bundle.
+//
+// Kept apart from [TexHyphenationPatterns] itself so that the engine stays
+// pure Dart: it is then usable from a plain `dart run`, from a build script
+// that precompiles patterns, and from the benchmarks, none of which have a
+// `dart:ui` to link against.
 
 import 'package:flutter/services.dart';
 import 'package:flutter_hyphen/src/tex/tex_hyphenation_patterns.dart';

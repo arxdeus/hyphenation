@@ -1,19 +1,18 @@
-/// Reads TeX hyphenation pattern files: `\patterns{...}` and
-/// `\hyphenation{...}`.
-///
-/// The format is Liang's, as described in his 1983 thesis and used by every
-/// `hyph-*.tex` file on CTAN. A pattern is a run of letters with priority
-/// digits wedged between them, so `hy3ph` says that breaking between `hy`
-/// and `ph` is worth 3. A `.` anchors the pattern to a word edge. Odd
-/// priorities permit a break, even ones forbid it, and the highest priority
-/// claimed at a position wins.
-///
-/// `\hyphenation{...}` lists exceptions spelled with explicit hyphens
-/// (`as-so-ciate`), which override the patterns outright.
-///
-/// Everything outside those two groups is commentary: TeX comments start at
-/// `%` and run to the end of the line, and files carry a header of them.
-library;
+// Reads TeX hyphenation pattern files: `\patterns{...}` and
+// `\hyphenation{...}`.
+//
+// The format is Liang's, as described in his 1983 thesis and used by every
+// `hyph-*.tex` file on CTAN. A pattern is a run of letters with priority
+// digits wedged between them, so `hy3ph` says that breaking between `hy`
+// and `ph` is worth 3. A `.` anchors the pattern to a word edge. Odd
+// priorities permit a break, even ones forbid it, and the highest priority
+// claimed at a position wins.
+//
+// `\hyphenation{...}` lists exceptions spelled with explicit hyphens
+// (`as-so-ciate`), which override the patterns outright.
+//
+// Everything outside those two groups is commentary: TeX comments start at
+// `%` and run to the end of the line, and files carry a header of them.
 
 import 'dart:typed_data';
 

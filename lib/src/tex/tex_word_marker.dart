@@ -1,5 +1,4 @@
-/// Finds the break opportunities in a word, using a compiled TeX pattern set.
-library;
+// Finds the break opportunities in a word, using a compiled TeX pattern set.
 
 import 'dart:typed_data';
 

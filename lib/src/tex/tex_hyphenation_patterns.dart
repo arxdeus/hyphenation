@@ -1,5 +1,4 @@
-/// A hyphenation dictionary built from TeX pattern files.
-library;
+// A hyphenation dictionary built from TeX pattern files.
 
 import 'dart:typed_data';
 
