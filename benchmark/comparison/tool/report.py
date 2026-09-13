@@ -142,7 +142,7 @@ def main():
                 if max(ours['cv'], other['cv']) > .05:
                     evidence += ' ⚠'
                 doc.append(f"| {suite_name}: {row['name']} | {name} | {ratio:.3f}× ({ci}) | {evidence} |")
-    doc += ['', 'Setup disadvantage: we require externally sourced dictionaries, while x and impure bundle them. Remaining warm-word deficits are allocation in `split`, which returns fresh parts instead of retaining finished lists per word as hyphenatorx does.', '',
+    doc += ['', 'Setup disadvantage: we require externally sourced dictionaries, while x and impure bundle them. The remaining warm-word deficits are allocation in `split`, which builds fresh parts per call rather than retaining them; `cacheSplitParts` trades memory to remove that, as the engine table shows.', '',
             '## Output agreement (not accuracy)', '',
             f"{quality['corpus_size']} observations, including 1,000 synthetic tokens. More breaks is not necessarily better.", '',
             '| A | B | Identical outputs |', '| --- | --- | ---: |']

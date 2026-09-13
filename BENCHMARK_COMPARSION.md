@@ -19,22 +19,22 @@ Only our engine was timed here. Import compilation does not test standalone depe
 
 | Workload | hyphenation |
 | --- | ---: |
-| load en-US dictionary | 599.049 |
-| split 32 prose words, warm | 1.599 |
-| split 32 prose words, cold | 15.206 |
-| split 2000 distinct words | 120.967 |
-| hyphenate a paragraph, common adapter (396 chars) | 24.405 ⚠ |
+| load en-US dictionary | 619.156 |
+| split 32 prose words, warm | 1.631 |
+| split 32 prose words, cold | 15.373 |
+| split 2000 distinct words | 118.290 |
+| hyphenate a paragraph, common adapter (396 chars) | 23.055 ⚠ |
 
 ## Engines (Flutter debug test runtime)
 
 | Workload | hyphenation | hyphenation (cacheSplitParts) | hyphenatorx | hyphenator_impure | hyphen |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| load en-US dictionary | 632.645 | — | 4,082.743 | 4,246.023 | 5,186.786 |
-| split 32 prose words, warm | 1.753 | — | 0.74168 | 7,171.378 | 64.185 |
-| split 10 long words, warm | 0.91512 | — | 0.20250 | 4,293.533 | 32.890 |
-| split 32 prose words, cold | 16.830 | — | 6,991.932 | 7,131.341 | 61.855 |
-| split 2000 distinct words | 129.247 | 40.836 | 67.875 ⚠ | 507,247.458 | 4,403.701 |
-| hyphenate a paragraph, common adapter (396 chars) | 26.462 | — | 24.762 ⚠ | 5,912.898 | 93.141 |
+| load en-US dictionary | 639.258 | — | 4,075.307 | 4,281.540 | 5,246.068 |
+| split 32 prose words, warm | 1.738 | — | 0.75427 | 6,666.052 | 62.491 |
+| split 10 long words, warm | 1.000 | — | 0.23308 | 4,573.242 | 38.982 |
+| split 32 prose words, cold | 19.233 | — | 7,405.445 | 7,454.418 | 72.077 |
+| split 2000 distinct words | 146.619 | 43.816 | 70.083 ⚠ | 517,644.958 | 4,966.488 |
+| hyphenate a paragraph, common adapter (396 chars) | 28.492 ⚠ | — | 26.865 ⚠ | 5,930.935 ⚠ | 109.633 |
 
 `cacheSplitParts` is an opt-in variant of our engine, not the default: it retains finished part lists per word, as hyphenatorx does, and costs roughly 3.5x the word-cache bytes. A dash means the variant does not apply to that workload.
 
@@ -42,11 +42,11 @@ Only our engine was timed here. Import compilation does not test standalone depe
 
 | Workload | flutter_hyphenation (local) | auto_hyphenating_text | hyphenatorx wrap | Text control | hyphen + precomputed SHY |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| warm same width | 43.823 ⚠ | 4,246.923 | 3,586.191 | 32.484 ⚠ | 31.514 ⚠ |
-| warm remount | 84.565 ⚠ | 3,982.202 | 3,267.861 | 98.600 ⚠ | 101.218 ⚠ |
-| warm cycling 120 widths | 64.340 ⚠ | 4,079.731 | 3,208.492 | 73.485 ⚠ | 76.058 ⚠ |
-| cold result caches remount | 713.376 ⚠ | 3,888.742 | 7,147.005 | 93.451 ⚠ | — |
-| uncached layout, warm words | 667.660 ⚠ | 3,898.746 | 3,281.414 ⚠ | 93.465 ⚠ | 91.054 ⚠ |
+| warm same width | 47.125 ⚠ | 5,018.019 | 4,243.766 | 39.208 ⚠ | 36.369 ⚠ |
+| warm remount | 114.847 ⚠ | 5,190.562 | 4,250.323 | 128.431 ⚠ | 137.547 ⚠ |
+| warm cycling 120 widths | 78.108 ⚠ | 5,373.910 | 4,106.228 | 93.783 ⚠ | 96.919 ⚠ |
+| cold result caches remount | 959.486 ⚠ | 5,198.932 | 9,217.190 | 125.310 ⚠ | — |
+| uncached layout, warm words | 857.780 | 5,204.599 | 4,301.230 | 129.359 ⚠ | 124.132 ⚠ |
 
 Text does not hyphenate. SHY uses precomputed text and a different rendering contract. The x wrap adapter excludes async widget startup.
 
@@ -56,17 +56,17 @@ All lower-median alternatives are included. Ratios use **our mean / their mean**
 
 | Workload | Faster median alternative | Our mean / theirs (95% interval) | Evidence |
 | --- | --- | ---: | --- |
-| engine: split 32 prose words, warm | hyphenatorx | 2.370× (2.337–2.404) | Local loss |
-| engine: split 10 long words, warm | hyphenatorx | 4.502× (4.419–4.588) | Local loss |
-| engine: split 2000 distinct words | hyphenatorx | 1.945× (1.793–2.126) | Local loss ⚠ |
-| engine: hyphenate a paragraph, common adapter | hyphenatorx | 1.090× (1.048–1.137) | Local loss ⚠ |
-| flutter: warm same width | Text (no hyphens) | 1.159× (0.876–1.564) | Inconclusive, different-feature control ⚠ |
-| flutter: warm same width | hyphen (precomputed SHY adapter) | 1.280× (0.965–1.732) | Inconclusive, different-feature control ⚠ |
-| flutter: cold result caches remount | Text (no hyphens) | 7.745× (7.141–8.394) | Local loss, different-feature control ⚠ |
-| flutter: uncached layout, warm words | Text (no hyphens) | 7.221× (6.658–7.849) | Local loss, different-feature control ⚠ |
-| flutter: uncached layout, warm words | hyphen (precomputed SHY adapter) | 7.263× (6.538–8.129) | Local loss, different-feature control ⚠ |
+| engine: split 32 prose words, warm | hyphenatorx | 2.273× (2.232–2.315) | Local loss |
+| engine: split 10 long words, warm | hyphenatorx | 4.334× (4.190–4.483) | Local loss |
+| engine: split 2000 distinct words | hyphenatorx | 1.395× (unbounded) | Inconclusive ⚠ |
+| engine: hyphenate a paragraph, common adapter | hyphenatorx | 1.077× (1.016–1.142) | Local loss ⚠ |
+| flutter: warm same width | Text (no hyphens) | 1.117× (0.874–1.441) | Inconclusive, different-feature control ⚠ |
+| flutter: warm same width | hyphen (precomputed SHY adapter) | 1.185× (0.923–1.541) | Inconclusive, different-feature control ⚠ |
+| flutter: cold result caches remount | Text (no hyphens) | 7.669× (7.128–8.276) | Local loss, different-feature control ⚠ |
+| flutter: uncached layout, warm words | Text (no hyphens) | 6.732× (5.901–7.818) | Local loss, different-feature control ⚠ |
+| flutter: uncached layout, warm words | hyphen (precomputed SHY adapter) | 6.916× (6.274–7.689) | Local loss, different-feature control ⚠ |
 
-Setup disadvantage: we require externally sourced dictionaries, while x and impure bundle them. Remaining warm-word deficits are allocation in `split`, which returns fresh parts instead of retaining finished lists per word as hyphenatorx does.
+Setup disadvantage: we require externally sourced dictionaries, while x and impure bundle them. The remaining warm-word deficits are allocation in `split`, which builds fresh parts per call rather than retaining them; `cacheSplitParts` trades memory to remove that, as the engine table shows.
 
 ## Output agreement (not accuracy)
 
