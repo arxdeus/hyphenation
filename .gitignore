@@ -301,3 +301,6 @@ plumb*
 # bench_press CLI telemetry output
 benchmark_results.json
 benchmark/results/
+.metadata
+pubspec.lock
+.idea
