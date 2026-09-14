@@ -2,9 +2,8 @@
 
 ## 1.0.2
 
-- The SDK constraint is now `^3.5.0` and the Flutter constraint `^1.17.0`, so
-  the package resolves on older stable Dart releases. No API or behaviour
-  changes.
+- The SDK constraint is now `^3.5.0`, so the package resolves on older stable
+  Dart releases. No API or behaviour changes.
 - Depends on `hyphenation: ^1.0.2`.
 
 ## 1.0.1
