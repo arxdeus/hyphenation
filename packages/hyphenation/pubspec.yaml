@@ -10,7 +10,7 @@ topics:
   - hyphenation
 
 environment:
-  sdk: ^3.13.2
+  sdk: ^3.5.0
 
 dependencies:
   characters: ^1.4.1

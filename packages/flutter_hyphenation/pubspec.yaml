@@ -10,8 +10,8 @@ topics:
   - hyphenation
 
 environment:
-  sdk: ^3.13.2
-  flutter: ">=1.17.0"
+  sdk: ^3.5.0
+  flutter: ^1.17.0
 
 resolution: workspace
 
