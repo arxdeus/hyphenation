@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2
+
+- The SDK constraint is now `^3.5.0`, so the package resolves on older stable
+  Dart releases. No API or behaviour changes.
+
 ## 1.0.1
 
 - The LICENSE file is now the plain MIT text so pub.dev recognizes it; the
